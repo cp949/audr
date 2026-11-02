@@ -1,5 +1,7 @@
 # @cp949/audr
 
+저장소: <https://github.com/cp949/audr>
+
 사운드 에디터와 녹음 대화상자를 제공하는 React 컴포넌트 라이브러리다. 소리는 모노 `Float32Array`와 샘플레이트로 다룬다.
 
 이 패키지는 `private: true`이고 발행하지 않는다. 같은 워크스페이스 안의 Vite 앱에서 쓰는 것만 지원한다. 워크스페이스 밖 앱(`file:`, `link:`)과 번들러 없는 Node ESM 직접 import는 지원하지 않는다.

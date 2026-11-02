@@ -2,6 +2,15 @@
   "name": "@cp949/audr",
   "version": "0.0.0",
   "private": true,
+  "homepage": "https://github.com/cp949/audr/tree/main/packages/audr#readme",
+  "bugs": {
+    "url": "https://github.com/cp949/audr/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cp949/audr.git",
+    "directory": "packages/audr"
+  },
   "type": "module",
   "sideEffects": [
     "**/*.css"
