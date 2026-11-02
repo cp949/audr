@@ -59,9 +59,9 @@ test.describe("applyEffect 실제 렌더링 (코어 직접 호출)", () => {
   });
 
   const cases: [string, number][] = [
-    ["faster", 35002],
-    ["slower", 55562],
-    ["echo", 77175],
+    ["faster", 33923],
+    ["slower", 58800],
+    ["echo", 97020],
     ["higher", 44100],
     ["lower", 44100],
     ["fade in", 44100],
@@ -109,11 +109,11 @@ test.describe("applyEffect 실제 렌더링 (코어 직접 호출)", () => {
     expect(result.tail).toBeGreaterThan(0.4);
   });
 
-  test("higher/lower: rms 비가 1.25와 0.75에 가깝다", async ({ page }) => {
+  test("higher/lower: rms 비가 1.5와 0.6에 가깝다", async ({ page }) => {
     const higher = await runCoreEffect(page, "higher", 0, 1);
     const lower = await runCoreEffect(page, "lower", 0, 1);
-    expect(higher.rms / INPUT_RMS).toBeCloseTo(1.25, 1);
-    expect(lower.rms / INPUT_RMS).toBeCloseTo(0.75, 1);
+    expect(higher.rms / INPUT_RMS).toBeCloseTo(1.5, 1);
+    expect(lower.rms / INPUT_RMS).toBeCloseTo(0.6, 1);
   });
 
   test("reverse: out[i]가 in[n-1-i]와 같다", async ({ page }) => {
@@ -199,10 +199,10 @@ test.describe("UI 경유 (데모 화면)", () => {
   // [버튼, 기대 샘플 수, 기대 peak 범위]. 입력은 진폭 0.5 사인파다.
   // 길이가 그대로인 효과는 샘플 수만으로는 버튼이 동작했는지 알 수 없어 Undo 활성과 peak로 확인한다.
   const uiCases: [string, number, [number, number]][] = [
-    ["Faster", 35002, [0.05, Infinity]],
-    ["Slower", 55562, [0.05, Infinity]],
-    ["Louder", 44100, [0.6, 0.65]], // 0.5 × 1.25
-    ["Softer", 44100, [0.35, 0.4]], // 0.5 × 0.75
+    ["Faster", 33923, [0.05, Infinity]],
+    ["Slower", 58800, [0.05, Infinity]],
+    ["Louder", 44100, [0.7, 0.8]], // 0.5 × 1.5
+    ["Softer", 44100, [0.25, 0.35]], // 0.5 × 0.6
     ["Mute", 44100, [0, 0.001]],
     ["Fade in", 44100, [0.05, Infinity]],
     ["Fade out", 44100, [0.05, Infinity]],
@@ -257,13 +257,13 @@ test.describe("UI 경유 (데모 화면)", () => {
     expect(n).toBeLessThan(66300);
   });
 
-  test("Undo/Redo: 효과 뒤 Undo는 44100으로, Redo는 35002로 돌린다", async ({ page }) => {
+  test("Undo/Redo: 효과 뒤 Undo는 44100으로, Redo는 33923으로 돌린다", async ({ page }) => {
     await editorButton(page, "Faster").click();
-    await expect(activeItem(page)).toHaveAttribute("data-samples", "35002");
+    await expect(activeItem(page)).toHaveAttribute("data-samples", "33923");
     await editorButton(page, "Undo").click();
     await expect(activeItem(page)).toHaveAttribute("data-samples", "44100");
     await editorButton(page, "Redo").click();
-    await expect(activeItem(page)).toHaveAttribute("data-samples", "35002");
+    await expect(activeItem(page)).toHaveAttribute("data-samples", "33923");
   });
 
   test("Copy to New: 목록이 2개가 되고 새 소리가 선택된다", async ({ page }) => {

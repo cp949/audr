@@ -1,3 +1,6 @@
+import { renderGraph } from "./graph";
+import { segmentEffect } from "./segment";
+
 export class RobotEffect {
   readonly input: GainNode;
   readonly output: GainNode;
@@ -114,3 +117,16 @@ export class RobotEffect {
     compressor.connect(this.output);
   }
 }
+
+/**
+ * 옛 로봇을 구간 효과로 감싼 임시 어댑터. 구간 전체에 효과를 걸고 길이는 그대로다.
+ * 새 로봇으로 바꿀 때 `RobotEffect`와 함께 지운다.
+ */
+export const robotLegacy = segmentEffect({
+  transform: (mid, sampleRate) =>
+    renderGraph(mid, sampleRate, mid.length, (ctx, source) => {
+      const robot = new RobotEffect(ctx, 0, mid.length / sampleRate);
+      source.connect(robot.input);
+      robot.output.connect(ctx.destination);
+    }),
+});

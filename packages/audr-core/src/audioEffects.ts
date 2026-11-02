@@ -1,10 +1,14 @@
-// 효과 계획은 planEffect, reverse 데이터 처리는 reverseRange,
-// OfflineAudioContext 렌더링은 applyEffect가 맡는다.
-import { EchoEffect } from "./effects/echo";
-import { FadeEffect } from "./effects/fade";
-import { MuteEffect } from "./effects/mute";
-import { RobotEffect } from "./effects/robot";
-import { VolumeEffect } from "./effects/volume";
+// 효과는 `effects/`의 정의(EffectDef)를 이름으로 찾아 실행한다.
+// 구간 규칙과 길이 계산은 effects/segment.ts, 설계 배경은 docs/design/04-effect-engine.md에 있다.
+import { echo } from "./effects/echoTrail";
+import { fadeIn, fadeOut } from "./effects/fadeCurve";
+import { louder, mute, softer } from "./effects/gain";
+import { reverse } from "./effects/reverse";
+import { robotLegacy } from "./effects/robot";
+import type { EffectDef } from "./effects/segment";
+import { faster, slower } from "./effects/speed";
+
+export { reverseRange } from "./effects/reverse";
 
 /** 효과 이름. 화면의 Louder는 "higher", Softer는 "lower"다. */
 export type EffectName =
@@ -26,62 +30,35 @@ export type EffectPlan = {
   adjustedTrimEnd: number;
 };
 
-/** faster/slower의 음높이 비율 (장3도) */
-const PITCH_RATIO = Math.pow(2, 4 / 12);
+const EFFECTS: Record<EffectName, EffectDef> = {
+  robot: robotLegacy,
+  reverse,
+  higher: louder,
+  lower: softer,
+  faster,
+  slower,
+  echo,
+  "fade in": fadeIn,
+  "fade out": fadeOut,
+  mute,
+};
 
-/** planEffect 결과에 효과 노드가 쓰는 초 단위 구간을 더한 내부 계산 결과 */
-type DetailedPlan = EffectPlan & { startSeconds: number; endSeconds: number };
+/** 0~1 비율 구간을 샘플 인덱스 [시작, 끝)로 바꾼다. 시작과 끝이 뒤집혀 들어와도 순서를 바로잡는다. */
+function sampleBounds(length: number, trimStart: number, trimEnd: number): [number, number] {
+  return [
+    Math.floor(Math.min(trimStart, trimEnd) * length),
+    Math.floor(Math.max(trimStart, trimEnd) * length),
+  ];
+}
 
-function computePlan(
-  length: number,
-  sampleRate: number,
-  name: EffectName,
-  trimStart: number,
-  trimEnd: number,
-): DetailedPlan {
-  const trimStartSeconds = (trimStart * length) / sampleRate;
-  const trimEndSeconds = (trimEnd * length) / sampleRate;
-
-  let sampleCount = length;
-  const affectedSampleCount = Math.floor((trimEndSeconds - trimStartSeconds) * sampleRate);
-  let adjustedAffectedSampleCount = affectedSampleCount;
-  const unaffectedSampleCount = sampleCount - affectedSampleCount;
-
-  let playbackRate = 1;
-  switch (name) {
-    case "echo":
-      sampleCount = Math.max(
-        sampleCount,
-        Math.floor((trimEndSeconds + EchoEffect.TAIL_SECONDS) * sampleRate),
-      );
-      break;
-    case "faster":
-      playbackRate = PITCH_RATIO;
-      adjustedAffectedSampleCount = Math.floor(affectedSampleCount / playbackRate);
-      sampleCount = unaffectedSampleCount + adjustedAffectedSampleCount;
-      break;
-    case "slower":
-      playbackRate = 1 / PITCH_RATIO;
-      adjustedAffectedSampleCount = Math.floor(affectedSampleCount / playbackRate);
-      sampleCount = unaffectedSampleCount + adjustedAffectedSampleCount;
-      break;
-  }
-
-  const durationSeconds = sampleCount / sampleRate;
-  const adjustedTrimEndSeconds = trimStartSeconds + adjustedAffectedSampleCount / sampleRate;
-  return {
-    sampleCount,
-    playbackRate,
-    adjustedTrimStart: trimStartSeconds / durationSeconds,
-    adjustedTrimEnd: adjustedTrimEndSeconds / durationSeconds,
-    startSeconds: trimStartSeconds,
-    endSeconds: adjustedTrimEndSeconds,
-  };
+/** 결과 길이로 나눈 구간 비율. 빈 소리는 0으로 둔다. */
+function toTrim(position: number, length: number): number {
+  return length > 0 ? position / length : 0;
 }
 
 /**
- * 효과 적용 후 샘플 수, 재생 속도, 조정된 trim(0~1)을 계산한다.
- * 일부 효과는 재생 속도나 샘플 수를 바꾸므로 OfflineAudioContext를 만들기 전에 미리 계산해야 한다.
+ * 효과 적용 후 샘플 수, 재생 비율, 조정된 trim(0~1)을 계산한다.
+ * 길이가 바뀌는 효과가 있어서, 렌더링하기 전에도 결과 구간을 알 수 있어야 한다.
  */
 export function planEffect(
   length: number,
@@ -90,59 +67,41 @@ export function planEffect(
   trimStart: number,
   trimEnd: number,
 ): EffectPlan {
-  const { sampleCount, playbackRate, adjustedTrimStart, adjustedTrimEnd } = computePlan(
-    length,
-    sampleRate,
-    name,
-    trimStart,
-    trimEnd,
-  );
-  return { sampleCount, playbackRate, adjustedTrimStart, adjustedTrimEnd };
-}
-
-/** 선택 구간(0~1 비율)의 샘플 순서를 뒤집은 새 배열을 돌려준다. 입력은 바꾸지 않는다. */
-export function reverseRange(samples: Float32Array, start: number, end: number): Float32Array {
-  const result = new Float32Array(samples.length);
-  const startSamples = Math.floor(start * samples.length);
-  const endSamples = Math.floor(end * samples.length);
-  let counter = 0;
-  for (let i = 0; i < samples.length; i++) {
-    if (i >= startSamples && i < endSamples) {
-      result[i] = samples[endSamples - counter - 1] as number;
-      counter++;
-    } else {
-      result[i] = samples[i] as number;
-    }
-  }
-  return result;
-}
-
-type OfflineContextConstructor = new (
-  channels: number,
-  length: number,
-  sampleRate: number,
-) => OfflineAudioContext;
-
-function createOfflineContext(sampleCount: number, sampleRate: number): OfflineAudioContext {
-  const g = globalThis as unknown as {
-    OfflineAudioContext?: OfflineContextConstructor;
-    webkitOfflineAudioContext?: OfflineContextConstructor;
+  const def = EFFECTS[name];
+  const [start, end] = sampleBounds(length, trimStart, trimEnd);
+  const plan = def.plan(length, sampleRate, start, end);
+  return {
+    sampleCount: plan.length,
+    playbackRate: def.rate ?? 1,
+    adjustedTrimStart: toTrim(plan.start, plan.length),
+    adjustedTrimEnd: toTrim(plan.end, plan.length),
   };
-  if (g.OfflineAudioContext) {
-    return new g.OfflineAudioContext(1, sampleCount, sampleRate);
-  }
-  if (g.webkitOfflineAudioContext) {
-    // Need to use webkitOfflineAudioContext, which doesn't support all sample rates.
-    // Resample by adjusting sample count to make room and set offline context to desired sample rate.
-    const sampleScale = 44100 / sampleRate;
-    return new g.webkitOfflineAudioContext(1, sampleScale * sampleCount, 44100);
-  }
-  throw new Error("OfflineAudioContext를 쓸 수 없다");
+}
+
+/**
+ * 샘플 배열에 효과를 적용한 새 배열과 조정된 trim(0~1)을 돌려준다. 입력 배열은 바꾸지 않는다.
+ * AudioBuffer를 만들지 않아 `applyEffect`보다 가볍고, 그래프를 쓰지 않는 효과는 node에서 시험할 수 있다.
+ */
+export async function runEffect(
+  name: EffectName,
+  samples: Float32Array,
+  sampleRate: number,
+  trimStart: number,
+  trimEnd: number,
+): Promise<{ samples: Float32Array; trimStart: number; trimEnd: number }> {
+  const [start, end] = sampleBounds(samples.length, trimStart, trimEnd);
+  const result = await EFFECTS[name].run(samples, sampleRate, start, end);
+  const length = result.samples.length;
+  return {
+    samples: result.samples,
+    trimStart: toTrim(result.start, length),
+    trimEnd: toTrim(result.end, length),
+  };
 }
 
 /**
  * 효과를 적용한 새 버퍼와 조정된 trim(0~1)을 돌려준다. 입력 버퍼는 바꾸지 않는다.
- * OfflineAudioContext가 최소 2샘플을 요구하므로 길이 2 미만이면 입력을 그대로 돌려준다.
+ * 길이 2 미만이면 효과를 걸 수 없어 입력을 그대로 돌려준다. 호출자는 `result.buffer === buffer`로 알아본다.
  */
 export async function applyEffect(
   buffer: AudioBuffer,
@@ -153,74 +112,18 @@ export async function applyEffect(
   if (buffer.length < 2) {
     return { buffer, trimStart, trimEnd };
   }
-
-  const plan = computePlan(buffer.length, buffer.sampleRate, name, trimStart, trimEnd);
-  const audioContext = createOfflineContext(plan.sampleCount, buffer.sampleRate);
-  const adjustedTrimStartSeconds = plan.startSeconds;
-  const adjustedTrimEndSeconds = plan.endSeconds;
-
-  // For the reverse effect we need to manually reverse the data into a new audio buffer
-  // to prevent overwriting the original, so that the undo stack works correctly.
-  let sourceBuffer = buffer;
-  if (name === "reverse") {
-    const reversed = audioContext.createBuffer(1, buffer.length, buffer.sampleRate);
-    reversed.getChannelData(0).set(reverseRange(buffer.getChannelData(0), trimStart, trimEnd));
-    sourceBuffer = reversed;
-  }
-
-  const source = audioContext.createBufferSource();
-  source.buffer = sourceBuffer;
-
-  // Some effects need to use more nodes and must expose an input and output
-  let node: { input: AudioNode; output: AudioNode } | undefined;
-  switch (name) {
-    case "faster":
-    case "slower":
-      source.playbackRate.setValueAtTime(plan.playbackRate, adjustedTrimStartSeconds);
-      source.playbackRate.setValueAtTime(1.0, adjustedTrimEndSeconds);
-      break;
-    case "higher":
-      node = new VolumeEffect(audioContext, 1.25, adjustedTrimStartSeconds, adjustedTrimEndSeconds);
-      break;
-    case "lower":
-      node = new VolumeEffect(audioContext, 0.75, adjustedTrimStartSeconds, adjustedTrimEndSeconds);
-      break;
-    case "echo":
-      node = new EchoEffect(audioContext, adjustedTrimStartSeconds, adjustedTrimEndSeconds);
-      break;
-    case "robot":
-      node = new RobotEffect(audioContext, adjustedTrimStartSeconds, adjustedTrimEndSeconds);
-      break;
-    case "fade in":
-      node = new FadeEffect(audioContext, true, adjustedTrimStartSeconds, adjustedTrimEndSeconds);
-      break;
-    case "fade out":
-      node = new FadeEffect(audioContext, false, adjustedTrimStartSeconds, adjustedTrimEndSeconds);
-      break;
-    case "mute":
-      node = new MuteEffect(audioContext, adjustedTrimStartSeconds, adjustedTrimEndSeconds);
-      break;
-  }
-
-  if (node) {
-    source.connect(node.input);
-    node.output.connect(audioContext.destination);
-  } else {
-    // No effects nodes are needed, wire directly to the output
-    source.connect(audioContext.destination);
-  }
-
-  source.start();
-
-  const renderedBuffer = await new Promise<AudioBuffer>((resolve, reject) => {
-    // webkit 접두사 구현은 Promise를 돌려주지 않으므로 oncomplete를 먼저 건다
-    audioContext.oncomplete = (e) => resolve(e.renderedBuffer);
-    const rendering = audioContext.startRendering() as Promise<AudioBuffer> | undefined;
-    rendering?.catch(reject);
+  const result = await runEffect(
+    name,
+    buffer.getChannelData(0),
+    buffer.sampleRate,
+    trimStart,
+    trimEnd,
+  );
+  const rendered = new AudioBuffer({
+    length: result.samples.length,
+    sampleRate: buffer.sampleRate,
+    numberOfChannels: 1,
   });
-  return {
-    buffer: renderedBuffer,
-    trimStart: plan.adjustedTrimStart,
-    trimEnd: plan.adjustedTrimEnd,
-  };
+  rendered.getChannelData(0).set(result.samples);
+  return { buffer: rendered, trimStart: result.trimStart, trimEnd: result.trimEnd };
 }
