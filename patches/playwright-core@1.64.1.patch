@@ -1,0 +1,33 @@
+diff --git a/lib/coreBundle.js b/lib/coreBundle.js
+index 6893f1cf133efec2c5dccc35c77cc7a53870ccbc..5675e631046177a6e5ef53be2adb2e717d9ae856 100644
+--- a/lib/coreBundle.js
++++ b/lib/coreBundle.js
+@@ -21071,7 +21071,7 @@ var init_dom = __esm({
+         (() => {
+         ${globalsSnapshot}
+         const module = {};
+-        ${source5}
++        ${/* audr 패치: Chrome 105 미만에는 Element.checkVisibility가 없다. Chrome 83 floor E2E(docs/adr/0001)용으로 없을 때만 조상의 display: none으로 대신 판정한다. */ source5.replace("if (!element.checkVisibility() && ", "if (!(element.checkVisibility ? element.checkVisibility() : ((el) => { for (; el; el = el.parentElement) if (getComputedStyle(el).display === \"none\") return false; return true; })(element)) && ")}
+         return new (module.exports.InjectedScript())(globalThis, ${JSON.stringify(options)});
+         })();
+       `;
+@@ -36834,8 +36834,9 @@ var init_crDragDrop = __esm({
+         try {
+           let expectingDrag = false;
+           await progress2.race(this._crPage._page.safeNonStallingEvaluateInAllFrames(`(${setupDragListeners.toString()})()`, "utility"));
++          // audr 패치: Input.setInterceptDrags는 Chrome 83에 없다. native drag 가로채기만 빠지고 mouse 이벤트 드래그는 그대로 동작하므로, 메서드가 없다는 오류만 무시한다(docs/adr/0001).
+           client.on("Input.dragIntercepted", onDragIntercepted);
+-          await progress2.race(client.send("Input.setInterceptDrags", { enabled: true }));
++          await progress2.race(client.send("Input.setInterceptDrags", { enabled: true }).catch((error) => { if (!String(error && error.message).includes("wasn't found")) throw error; }));
+           try {
+             await moveCallback(progress2);
+             expectingDrag = (await progress2.race(Promise.all(this._crPage._page.frames().map(async (frame) => {
+@@ -36843,7 +36844,7 @@ var init_crDragDrop = __esm({
+             })))).some((x2) => x2);
+           } finally {
+             client.off("Input.dragIntercepted", onDragIntercepted);
+-            await progress2.race(client.send("Input.setInterceptDrags", { enabled: false }));
++            await progress2.race(client.send("Input.setInterceptDrags", { enabled: false }).catch((error) => { if (!String(error && error.message).includes("wasn't found")) throw error; }));
+           }
+           this._dragState = expectingDrag ? (await dragInterceptedPromise).data : null;
+         } catch (error) {

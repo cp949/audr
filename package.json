@@ -1,0 +1,28 @@
+{
+  "name": "audr-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "check-types": "turbo run check-types",
+    "test": "turbo run test",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "verify": "oxfmt --check . && turbo run lint check-types test --output-logs=errors-only && pnpm check:browser-floor",
+    "verify:full": "pnpm verify && pnpm --filter demo test:e2e",
+    "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true",
+    "check:browser-floor": "node scripts/check-browser-floor.mjs"
+  },
+  "devDependencies": {
+    "eslint": "^10.14.0",
+    "eslint-plugin-es-x": "^10.1.0",
+    "oxfmt": "^0.75.0",
+    "oxlint": "^1.90.0",
+    "stylelint": "^17.16.0",
+    "stylelint-no-unsupported-browser-features": "^8.1.2",
+    "turbo": "^2.11.10",
+    "typescript": "^7.0.2"
+  },
+  "packageManager": "pnpm@10.28.0"
+}

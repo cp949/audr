@@ -1,0 +1,121 @@
+/* 색과 단위 값을 --audr- 접두어 CSS 변수로 둔 토큰 */
+:root {
+  /* 색 */
+  --audr-ui-primary: hsla(215, 100%, 95%, 1);
+  --audr-ui-secondary: #e9f1fc;
+  --audr-ui-tertiary: #d9e3f2;
+  --audr-ui-modal-overlay: hsla(215, 100%, 65%, 0.9);
+  --audr-ui-alert-overlay: hsla(215, 100%, 65%, 0.4);
+  --audr-ui-white: #ffffff;
+  --audr-ui-white-dim: hsla(0, 100%, 100%, 0.75);
+  --audr-ui-white-transparent: hsla(0, 100%, 100%, 0.25);
+  --audr-ui-transparent: hsla(0, 100%, 100%, 0);
+  --audr-ui-black-transparent: hsla(0, 0%, 0%, 0.15);
+  --audr-ui-black-transparent-10: hsla(0, 0%, 0%, 0.1);
+  --audr-ui-black: #000000;
+  --audr-ui-green: #0da57a;
+  --audr-ui-green-2: #0fbd8c;
+  --audr-ui-orange: hsla(37, 96%, 55%, 1);
+  --audr-ui-alert-orange: hsla(32, 100%, 94%, 1);
+  --audr-text-primary: #575e75;
+  --audr-text-primary-transparent: hsla(225, 15%, 40%, 0.75);
+  --audr-motion-primary: hsla(215, 100%, 65%, 1);
+  --audr-motion-tertiary: #3373cc;
+  --audr-looks-secondary: #855cd6;
+  --audr-looks-transparent: hsla(260, 60%, 60%, 0.35);
+  --audr-looks-light-transparent: hsla(260, 60%, 60%, 0.15);
+  --audr-looks-secondary-dark: hsla(260, 42%, 51%, 1);
+  --audr-red-primary: #ff661a;
+  --audr-red-tertiary: hsla(20, 100%, 45%, 1);
+  /*
+    audr 추가. 경고 글자용 진한 주황으로, 테마와 무관해 테마 블록에 두지 않는다.
+    red-tertiary는 반투명 흰 라벨 배경 위에서 약 3.8:1이라 12px 글자 기준(4.5:1)에 못 미친다.
+    이 값은 라벨 배경이 파형과 겹친 가장 어두운 경우에도 4.5:1 이상이다(themeTokens.test.ts가 검사).
+  */
+  --audr-red-text: hsla(20, 100%, 33%, 1);
+  --audr-sound-primary: #cf63cf;
+  --audr-sound-tertiary: #bd42bd;
+  /* CSS에 직접 쓰던 값. 테마가 바꿀 수 있게 변수로 뺐다 */
+  --audr-sound-wave: hsl(300, 54%, 72%);
+  --audr-sound-light-transparent: hsla(300, 53%, 60%, 0.15);
+  /* 아이콘 SVG는 <img>로 불러 CSS 변수가 닿지 않는다. 테마가 색조를 filter로 옮긴다 */
+  --audr-icon-filter-looks: none;
+  --audr-icon-filter-sound: none;
+  --audr-control-primary: hsla(38, 100%, 55%, 1);
+  --audr-data-primary: #ff8c1a;
+  --audr-pen-primary: #0fbd8c;
+  --audr-pen-transparent: hsla(163, 85%, 40%, 0.25);
+  --audr-pen-tertiary: #0b8e69;
+  --audr-error-primary: #ff8c1a;
+  --audr-error-light: hsla(30, 100%, 70%, 1);
+  --audr-error-transparent: hsla(30, 100%, 55%, 0.25);
+  --audr-extensions-primary: #0fbd8c;
+  --audr-extensions-tertiary: #0b8e69;
+  --audr-extensions-transparent: hsla(163, 85%, 40%, 0.35);
+  --audr-extensions-light: #c3efe2;
+  --audr-membership-blue: #2f6abc;
+  --audr-drop-highlight: #8abbff;
+
+  /* 단위 */
+  --audr-space: 0.5rem;
+  --audr-sprites-per-row: 5;
+  --audr-menu-bar-height: 3rem;
+  --audr-sprite-info-height: 6rem;
+  --audr-stage-menu-height: 2.75rem;
+  --audr-library-header-height: 3.125rem;
+  --audr-library-filter-bar-height: 2.5rem;
+  --audr-stage-standard-border-width: 0.0625rem;
+  --audr-stage-full-screen-border-width: 0.1875rem;
+  --audr-stage-full-screen-stage-padding: 0.1875rem;
+  --audr-form-radius: calc(var(--audr-space) / 2);
+  --audr-full-size: 1095px;
+  --audr-full-size-paint: 1249px;
+  --audr-menu-bar-standard-font-size: 0.75rem;
+  --audr-menu-bar-large-font-size: 0.875rem;
+  --audr-menu-bar-button-size: 2rem;
+  --audr-menu-bar-item-max-width: 12rem;
+}
+
+/*
+ * 테마: 요소에 data-audr-theme="blue|teal"을 걸면 그 요소 아래가 테마 색을 쓴다.
+ * 속성이 없으면 위의 보라다.
+ * - React에서는 SoundEditor·RecordDialog의 theme prop이 이 속성을 건다.
+ * - 선택자를 :root에 묶지 않아 래퍼, <html> 어디에 걸어도 된다. 가장 가까운 조상의 속성이 이긴다.
+ * - 같은 우선순위인 위의 :root 블록보다 뒤에 있어야 <html>에 걸었을 때 이긴다. 순서를 바꾸지 않는다.
+ * 아래 색은 보라·분홍 토큰에 아이콘 filter와 같은 hue-rotate 행렬을 적용한 값이다.
+ * 그래서 filter로 옮긴 아이콘 색과 UI 색이 어긋나지 않는다. 값을 고치면 filter 각도도 함께 고친다.
+ * 예외: --audr-ui-modal-overlay와 --audr-ui-primary는 원래 보라가 아니라 파랑이라 행렬을 쓰지 않고 테마 헤더 색상에 맞춰 고른다.
+ */
+[data-audr-theme="blue"] {
+  --audr-looks-secondary: #3475c8;
+  --audr-looks-transparent: rgba(52, 117, 200, 0.35);
+  --audr-looks-light-transparent: rgba(52, 117, 200, 0.15);
+  --audr-looks-secondary-dark: #2c64ab;
+  --audr-sound-primary: #8277ef;
+  --audr-sound-tertiary: #6558e1;
+  --audr-sound-wave: #a79ff5;
+  --audr-sound-light-transparent: rgba(130, 119, 239, 0.15);
+  /* 모달 배경. 기본 값이 파랑이라 파랑 테마는 이 값을 그대로 쓴다 */
+  --audr-ui-modal-overlay: hsla(215, 100%, 65%, 0.9);
+  /* 녹음창 파형 영역과 레벨 미터 배경. 파랑 테마는 기본 값을 그대로 쓴다 */
+  --audr-ui-primary: hsla(215, 100%, 95%, 1);
+  --audr-icon-filter-looks: hue-rotate(-45deg);
+  --audr-icon-filter-sound: hue-rotate(-45deg);
+}
+
+[data-audr-theme="teal"] {
+  --audr-looks-secondary: #07898e;
+  --audr-looks-transparent: rgba(7, 137, 142, 0.35);
+  --audr-looks-light-transparent: rgba(7, 137, 142, 0.15);
+  --audr-looks-secondary-dark: #057479;
+  --audr-sound-primary: #3c8ed5;
+  --audr-sound-tertiary: #1573c4;
+  --audr-sound-wave: #75b0e3;
+  --audr-sound-light-transparent: rgba(60, 142, 213, 0.15);
+  /* 모달 배경. hue-rotate가 아니라 teal 헤더(색상 182)에 맞춰 직접 고른 값이다 */
+  --audr-ui-modal-overlay: hsla(182, 60%, 55%, 0.9);
+  /* 녹음창 파형 영역과 레벨 미터 배경. 같은 방식으로 teal 색상에 맞춘 연한 색 */
+  --audr-ui-primary: hsla(182, 60%, 94%, 1);
+  --audr-icon-filter-looks: hue-rotate(-85deg);
+  --audr-icon-filter-sound: hue-rotate(-85deg);
+}

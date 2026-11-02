@@ -1,0 +1,56 @@
+.inputGroup {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.inputLabel {
+  font-size: 0.625rem;
+  user-select: none;
+  cursor: default;
+  white-space: nowrap;
+  margin-right: 0.5rem;
+  font-weight: bold;
+}
+
+.inputForm {
+  height: 2rem;
+  padding: 0 0.75rem;
+
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 0.625rem;
+  font-weight: bold;
+  color: var(--audr-text-primary);
+
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--audr-ui-black-transparent);
+  border-radius: 2rem;
+
+  outline: none;
+  cursor: text;
+  transition: 0.25s ease-out;
+  box-shadow: none;
+
+  /* For truncating overflowing text gracefully. min-width is for a flexbox bug: https://css-tricks.com/flexbox-truncated-text */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.inputForm:hover {
+  border-color: var(--audr-looks-secondary);
+}
+
+.inputForm:focus {
+  border-color: var(--audr-looks-secondary);
+  box-shadow: 0 0 0 0.25rem var(--audr-looks-transparent);
+}
+
+/* 움직임을 줄이도록 설정한 사용자에게는 장식용 전환 효과를 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  .inputForm {
+    transition: none;
+  }
+}

@@ -1,0 +1,254 @@
+/* RTL은 지원하지 않는다(1단계는 ko/en). */
+.editorContainer {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  padding: calc(2 * var(--audr-space));
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* 호스트와 무관하게 같은 모양이 되도록 글자 크기와 글자색을 여기서 정한다. */
+  font-size: 0.85rem;
+  color: #000;
+}
+
+/* box-sizing: border-box를 에디터 안으로 한정한다. */
+.editorContainer,
+.editorContainer * {
+  box-sizing: border-box;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.row + .row {
+  margin-top: calc(2 * var(--audr-space));
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: row;
+}
+
+.inputGroup + .inputGroup {
+  margin-left: calc(2 * var(--audr-space));
+}
+
+.inputGroup {
+  padding-right: calc(2 * var(--audr-space));
+  border-right: 1px dashed var(--audr-ui-black-transparent);
+}
+
+.waveformContainer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+
+  position: relative;
+
+  background: var(--audr-sound-light-transparent);
+  border: 1px solid var(--audr-ui-black-transparent);
+  border-radius: 5px;
+
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.button {
+  height: 2rem;
+  padding: 0.35rem;
+  outline: none;
+  background: white;
+  border-radius: 0.25rem;
+  border: 1px solid var(--audr-ui-black-transparent);
+  cursor: pointer;
+  font-size: 0.85rem;
+  user-select: none;
+  margin: 0px;
+  position: relative;
+}
+
+.button:active {
+  background: var(--audr-looks-transparent);
+}
+
+/* 포커스 링. :focus-visible은 Chrome 86부터라 링은 :focus에 두고, 마우스 포커스일 때만 아래 규칙으로 지운다.
+   Chrome 75~85는 아래 규칙을 통째로 무시하므로 마우스 포커스에도 링이 보인다(링이 없는 것보다 낫다). */
+.button:focus::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  bottom: -1px;
+  left: -1px;
+  border: 1px solid var(--audr-looks-secondary);
+  z-index: 1;
+}
+
+.button:focus:not(:focus-visible)::before {
+  content: none;
+}
+
+.button > img {
+  filter: var(--audr-icon-filter-looks);
+  flex-grow: 1;
+  max-width: 100%;
+  max-height: 100%;
+  min-width: 1.25rem;
+}
+
+.roundButton {
+  height: 3rem;
+  width: 3rem;
+  background: var(--audr-looks-secondary);
+  border-radius: 100%;
+  border: 4px solid var(--audr-ui-white-dim);
+  cursor: pointer;
+  padding: 0.75rem;
+  user-select: none;
+}
+
+.roundButton > img {
+  flex-grow: 1;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.effectButton {
+  flex-basis: 60px;
+  color: var(--audr-text-primary);
+  font-size: 0.625rem;
+  user-select: none;
+  padding: 0.25rem 0;
+}
+
+.effectButton + .effectButton {
+  margin: 0;
+}
+
+.effectButton img {
+  filter: var(--audr-icon-filter-sound);
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-bottom: -0.375rem;
+}
+
+.toolButton {
+  flex-basis: 60px;
+  color: var(--audr-text-primary);
+  font-size: 0.625rem;
+  user-select: none;
+  padding: 0.25rem 0;
+}
+
+.toolButton + .toolButton {
+  margin: 0;
+}
+
+.toolButton img {
+  filter: var(--audr-icon-filter-looks);
+  width: 4rem;
+  height: 1.5rem;
+  margin-bottom: -0.375rem;
+}
+
+.buttonGroup {
+  margin-left: 1rem;
+  display: flex;
+}
+
+.buttonGroup .button {
+  border-radius: 0;
+}
+
+.button:not(:last-child) {
+  border-right: none;
+}
+
+/* 선택자 목록에 :focus-visible을 섞지 않는다. 모르는 선택자가 하나라도 있으면 Chrome 85 이하는 규칙 전체를 버린다. */
+.buttonGroup .button:first-child,
+.buttonGroup .button:first-child:focus::before {
+  border-radius: var(--audr-form-radius) 0 0 var(--audr-form-radius);
+}
+
+.buttonGroup .button:last-child,
+.buttonGroup .button:last-child:focus::before {
+  border-radius: 0 var(--audr-form-radius) var(--audr-form-radius) 0;
+}
+
+.button:disabled > img {
+  opacity: 0.25;
+}
+
+/* 시간 표시줄. 효과 버튼 줄 아래(마지막 자식)에 붙여 위쪽 요소의 위치를 바꾸지 않는다.
+   에디터가 좁으면 잘리지 않게 항목 단위로 다음 줄로 넘긴다. 항목 안에서는 끊지 않는다.
+   이때 재생이 시작되면 줄이 늘어 에디터 높이가 커질 수 있다. 아래쪽이라 위 요소는 그대로다.
+   flex gap은 Chrome 84부터라 쓰지 않고 span 오른쪽 margin으로 띄운다. */
+.timeReadout {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: calc(2 * var(--audr-space));
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--audr-text-primary);
+}
+
+.timeReadout > span {
+  margin-right: 1rem;
+  white-space: nowrap;
+}
+
+/*
+  단축키 도움말 버튼. 시간 표시줄과 같은 글자 크기와 줄 높이를 쓴다.
+  누르는 영역은 WCAG 2.5.8의 24px 높이로 키운다. 위아래 4px 패딩을 같은 크기의 음수 margin으로 상쇄해
+  줄이 차지하는 높이는 16px 그대로다. 늘어난 4px은 위로 표시줄 margin-top, 아래로 에디터 패딩이나 목록 margin-top 안에 들어간다.
+  margin-left: auto로 줄 오른쪽 끝에 두어 Playing 항목이 생기고 사라져도 위치가 변하지 않는다.
+  포커스 표시는 브라우저 기본 윤곽선을 그대로 쓴다.
+*/
+.shortcutToggle {
+  margin: -4px 0 -4px auto;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* 펼친 목록. 알림처럼 한 줄을 다 차지해 앞의 시간 줄을 밀지 않는다. 열 간격은 grid gap 대신 margin으로 둔다(Chrome 75). */
+.shortcutList {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  flex: 0 0 100%;
+  justify-content: end;
+  margin: var(--audr-space) 0 0;
+}
+
+.shortcutList dt {
+  margin: 0 calc(2 * var(--audr-space)) 0 0;
+}
+
+.shortcutList dd {
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/*
+  편집 실패 알림. 시간 표시줄 안 마지막 자식이라 위의 시간 줄은 움직이지 않는다.
+  호스트 배경을 알 수 없으므로 흰 배경을 깔아 경고 글자(--audr-red-text)의 대비를 고정한다.
+  글자 색만으로 알리지 않도록 왼쪽 띠와 굵기도 쓴다. 닫기 버튼은 없다(다음 성공 편집에서 지운다).
+*/
+.editError {
+  flex: 0 0 100%;
+  margin-top: var(--audr-space);
+  padding: calc(var(--audr-space) / 2) var(--audr-space);
+  border-left: 4px solid var(--audr-red-text);
+  border-radius: 4px;
+  background: var(--audr-ui-white);
+  color: var(--audr-red-text);
+  font-weight: 700;
+}

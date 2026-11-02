@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+  - apps/*
+
+# playwright-core 패치: Chrome 83 floor E2E(apps/demo test:e2e:chrome83, docs/adr/0001) 전용.
+# Playwright 1.64가 Chrome 83에 없는 Element.checkVisibility(105+)와 CDP Input.setInterceptDrags를 호출해서,
+# 없을 때만 대신 판정하거나 오류를 무시한다. 최신 Chromium에서는 동작이 같다. Playwright를 올리면 패치를 다시 만든다.
+patchedDependencies:
+  playwright-core@1.64.1: patches/playwright-core@1.64.1.patch

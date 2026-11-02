@@ -1,0 +1,57 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: var(--audr-looks-secondary);
+  border-radius: 0.5rem;
+  background: none;
+  border: none;
+}
+
+.container + .container {
+  margin-top: 1.25rem;
+}
+
+.title {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/*
+ * 이유를 알리는 비활성 버튼은 호버 툴팁(title)이 떠야 하므로 pointer-events를 되살린다.
+ * 눌러도 반응하지 않도록 :active 배경과 pointer 커서는 지운다.
+ */
+.disabledWithReason {
+  pointer-events: auto;
+  cursor: default;
+}
+
+/* 화면에는 보이지 않고 보조기기만 읽는 텍스트. 레이아웃에 자리를 차지하지 않는다. */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.container:active {
+  background-color: var(--audr-looks-light-transparent);
+}
+
+/* .container:active와 우선순위가 같아서 뒤에 둬야 이긴다 */
+.disabledWithReason:active {
+  background: none;
+}

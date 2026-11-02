@@ -1,0 +1,159 @@
+/* 데모 페이지 배경과 레이아웃. 에디터와 모달 스타일은 라이브러리가 가진다. */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background: var(--audr-ui-secondary);
+  color: var(--audr-text-primary);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  height: 3rem;
+  padding: 0 1rem;
+  background: var(--audr-looks-secondary);
+  color: var(--audr-ui-white);
+  font-size: 0.875rem;
+}
+
+/* flex gap은 Chrome 84부터라 형제 margin으로 간격을 둔다 */
+.topbar > * + * {
+  margin-left: 1rem;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+.topbar button {
+  height: 2rem;
+  padding: 0 1rem;
+  border: 2px solid var(--audr-ui-white-transparent);
+  border-radius: 0.25rem;
+  background: var(--audr-red-primary);
+  color: var(--audr-ui-white);
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.themePicker select {
+  margin-left: 0.5rem;
+  height: 2rem;
+}
+
+.workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 목록과 선택한 소리의 작업 버튼을 세로로 쌓는다 */
+.sound-panel {
+  display: flex;
+  flex: 0 0 8rem;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--audr-ui-tertiary);
+}
+
+.sound-list {
+  flex: 1;
+  margin: 0;
+  padding: 0.5rem;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.sound-actions {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+}
+
+/* flex gap은 Chrome 84부터라 형제 margin으로 간격을 둔다 */
+.sound-actions > * + * {
+  margin-top: 0.5rem;
+}
+
+.sound-actions button {
+  padding: 0.375rem 0.25rem;
+  border: 2px solid var(--audr-looks-secondary);
+  border-radius: 0.5rem;
+  background: var(--audr-ui-white);
+  color: var(--audr-looks-secondary);
+  font-size: 0.75rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.sound-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sound-list li + li {
+  margin-top: 0.5rem;
+}
+
+.sound-item {
+  width: 100%;
+  padding: 0.5rem;
+  border: 2px solid transparent;
+  border-radius: 0.5rem;
+  background: var(--audr-ui-white);
+  color: var(--audr-text-primary);
+  font-size: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.sound-name,
+.sound-length {
+  display: block;
+}
+
+.sound-length {
+  margin-top: 0.25rem;
+  color: var(--audr-text-primary-transparent);
+  font-size: 0.625rem;
+}
+
+.sound-item[aria-current="true"] {
+  border-color: var(--audr-looks-secondary);
+  background: var(--audr-looks-light-transparent);
+}
+
+.editor-pane {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  background: var(--audr-ui-white);
+}
+
+/* 에디터를 고정 크기(629×673) 영역에 보여 준다 */
+.editor-frame {
+  display: flex;
+  flex-direction: column;
+  width: 629px;
+  height: 673px;
+}
+
+/* 파일을 끌어 오면 놓을 수 있는 영역임을 보인다. outline이라 레이아웃은 움직이지 않는다. */
+.workspace[data-dropping] {
+  outline: 3px dashed var(--audr-looks-secondary);
+  outline-offset: -3px;
+}

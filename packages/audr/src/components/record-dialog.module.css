@@ -1,0 +1,288 @@
+/* RTL은 지원하지 않는다. */
+.dialogContent {
+  width: 600px;
+}
+
+.body {
+  background: var(--audr-ui-white);
+  padding: 1.5rem 2.25rem;
+}
+
+.visualizationContainer {
+  display: flex;
+  justify-content: space-around;
+}
+
+.meterContainer,
+.waveformContainer {
+  background: var(--audr-ui-primary);
+  border: 1px solid var(--audr-ui-black-transparent);
+  border-radius: 5px;
+  padding: 3px;
+  /* Force these to be on their own render layer because they update often */
+  transform: translateZ(0);
+}
+
+.meterContainer {
+  margin-right: 5px;
+  height: 180px;
+}
+
+.waveformContainer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  height: 180px;
+  position: relative;
+}
+
+.helpText {
+  margin: 10px auto 0;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: rgb(167, 170, 181);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.playingText {
+  color: var(--audr-looks-secondary);
+}
+
+.recordingText {
+  color: var(--audr-red-primary);
+}
+
+.mainButtonRow {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 15px;
+}
+
+.mainButtonRow button {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  background: transparent;
+  border: none;
+}
+
+.mainButtonRow button:disabled {
+  opacity: 0.25;
+}
+
+/* 마우스로 누를 때만 윤곽선을 숨기고, 키보드로 포커스하면 보이게 한다.
+   두 규칙을 한 선택자 목록으로 합치지 않는다. Chrome 85 이하는 :focus-visible을 몰라 목록 전체를 버린다. */
+.mainButtonRow button:active {
+  outline: none;
+}
+
+.mainButtonRow button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.mainButtonRow button:focus-visible {
+  outline: 2px solid var(--audr-looks-secondary);
+  outline-offset: 2px;
+}
+
+.buttonRow {
+  font-weight: bolder;
+  text-align: right;
+  display: flex;
+  justify-content: space-between;
+}
+
+.buttonRow button {
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  background: white;
+  border: 1px solid var(--audr-ui-black-transparent);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--audr-looks-secondary);
+}
+
+.buttonRow button.okButton {
+  background: var(--audr-looks-secondary);
+  border: var(--audr-looks-secondary);
+  color: white;
+}
+
+.buttonRow button + button {
+  margin-left: 0.5rem;
+}
+
+.mainButton {
+  text-align: center;
+}
+
+/* 보라 계열 아이콘(재생·미리 듣기 정지·다시 녹음). 주황 녹음 정지 아이콘에는 달지 않는다 */
+img[data-audr-icon="looks"] {
+  filter: var(--audr-icon-filter-looks);
+}
+
+/* Increase specificity to make sure this wins out over normalize.css */
+svg.recordButton {
+  overflow: visible;
+}
+
+.recordButtonCircle {
+  fill: var(--audr-red-primary);
+  stroke: var(--audr-red-tertiary);
+}
+
+.recordButtonCircleOutline {
+  fill: var(--audr-red-primary);
+  opacity: 0.2;
+  transition: 0.1s;
+}
+
+/* 움직임을 줄이도록 설정한 사용자에게는 장식용 전환 효과를 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  .recordButtonCircleOutline {
+    transition: none;
+  }
+}
+
+/*
+  녹음 중 경과 시간 라벨. 파형 영역(.waveformContainer, position: relative) 오른쪽 위에 겹친다.
+  파형과 겹칠 수 있어 반투명 흰 배경을 깔고, 클릭이 파형 아래로 통과하게 한다.
+*/
+.timeLabel {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--audr-ui-white-dim);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: var(--audr-text-primary);
+  /* 숫자 폭이 같아 시간이 바뀔 때 라벨 폭이 흔들리지 않는다. 지원하지 않으면 무시된다 */
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+/* 남은 시간이 얼마 없다. 색만으로 알리지 않도록 굵기도 올린다. 주황은 테마와 무관하다 */
+.timeLabelWarning {
+  color: var(--audr-red-text);
+  font-weight: 700;
+}
+
+/*
+  저장할 길이. .buttonRow 가운데에 보인다.
+  - DOM은 Re-record, Save 뒤 마지막 자식이다. absolute라 두 버튼의 위치·크기와 스타일은 그대로다.
+  - 가로: .buttonRow와 그 조상(.body 등)은 position이 없어서 포함 블록은 position: fixed인 모달 오버레이다.
+    모달은 그 안에서 margin: auto로 가운데에 있으므로 left: 50%가 버튼 줄의 가운데다.
+  - 뷰포트가 모달 폭(600px)보다 좁으면 모달은 왼쪽에 붙고 이 요소는 뷰포트 가운데로 가서 어긋난다.
+    이 요소의 위치를 버튼 줄 기준으로 잡으려면 기존 요소에 position을 줘야 해서 쓰지 않았다.
+  - 세로: top을 정하지 않으면 static position을 쓴다. align-self: center가 버튼 줄 높이의 가운데로 맞춘다.
+    flex 컨테이너의 absolute 자식이 정렬 속성으로 static position을 잡는 동작은 Chrome 52부터다.
+  - 확인창이 뜨면 단계 화면이 visibility: hidden이 되고 이 요소도 상속해 함께 숨는다.
+*/
+.savedLength {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  align-self: center;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: var(--audr-text-primary);
+  pointer-events: none;
+}
+
+/* 자동 정지 안내. 한도에 닿아 멈춘 경우에만 그려지므로 기본 화면의 배치는 그대로다 */
+.limitNotice {
+  margin: 0.75rem 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--audr-text-primary);
+}
+
+/*
+  확인창이 떠 있는 동안 .body에 붙는다. 기본 상태의 스타일은 바꾸지 않는다.
+  - position: relative로 확인창(.discardConfirm)이 .body 전체를 덮게 한다.
+  - 뒤의 단계는 display가 아니라 visibility로 숨긴다. 레이아웃 크기를 유지해 같은 영역을 덮고,
+    숨은 요소는 Tab 순서와 읽기에서 빠진다(inert 없이도 Chrome 75에서 동작한다).
+*/
+.confirming {
+  position: relative;
+}
+
+.confirming > :not(.discardConfirm) {
+  visibility: hidden;
+}
+
+.discardConfirm {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 2.25rem;
+  background: var(--audr-ui-white);
+  text-align: center;
+}
+
+.discardTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--audr-text-primary);
+}
+
+.discardDescription {
+  margin: 0.5rem 0 1.5rem;
+  font-size: 0.95rem;
+  color: var(--audr-text-primary);
+}
+
+.discardButtons {
+  display: flex;
+  justify-content: center;
+}
+
+/* flex gap은 Chrome 83 이하에 없어 margin으로 띄운다 */
+.discardButtons button + button {
+  margin-left: 0.5rem;
+}
+
+.discardButtons button {
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  background: var(--audr-ui-white);
+  border: 1px solid var(--audr-ui-black-transparent);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--audr-looks-secondary);
+}
+
+/* 안전한 선택은 Save 버튼처럼 채워 먼저 눈에 들어오게 한다 */
+.discardButtons button.keepButton {
+  background: var(--audr-looks-secondary);
+  border-color: var(--audr-looks-secondary);
+  color: var(--audr-ui-white);
+}
+
+/* 버리기는 테마와 무관한 주황 계열 테두리로 되돌릴 수 없는 동작임을 나타낸다 */
+.discardButtons button.discardButton {
+  border-color: var(--audr-red-tertiary);
+  color: var(--audr-text-primary);
+}
+
+/* 두 규칙을 한 선택자 목록으로 합치지 않는다. Chrome 85 이하는 :focus-visible을 몰라 목록 전체를 버린다. */
+.discardButtons button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.discardButtons button:focus-visible {
+  outline: 2px solid var(--audr-looks-secondary);
+  outline-offset: 2px;
+}

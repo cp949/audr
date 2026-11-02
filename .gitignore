@@ -1,0 +1,10 @@
+node_modules
+dist
+.turbo
+.superpowers
+playwright-report
+test-results
+*.tsbuildinfo
+_works
+docs/superpowers/
+_tmp/
