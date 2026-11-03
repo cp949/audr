@@ -20,21 +20,22 @@ body {
 
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  height: 3rem;
+  min-height: 3rem;
   padding: 0 1rem;
   background: var(--audr-accent);
   color: var(--audr-ui-white);
   font-size: 0.875rem;
 }
 
-/* flex gap은 Chrome 84부터라 형제 margin으로 간격을 둔다 */
-.topbar > * + * {
-  margin-left: 1rem;
+/* flex gap은 Chrome 84부터라 자식 margin으로 간격을 둔다. 줄이 바뀐 자식의 왼쪽이 비지 않게 오른쪽 margin을 쓴다 */
+.topbar > * {
+  margin: 0.25rem 1rem 0.25rem 0;
 }
 
 .topbar h1 {
-  margin: 0;
+  margin: 0.25rem 1rem 0.25rem 0;
   font-size: 1rem;
   font-weight: normal;
 }
