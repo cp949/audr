@@ -6,6 +6,8 @@ export type WaveformProps = {
   data: number[];
   width: number;
   height: number;
+  /** true이면 막대를 흐리게 그린다. 편집기가 선택이 없을 때 쓴다 */
+  dimmed?: boolean;
 };
 
 /** 막대 한 칸의 폭(막대 3px + 간격 2px) */
@@ -15,7 +17,12 @@ const BAR_WIDTH = 3;
 const MIN_BAR_HEIGHT = 2;
 
 // 막대 계산은 비싸므로 data가 바뀔 때만 다시 그린다
-export const Waveform = memo(function Waveform({ data, width, height }: WaveformProps) {
+export const Waveform = memo(function Waveform({
+  data,
+  width,
+  height,
+  dimmed = false,
+}: WaveformProps) {
   const barCount = data.length === 0 ? 0 : Math.max(1, Math.floor(width / BAR_PITCH));
   const bars = [];
   for (let i = 0; i < barCount; i++) {
@@ -39,7 +46,12 @@ export const Waveform = memo(function Waveform({ data, width, height }: Waveform
   }
 
   return (
-    <svg className={styles.container} viewBox={`0 0 ${width} ${height}`} data-waveform="">
+    <svg
+      className={styles.container}
+      viewBox={`0 0 ${width} ${height}`}
+      data-waveform=""
+      data-dimmed={dimmed ? "" : undefined}
+    >
       <g className={styles.bars}>{bars}</g>
     </svg>
   );

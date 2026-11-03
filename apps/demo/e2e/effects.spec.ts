@@ -362,6 +362,13 @@ test.describe("UI 경유 (데모 화면)", () => {
     });
   }
 
+  test("선택이 없으면 파형 막대 불투명도가 0.3이고, 선택하면 1이 된다", async ({ page }) => {
+    const bars = page.locator("svg[data-waveform] g").first();
+    await expect(bars).toHaveCSS("opacity", "0.3");
+    await dragSelect(page, 0.2, 0.8);
+    await expect(bars).toHaveCSS("opacity", "1");
+  });
+
   test("선택 도구 막대는 선택이 없으면 없고, 선택하면 눈금자 아래 파형 상자 안에 선택 가운데로 뜬다", async ({
     page,
   }) => {

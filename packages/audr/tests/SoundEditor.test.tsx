@@ -1034,6 +1034,19 @@ describe("SoundEditor 소리 전환(soundId)", () => {
   });
 });
 
+describe("SoundEditor 파형 막대 투명도", () => {
+  it("선택이 없으면 편집기 파형이 흐리게 표시된다", () => {
+    const { container } = setup();
+    expect(container.querySelector("svg[data-waveform]")?.hasAttribute("data-dimmed")).toBe(true);
+  });
+
+  it("선택하면 편집기 파형이 원래 색으로 돌아온다", async () => {
+    const { container } = setup();
+    await dragSelect(container, 250, 750);
+    expect(container.querySelector("svg[data-waveform]")?.hasAttribute("data-dimmed")).toBe(false);
+  });
+});
+
 describe("SoundEditor 선택 도구 막대", () => {
   it("선택이 없으면 보이지 않고 상단 도구 줄에도 Delete가 없다", () => {
     setup();

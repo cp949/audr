@@ -47,6 +47,16 @@ describe("Waveform", () => {
     expect(bars(container)).toHaveLength(0);
   });
 
+  it("dimmed가 없으면 data-dimmed 표시가 없다", () => {
+    const { container } = render(<Waveform data={[0.5]} width={600} height={160} />);
+    expect(container.querySelector("svg")?.hasAttribute("data-dimmed")).toBe(false);
+  });
+
+  it("dimmed이면 svg에 data-dimmed 표시가 붙는다", () => {
+    const { container } = render(<Waveform data={[0.5]} width={600} height={160} dimmed />);
+    expect(container.querySelector("svg")?.hasAttribute("data-dimmed")).toBe(true);
+  });
+
   it("viewBox가 width, height를 따른다", () => {
     const { container } = render(<Waveform data={[0.5, 0.5]} width={600} height={160} />);
     expect(container.querySelector("svg")?.getAttribute("viewBox")).toBe("0 0 600 160");
@@ -62,6 +72,7 @@ describe("tokens.css", () => {
     ["--audr-red-primary", "#FF661A"],
     ["--audr-ui-primary", "hsla(215, 100%, 95%, 1)"],
     ["--audr-stage-bg", "#12202B"],
+    ["--audr-wave-idle-opacity", "0.3"],
   ])("%s 변수가 %s 값으로 있다", (name, value) => {
     // oxfmt가 hex를 소문자로 정규화하므로 대소문자는 구분하지 않는다
     expect(css.toLowerCase()).toContain(`${name}: ${value.toLowerCase()};`);
