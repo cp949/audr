@@ -56,11 +56,10 @@ const EFFECT_GROUPS = [
 type EffectGroupId = (typeof EFFECT_GROUPS)[number]["id"];
 
 /**
- * 재생 버튼 아래(왼쪽 열)에 놓는 묶음. 배열 순서가 위에서 아래 순서다.
- * 나머지 묶음은 파형 오른쪽 패널에 놓는다.
- * 왼쪽 열 묶음은 이름을 화면에 보이지 않고 보조기기만 읽게 한다. 칩 아이콘과 이름만으로 뜻이 분명하다
+ * 이름을 화면에 보이지 않고 보조기기만 읽게 하는 묶음.
+ * 칩의 아이콘과 이름만으로 뜻이 분명한 앞 두 묶음이다
  */
-const LEFT_GROUP_IDS: ReadonlyArray<EffectGroupId> = ["volume", "speed"];
+const HIDDEN_NAME_GROUP_IDS: ReadonlyArray<EffectGroupId> = ["volume", "speed"];
 
 /**
  * 효과 버튼. 배열 순서가 묶음 안의 화면 순서이자 Tab 순서다.
@@ -218,7 +217,7 @@ export function SoundEditor({
       className={styles.effectGroup}
       data-group={id}
     >
-      {LEFT_GROUP_IDS.includes(id) ? (
+      {HIDDEN_NAME_GROUP_IDS.includes(id) ? (
         <span id={`${scopeId}-${id}`} className={styles.visuallyHidden}>
           {m[name]}
         </span>
@@ -442,12 +441,8 @@ export function SoundEditor({
               </button>
             )}
           </div>
-          {/* 소리 크기와 속도·방향 묶음은 재생 버튼 아래에 둔다 */}
-          {EFFECT_GROUPS.filter(({ id }) => LEFT_GROUP_IDS.includes(id)).map(renderEffectGroup)}
-        </div>
-        {/* 왼쪽 열에 놓지 않은 나머지 묶음. DOM 순서가 Tab 순서이자 화면 순서다 */}
-        <div className={styles.effectPanel}>
-          {EFFECT_GROUPS.filter(({ id }) => !LEFT_GROUP_IDS.includes(id)).map(renderEffectGroup)}
+          {/* 효과 묶음. 재생 버튼 아래에 위에서 아래로 놓는다. DOM 순서가 Tab 순서이자 화면 순서다 */}
+          {EFFECT_GROUPS.map(renderEffectGroup)}
         </div>
       </div>
       {/* 화면용 정보다. 재생 위치가 프레임마다 바뀌므로 aria-live를 달지 않는다(스크린 리더는 핸들의 aria-valuetext를 쓴다) */}

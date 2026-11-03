@@ -137,32 +137,24 @@ describe("SoundEditor 레이아웃", () => {
     expect(screen.getByLabelText(en.sound)).toHaveProperty("value", "Meow");
   });
 
-  it("작업 영역은 왼쪽(파형, 재생 줄, 소리 크기·속도 묶음)과 오른쪽(나머지 효과 패널)으로 나뉜다", () => {
+  it("작업 영역은 한 열이며 파형, 재생 줄, 효과 묶음 5개가 위에서 아래로 이어진다", () => {
     const { container } = setup();
     const work = container.querySelector('[class*="workArea"]') as HTMLElement;
-    const [left, panel] = Array.from(work.children) as HTMLElement[];
-    expect(left?.querySelector("svg[data-waveform]")).not.toBeNull();
-    expect(left?.contains(screen.getByRole("button", { name: en.play }))).toBe(true);
-    for (const name of [en.effectGroupVolume, en.effectGroupSpeed]) {
-      expect(left?.contains(screen.getByRole("group", { name }))).toBe(true);
-      expect(panel?.contains(screen.getByRole("group", { name }))).toBe(false);
-    }
-    for (const name of [en.effectGroupVoice, en.effectGroupSpace, en.effectGroupWobble]) {
-      expect(panel?.contains(screen.getByRole("group", { name }))).toBe(true);
-    }
-    expect(left?.contains(panel as HTMLElement)).toBe(false);
-  });
-
-  it("소리 크기 묶음은 재생 줄 바로 아래, 속도·방향 묶음은 그 아래에 이어진다", () => {
-    setup();
+    expect(work.children).toHaveLength(1);
+    const column = work.children[0] as HTMLElement;
+    expect(column.querySelector("svg[data-waveform]")).not.toBeNull();
     const transport = screen.getByRole("button", { name: en.play }).parentElement;
-    const volume = screen.getByRole("group", { name: en.effectGroupVolume });
-    const speed = screen.getByRole("group", { name: en.effectGroupSpeed });
-    expect(volume.previousElementSibling).toBe(transport);
-    expect(speed.previousElementSibling).toBe(volume);
+    const groups = EFFECT_GROUPS.map(({ name }) => screen.getByRole("group", { name: en[name] }));
+    // 재생 줄 바로 뒤에 5개 묶음이 묶음 순서대로 이어진다
+    let previous = transport;
+    for (const group of groups) {
+      expect(group.previousElementSibling).toBe(previous);
+      expect(column.contains(group)).toBe(true);
+      previous = group;
+    }
   });
 
-  it("왼쪽 열 묶음(소리 크기, 속도·방향)의 이름은 화면에서 숨기고 보조기기만 읽으며, 오른쪽 패널 묶음 이름은 보인다", () => {
+  it("앞 두 묶음(소리 크기, 속도·방향)의 이름은 화면에서 숨기고 보조기기만 읽으며, 나머지 묶음 이름은 보인다", () => {
     setup();
     for (const name of [en.effectGroupVolume, en.effectGroupSpeed]) {
       expect(screen.getByText(name).className, name).toMatch(/visuallyHidden/);

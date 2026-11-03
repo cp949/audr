@@ -279,9 +279,12 @@ test.describe("UI 경유 (데모 화면)", () => {
     return boxes;
   }
 
-  test("효과 버튼 19개는 5개 묶음으로 나뉘고 묶음은 위에서 아래로 놓이며 서로 겹치지 않는다", async ({
+  test("효과 버튼 19개는 5개 묶음으로 나뉘어 재생 버튼 아래에 위에서 아래로 놓이며 서로 겹치지 않는다", async ({
     page,
   }) => {
+    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+    const play = await editorButton(page, "Play").boundingBox();
+    if (!wave || !play) throw new Error("파형이나 재생 버튼의 위치를 구하지 못했다");
     const boxes = await chipBoxes(page);
     expect(boxes).toHaveLength(19);
     for (let i = 0; i < boxes.length; i++) {
@@ -291,80 +294,50 @@ test.describe("UI 경유 (데모 화면)", () => {
         );
       }
     }
-    // 왼쪽 열 묶음(Volume, Speed & direction)의 이름은 화면에서 숨기고(보조기기만 읽는다)
-    // 오른쪽 패널 묶음의 이름은 같은 묶음의 첫 칩 위에 있다
+    // 모든 칩이 재생 버튼 아래, 파형 폭 안에 있다
+    for (const box of boxes) {
+      expect(box.y, box.title).toBeGreaterThanOrEqual(play.y + play.height - 0.5);
+      expect(box.x, box.title).toBeGreaterThanOrEqual(wave.x - 0.5);
+      expect(box.x + box.width, box.title).toBeLessThanOrEqual(wave.x + wave.width + 0.5);
+    }
+    // 앞 두 묶음(Volume, Speed & direction)의 이름은 화면에서 숨기고(보조기기만 읽는다)
+    // 나머지 묶음의 이름은 같은 묶음의 첫 칩 위에 있다
     for (const [name] of GROUPS.slice(0, 2)) {
       const hidden = await page.getByText(name, { exact: true }).boundingBox();
       expect(hidden?.width ?? 0, name).toBeLessThanOrEqual(1);
       expect(hidden?.height ?? 0, name).toBeLessThanOrEqual(1);
     }
-    // 두 열 모두 묶음이 위에서 아래로 이어진다
-    for (const [column, hasLabel] of [
-      [GROUPS.slice(0, 2), false],
-      [GROUPS.slice(2), true],
-    ] as const) {
-      let previousBottom = -Infinity;
-      for (const [name, titles] of column) {
-        const group = boxes.filter((b) => titles.includes(b.title));
-        const top = Math.min(...group.map((b) => b.y));
-        if (hasLabel) {
-          const label = await page.getByText(name, { exact: true }).boundingBox();
-          if (!label) throw new Error(`${name} 묶음 이름의 위치를 구하지 못했다`);
-          expect(label.y, name).toBeGreaterThanOrEqual(previousBottom - 0.5);
-          expect(top, name).toBeGreaterThanOrEqual(label.y + label.height - 0.5);
-        } else {
-          expect(top, name).toBeGreaterThanOrEqual(previousBottom - 0.5);
-        }
-        previousBottom = Math.max(...group.map((b) => b.y + b.height));
+    // 묶음이 위에서 아래로 이어진다
+    let previousBottom = -Infinity;
+    for (const [index, [name, titles]] of GROUPS.entries()) {
+      const group = boxes.filter((b) => titles.includes(b.title));
+      const top = Math.min(...group.map((b) => b.y));
+      if (index >= 2) {
+        const label = await page.getByText(name, { exact: true }).boundingBox();
+        if (!label) throw new Error(`${name} 묶음 이름의 위치를 구하지 못했다`);
+        expect(label.y, name).toBeGreaterThanOrEqual(previousBottom - 0.5);
+        expect(top, name).toBeGreaterThanOrEqual(label.y + label.height - 0.5);
+      } else {
+        expect(top, name).toBeGreaterThanOrEqual(previousBottom - 0.5);
       }
+      previousBottom = Math.max(...group.map((b) => b.y + b.height));
     }
   });
 
-  test("Volume과 Speed & direction 묶음 외의 효과 패널은 파형 오른쪽에 있고 에디터 오른쪽 끝을 넘지 않는다", async ({
-    page,
-  }) => {
-    const editor = await page.locator('[class*="editorContainer"]').first().boundingBox();
+  test("효과를 아래로 옮겨도 파형 폭은 380px로 유지된다", async ({ page }) => {
     const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
-    if (!editor || !wave) throw new Error("에디터나 파형의 위치를 구하지 못했다");
-    const left = GROUPS.slice(0, 2).flatMap(([, titles]) => titles);
-    for (const box of await chipBoxes(page)) {
-      if (left.includes(box.title)) continue;
-      expect(box.x, box.title).toBeGreaterThanOrEqual(wave.x + wave.width - 0.5);
-      expect(box.x + box.width, box.title).toBeLessThanOrEqual(editor.x + editor.width + 0.5);
-    }
+    expect(wave?.width).toBeCloseTo(380, 0);
   });
 
-  test("Volume 묶음은 재생 버튼 아래, Speed & direction 묶음은 그 아래에 파형 폭 안으로 놓인다", async ({
-    page,
-  }) => {
-    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
-    const play = await editorButton(page, "Play").boundingBox();
-    if (!wave || !play) throw new Error("파형이나 재생 버튼의 위치를 구하지 못했다");
-    const boxes = await chipBoxes(page);
-    const of = (titles: string[]) => boxes.filter((b) => titles.includes(b.title));
-    const volume = of(GROUPS[0]![1]);
-    const speed = of(GROUPS[1]![1]);
-    for (const box of [...volume, ...speed]) {
-      expect(box.x, box.title).toBeGreaterThanOrEqual(wave.x - 0.5);
-      expect(box.x + box.width, box.title).toBeLessThanOrEqual(wave.x + wave.width + 0.5);
-    }
-    for (const box of volume)
-      expect(box.y, box.title).toBeGreaterThanOrEqual(play.y + play.height - 0.5);
-    const volumeBottom = Math.max(...volume.map((b) => b.y + b.height));
-    for (const box of speed) expect(box.y, box.title).toBeGreaterThanOrEqual(volumeBottom - 0.5);
-  });
-
-  test("폭이 좁으면 효과 패널이 파형 아래로 내려가고 가로로 넘치지 않는다", async ({ page }) => {
+  test("폭이 좁아도 효과 칩이 에디터 오른쪽 끝을 넘지 않는다", async ({ page }) => {
     // 데모는 에디터 폭을 629px로 고정한다. 좁은 호스트를 흉내 내려 폭만 줄인다
     await page.evaluate(() => {
       const frame = document.querySelector<HTMLElement>(".editor-frame");
       if (frame) frame.style.width = "420px";
     });
     const editor = await page.locator('[class*="editorContainer"]').first().boundingBox();
-    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
-    if (!editor || !wave) throw new Error("에디터나 파형의 위치를 구하지 못했다");
+    if (!editor) throw new Error("에디터의 위치를 구하지 못했다");
     for (const box of await chipBoxes(page)) {
-      expect(box.y, box.title).toBeGreaterThanOrEqual(wave.y + wave.height - 0.5);
       expect(box.x + box.width, box.title).toBeLessThanOrEqual(editor.x + editor.width + 0.5);
     }
   });

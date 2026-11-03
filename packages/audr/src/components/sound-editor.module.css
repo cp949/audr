@@ -181,7 +181,7 @@
   min-width: 1.25rem;
 }
 
-/* 작업 영역. 왼쪽(파형, 재생 줄)과 오른쪽(효과 패널)이 나란히 서고, 폭이 모자라면 패널이 아래로 내려간다.
+/* 작업 영역. 파형, 재생 줄, 효과 묶음이 한 열로 위에서 아래로 이어진다.
    flex gap은 Chrome 84부터라 쓰지 않는다. 음수 margin과 자식 margin으로 간격을 만든다 */
 .workArea {
   display: flex;
@@ -194,14 +194,11 @@
   margin: 0 var(--audr-space) calc(2 * var(--audr-space));
 }
 
+/* 열 폭은 Waveform의 width(380)에 맞춘다. 효과 묶음이 오른쪽에서 내려와도 파형이 늘어나지 않게 한다 */
 .workMain {
   flex: 1 1 340px;
   min-width: 0;
-}
-
-.effectPanel {
-  flex: 0 1 200px;
-  min-width: 0;
+  max-width: 380px;
 }
 
 /* 재생 줄. 파형 아래 가로 가운데에 둔다 */
@@ -249,7 +246,7 @@
   outline: none;
 }
 
-/* 왼쪽 열의 효과 묶음. 재생 줄 아래에 떨어뜨려 놓는다 */
+/* 재생 줄 바로 아래 첫 묶음은 재생 줄과 떨어뜨려 놓는다 */
 .workMain > .effectGroup {
   margin-top: 0.75rem;
 }
