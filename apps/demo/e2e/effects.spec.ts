@@ -362,11 +362,19 @@ test.describe("UI 경유 (데모 화면)", () => {
     });
   }
 
-  test("선택이 없으면 파형 막대 불투명도가 0.7이고, 선택하면 1이 된다", async ({ page }) => {
-    const bars = page.locator("svg[data-waveform] g").first();
-    await expect(bars).toHaveCSS("opacity", "0.7");
+  test("선택이 없으면 모든 막대가 불투명도 0.7이고, 선택하면 선택 구간의 막대만 1이 된다", async ({
+    page,
+  }) => {
+    const rects = page.locator("svg[data-waveform] rect");
+    const count = await rects.count();
+    const first = rects.first();
+    const middle = rects.nth(Math.floor(count / 2));
+    const last = rects.last();
+    for (const bar of [first, middle, last]) await expect(bar).toHaveCSS("opacity", "0.7");
     await dragSelect(page, 0.2, 0.8);
-    await expect(bars).toHaveCSS("opacity", "1");
+    await expect(first).toHaveCSS("opacity", "0.7");
+    await expect(middle).toHaveCSS("opacity", "1");
+    await expect(last).toHaveCSS("opacity", "0.7");
   });
 
   test("선택 도구 막대는 선택이 없으면 없고, 선택하면 눈금자 아래 파형 상자 안에 선택 가운데로 뜬다", async ({

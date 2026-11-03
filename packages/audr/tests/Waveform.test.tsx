@@ -47,14 +47,39 @@ describe("Waveform", () => {
     expect(bars(container)).toHaveLength(0);
   });
 
-  it("dimmed가 없으면 data-dimmed 표시가 없다", () => {
+  it("dimmed가 없으면 모든 막대가 흐리지 않다", () => {
     const { container } = render(<Waveform data={[0.5]} width={600} height={160} />);
     expect(container.querySelector("svg")?.hasAttribute("data-dimmed")).toBe(false);
+    expect(bars(container).some((r) => r.hasAttribute("data-dim"))).toBe(false);
   });
 
-  it("dimmed이면 svg에 data-dimmed 표시가 붙는다", () => {
+  it("dimmed이면 highlight가 없을 때 모든 막대가 흐리다", () => {
     const { container } = render(<Waveform data={[0.5]} width={600} height={160} dimmed />);
     expect(container.querySelector("svg")?.hasAttribute("data-dimmed")).toBe(true);
+    expect(bars(container).every((r) => r.hasAttribute("data-dim"))).toBe(true);
+  });
+
+  it("dimmed이면 highlight 구간 안의 막대만 흐리지 않다", () => {
+    // 폭 100이면 막대 20개. 막대 i의 가운데는 (i + 0.5) / 20이다
+    const { container } = render(
+      <Waveform
+        data={[0.5]}
+        width={100}
+        height={160}
+        dimmed
+        highlight={{ start: 0.25, end: 0.75 }}
+      />,
+    );
+    const dim = bars(container).map((r) => r.hasAttribute("data-dim"));
+    // 가운데가 0.25~0.75에 드는 막대는 5번(0.275)부터 14번(0.725)까지다
+    expect(dim).toEqual(Array.from({ length: 20 }, (_, i) => !(i >= 5 && i <= 14)));
+  });
+
+  it("highlight가 전체 구간이면 모든 막대가 흐리지 않다", () => {
+    const { container } = render(
+      <Waveform data={[0.5]} width={100} height={160} dimmed highlight={{ start: 0, end: 1 }} />,
+    );
+    expect(bars(container).some((r) => r.hasAttribute("data-dim"))).toBe(false);
   });
 
   it("viewBox가 width, height를 따른다", () => {

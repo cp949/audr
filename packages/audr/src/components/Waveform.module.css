@@ -7,7 +7,7 @@
   fill: var(--audr-wave-fill);
 }
 
-/* 선택이 없을 때는 막대를 흐리게 해 선택한 구간이 돋보이게 한다. 투명도는 토큰으로 조절한다 */
-.container[data-dimmed] .bars {
+/* 선택 구간 밖의 막대는 흐리게 해 선택한 구간이 돋보이게 한다. 투명도는 토큰으로 조절한다 */
+.bars rect[data-dim] {
   opacity: var(--audr-wave-idle-opacity);
 }

@@ -6,8 +6,10 @@ export type WaveformProps = {
   data: number[];
   width: number;
   height: number;
-  /** true이면 막대를 흐리게 그린다. 편집기가 선택이 없을 때 쓴다 */
+  /** true이면 막대를 흐리게 그린다. 편집기가 쓴다 */
   dimmed?: boolean;
+  /** dimmed일 때 흐리지 않게 둘 구간(0~1 비율). 막대 가운데가 구간 안이면 원래 색이다. 없으면 모든 막대가 흐리다 */
+  highlight?: { start: number; end: number } | null;
 };
 
 /** 막대 한 칸의 폭(막대 3px + 간격 2px) */
@@ -22,6 +24,7 @@ export const Waveform = memo(function Waveform({
   width,
   height,
   dimmed = false,
+  highlight = null,
 }: WaveformProps) {
   const barCount = data.length === 0 ? 0 : Math.max(1, Math.floor(width / BAR_PITCH));
   const bars = [];
@@ -33,9 +36,12 @@ export const Waveform = memo(function Waveform({
     for (let j = from; j < to; j++) peak = Math.max(peak, data[j] as number);
     // 구간의 최댓값을 쓰면 짧은 소리도 막대에서 사라지지 않는다
     const barHeight = Math.min(height, Math.max(MIN_BAR_HEIGHT, height * peak));
+    const center = (i + 0.5) / barCount;
+    const inHighlight = highlight !== null && center >= highlight.start && center <= highlight.end;
     bars.push(
       <rect
         key={i}
+        data-dim={dimmed && !inHighlight ? "" : undefined}
         x={i * BAR_PITCH + (BAR_PITCH - BAR_WIDTH) / 2}
         y={(height - barHeight) / 2}
         width={BAR_WIDTH}

@@ -306,7 +306,7 @@ export function SoundEditor({
                   {m.timeLengthValue.replace("{seconds}", formatSeconds(durationSeconds))}
                 </span>
               </div>
-              <Waveform data={chunkLevels} dimmed={selection === null} height={160} width={380} />
+              <Waveform data={chunkLevels} dimmed highlight={selection} height={160} width={380} />
               {/* 진폭 0(가로선)과 시간 25%·50%·75%(세로선)를 가리키는 연한 기준선. 선택 영역 아래에 두어 입력을 막지 않는다 */}
               <div className={styles.guideHorizontal} aria-hidden="true" />
               {GUIDE_POSITIONS.map((percent) => (

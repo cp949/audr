@@ -1053,15 +1053,23 @@ describe("SoundEditor 소리 전환(soundId)", () => {
 });
 
 describe("SoundEditor 파형 막대 투명도", () => {
-  it("선택이 없으면 편집기 파형이 흐리게 표시된다", () => {
+  const waveBars = (container: HTMLElement) => [
+    ...(container.querySelector("svg[data-waveform]") as SVGElement).querySelectorAll("rect"),
+  ];
+
+  it("선택이 없으면 모든 막대가 흐리다", () => {
     const { container } = setup();
-    expect(container.querySelector("svg[data-waveform]")?.hasAttribute("data-dimmed")).toBe(true);
+    expect(waveBars(container).every((r) => r.hasAttribute("data-dim"))).toBe(true);
   });
 
-  it("선택하면 편집기 파형이 원래 색으로 돌아온다", async () => {
+  it("선택하면 선택 구간 안의 막대만 원래 색이고 바깥은 흐리다", async () => {
     const { container } = setup();
     await dragSelect(container, 250, 750);
-    expect(container.querySelector("svg[data-waveform]")?.hasAttribute("data-dimmed")).toBe(false);
+    const rects = waveBars(container);
+    const dim = rects.map((r) => r.hasAttribute("data-dim"));
+    expect(dim[0]).toBe(true);
+    expect(dim[Math.floor(rects.length / 2)]).toBe(false);
+    expect(dim[rects.length - 1]).toBe(true);
   });
 });
 
