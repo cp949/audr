@@ -57,12 +57,10 @@ type EffectGroupId = (typeof EFFECT_GROUPS)[number]["id"];
 
 /**
  * 재생 버튼 아래(왼쪽 열)에 놓는 묶음. 배열 순서가 위에서 아래 순서다.
- * 나머지 묶음은 파형 오른쪽 패널에 놓는다
+ * 나머지 묶음은 파형 오른쪽 패널에 놓는다.
+ * 왼쪽 열 묶음은 이름을 화면에 보이지 않고 보조기기만 읽게 한다. 칩 아이콘과 이름만으로 뜻이 분명하다
  */
 const LEFT_GROUP_IDS: ReadonlyArray<EffectGroupId> = ["volume", "speed"];
-
-/** 이름을 화면에 보이지 않고 보조기기만 읽게 하는 묶음. 소리 크기는 아이콘만으로 뜻이 분명하다 */
-const HIDDEN_NAME_GROUP_ID: EffectGroupId = "volume";
 
 /**
  * 효과 버튼. 배열 순서가 묶음 안의 화면 순서이자 Tab 순서다.
@@ -220,7 +218,7 @@ export function SoundEditor({
       className={styles.effectGroup}
       data-group={id}
     >
-      {id === HIDDEN_NAME_GROUP_ID ? (
+      {LEFT_GROUP_IDS.includes(id) ? (
         <span id={`${scopeId}-${id}`} className={styles.visuallyHidden}>
           {m[name]}
         </span>

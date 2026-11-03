@@ -291,17 +291,23 @@ test.describe("UI 경유 (데모 화면)", () => {
         );
       }
     }
-    // Volume 묶음 이름은 화면에서 숨기고(보조기기만 읽는다) 나머지 이름은 같은 묶음의 첫 칩 위에 있다
-    const volumeLabel = await page.getByText("Volume", { exact: true }).boundingBox();
-    expect(volumeLabel?.width ?? 0).toBeLessThanOrEqual(1);
-    expect(volumeLabel?.height ?? 0).toBeLessThanOrEqual(1);
-    // 왼쪽 열(Volume, Speed & direction)과 오른쪽 패널(나머지)은 각각 위에서 아래로 이어진다
-    for (const column of [GROUPS.slice(0, 2), GROUPS.slice(2)]) {
+    // 왼쪽 열 묶음(Volume, Speed & direction)의 이름은 화면에서 숨기고(보조기기만 읽는다)
+    // 오른쪽 패널 묶음의 이름은 같은 묶음의 첫 칩 위에 있다
+    for (const [name] of GROUPS.slice(0, 2)) {
+      const hidden = await page.getByText(name, { exact: true }).boundingBox();
+      expect(hidden?.width ?? 0, name).toBeLessThanOrEqual(1);
+      expect(hidden?.height ?? 0, name).toBeLessThanOrEqual(1);
+    }
+    // 두 열 모두 묶음이 위에서 아래로 이어진다
+    for (const [column, hasLabel] of [
+      [GROUPS.slice(0, 2), false],
+      [GROUPS.slice(2), true],
+    ] as const) {
       let previousBottom = -Infinity;
       for (const [name, titles] of column) {
         const group = boxes.filter((b) => titles.includes(b.title));
         const top = Math.min(...group.map((b) => b.y));
-        if (name !== "Volume") {
+        if (hasLabel) {
           const label = await page.getByText(name, { exact: true }).boundingBox();
           if (!label) throw new Error(`${name} 묶음 이름의 위치를 구하지 못했다`);
           expect(label.y, name).toBeGreaterThanOrEqual(previousBottom - 0.5);

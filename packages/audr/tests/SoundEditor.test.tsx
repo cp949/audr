@@ -162,13 +162,16 @@ describe("SoundEditor 레이아웃", () => {
     expect(speed.previousElementSibling).toBe(volume);
   });
 
-  it("소리 크기 묶음 이름은 화면에서 숨기고 보조기기만 읽으며, 다른 묶음 이름은 보인다", () => {
+  it("왼쪽 열 묶음(소리 크기, 속도·방향)의 이름은 화면에서 숨기고 보조기기만 읽으며, 오른쪽 패널 묶음 이름은 보인다", () => {
     setup();
-    const volumeName = screen.getByText(en.effectGroupVolume);
-    expect(volumeName.className).toMatch(/visuallyHidden/);
-    // 묶음 이름으로 계속 읽힌다
-    expect(screen.getByRole("group", { name: en.effectGroupVolume })).toBeTruthy();
-    expect(screen.getByText(en.effectGroupSpeed).className).not.toMatch(/visuallyHidden/);
+    for (const name of [en.effectGroupVolume, en.effectGroupSpeed]) {
+      expect(screen.getByText(name).className, name).toMatch(/visuallyHidden/);
+      // 묶음 이름으로 계속 읽힌다
+      expect(screen.getByRole("group", { name }), name).toBeTruthy();
+    }
+    for (const name of [en.effectGroupVoice, en.effectGroupSpace, en.effectGroupWobble]) {
+      expect(screen.getByText(name).className, name).not.toMatch(/visuallyHidden/);
+    }
   });
 
   it("locale ko이면 한국어 문자열을 쓴다", () => {
