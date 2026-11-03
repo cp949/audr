@@ -1,5 +1,7 @@
 import type { ComponentType } from "react";
 import { App } from "../App";
+import { EditorBasicExample } from "./EditorBasic";
+import editorBasicSource from "./EditorBasic.tsx?raw";
 import { RecordOnlyExample } from "./RecordOnly";
 import recordOnlySource from "./RecordOnly.tsx?raw";
 
@@ -28,6 +30,13 @@ export const EXAMPLES: Example[] = [
     title: "통합 데모",
     summary: "소리 목록, 편집, 녹음, 가져오기, 테마, 다국어를 한 화면에서 시험한다.",
     Component: App,
+  },
+  {
+    id: "editor",
+    title: "에디터 기본",
+    summary: "SoundEditor 하나로 파일을 열고, 편집하고, WAV로 내려받는다.",
+    Component: EditorBasicExample,
+    source: editorBasicSource,
   },
   {
     id: "record",
