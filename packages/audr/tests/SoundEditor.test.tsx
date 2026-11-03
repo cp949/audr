@@ -146,7 +146,7 @@ describe("SoundEditor 레이아웃", () => {
 
   it("locale ko이면 한국어 문자열을 쓴다", () => {
     setup({ locale: "ko" });
-    expect(screen.getByRole("button", { name: "복사" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "구간 복사" })).toBeTruthy();
     expect(screen.getByRole("button", { name: getMessages("ko").play })).toBeTruthy();
   });
 
@@ -337,7 +337,7 @@ describe("SoundEditor 시간 표시줄", () => {
     expect(screen.getByText("1.00 Sek.")).toBeTruthy();
     expect(screen.getByText("Dauer 1.00 s")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Abspielen" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "복사" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "구간 복사" })).toBeTruthy();
   });
 
   it("드래그하는 동안 확정 전 선택도 보이고, 선택이 해제되면 사라진다", async () => {
