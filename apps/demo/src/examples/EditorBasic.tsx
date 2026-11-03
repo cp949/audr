@@ -10,11 +10,13 @@ import { createSine } from "./sampleSound";
  * - 다른 파일로 바꿀 때는 `soundId`를 바꾼다. 그러면 undo 이력과 선택이 새로 시작한다.
  * - 에디터의 부모는 flex 컨테이너(`flex-direction: column`)이고 높이가 정해져 있어야 한다.
  * - `onCopyToNew`는 필수다. 소리가 하나뿐이라 복사한 구간을 새 소리로 바꿔 연다. 목록이 있으면 항목을 더한다.
+ * - 큰 파일은 디코드에 몇 초 걸린다. 끝날 때까지 `loading`으로 입력을 막고 안내를 보인다.
  * - `decodeAudioFile`은 길이를 제한하지 않는다. 편집 한도를 넘는 소리는 목록에 넣지 않는다.
  */
 export function EditorBasicExample() {
   const [sound, setSound] = useState(() => ({ id: 1, name: "Sine 440Hz", ...createSine() }));
   const [notice, setNotice] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const openFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
@@ -22,6 +24,9 @@ export function EditorBasicExample() {
     // 같은 파일을 다시 골라도 change가 일어나도록 비운다
     input.value = "";
     if (!file) return;
+    // 디코드는 파일이 크면 몇 초 걸린다. 브라우저가 따로 처리해서 화면은 막히지 않으니, 진행 중임을 알린다.
+    setLoading(true);
+    setNotice(null);
     try {
       const buffer = await decodeAudioFile(file);
       if (buffer.samples.length > maxEditableSamples(buffer.sampleRate)) {
@@ -29,9 +34,10 @@ export function EditorBasicExample() {
         return;
       }
       setSound((prev) => ({ ...buffer, id: prev.id + 1, name: file.name.replace(/\.[^.]+$/, "") }));
-      setNotice(null);
     } catch {
       setNotice(`${file.name}을(를) 열 수 없다`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,10 +53,17 @@ export function EditorBasicExample() {
 
   return (
     <div>
-      <input type="file" accept="audio/*" aria-label="Open sound file" onChange={openFile} />{" "}
+      <input
+        type="file"
+        accept="audio/*"
+        aria-label="Open sound file"
+        disabled={loading}
+        onChange={openFile}
+      />{" "}
       <button type="button" onClick={download}>
         WAV로 내려받기
       </button>
+      {loading && <p role="status">불러오는 중…</p>}
       {notice && <p role="alert">{notice}</p>}
       <div style={{ display: "flex", flexDirection: "column", height: 600, maxWidth: 800 }}>
         <SoundEditor
