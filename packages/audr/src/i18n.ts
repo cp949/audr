@@ -61,8 +61,7 @@ const en = {
   /** 선택 구간. 파형 위에는 `timeSelectionValue`만 보이고, 보조기기는 `timeSelection`을 읽는다 */
   timeSelection: "Selection {start}–{end} s ({length} s)",
   timeSelectionValue: "{start}–{end} s ({length} s)",
-  timePlaying: "Playing {seconds} s",
-  /** 효과 버튼이 적용되는 범위. 확정된 선택이 있으면 선택 구간, 없으면 소리 전체다. 시간 표시줄에 보이고 효과 버튼의 설명으로도 읽힌다 */
+  /** 효과 버튼이 적용되는 범위. 확정된 선택이 있으면 선택 구간, 없으면 소리 전체다. 효과 버튼의 설명으로 읽힌다 */
   effectScopeWhole: "Effects apply to: whole sound",
   effectScopeSelection: "Effects apply to: selection",
   /** 상단 첫 줄 오른쪽 끝 `?` 버튼의 이름과 팝오버 목록 항목 */
@@ -171,7 +170,6 @@ const ko: Messages = {
   timeLengthValue: "{seconds}초",
   timeSelection: "선택 {start}–{end}초 ({length}초)",
   timeSelectionValue: "{start}–{end}초 ({length}초)",
-  timePlaying: "재생 {seconds}초",
   effectScopeWhole: "효과 적용 범위: 소리 전체",
   effectScopeSelection: "효과 적용 범위: 선택 구간",
   shortcutsToggle: "단축키",

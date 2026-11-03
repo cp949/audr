@@ -118,7 +118,7 @@ describe("SoundEditor 단축키 도움말 팝오버 열기·닫기", () => {
     expect(document.querySelector("dl")).not.toBeNull();
   });
 
-  it("버튼은 시간 표시줄이 아니라 상단 첫 줄에 있다", () => {
+  it("버튼은 상단 첫 줄에 있다", () => {
     const { container } = setup();
     const header = container.querySelector('[class*="header"]') as HTMLElement;
     expect(header.contains(toggle())).toBe(true);

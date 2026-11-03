@@ -228,18 +228,17 @@ describe("SoundEditor 버튼 상태", () => {
 });
 
 /**
- * 시간 표시줄. 샘플레이트 1000Hz에 1000샘플이라 전체가 1.00초다.
+ * 시간 표기(전체 길이, 선택 구간). 샘플레이트 1000Hz에 1000샘플이라 전체가 1.00초다.
  * 표시는 화면용이라 aria-live가 없다. 문구와 갱신 시점만 고정한다.
  */
-describe("SoundEditor 시간 표시줄", () => {
+describe("SoundEditor 시간 표기", () => {
   const setupOneSecond = (overrides: Partial<React.ComponentProps<typeof SoundEditor>> = {}) =>
     setup({ samples: ramp(1000), sampleRate: 1000, ...overrides });
 
-  it("선택과 재생이 없으면 전체 길이만 보인다", () => {
+  it("선택이 없으면 전체 길이만 보인다", () => {
     setupOneSecond();
     expect(screen.getByText("1.00 s")).toBeTruthy();
     expect(screen.queryByText(/Selection/)).toBeNull();
-    expect(screen.queryByText(/Playing/)).toBeNull();
   });
 
   it("선택하면 시작–끝과 선택 길이를 소수 둘째 자리 초로 보인다", async () => {
@@ -276,12 +275,12 @@ describe("SoundEditor 시간 표시줄", () => {
     expect(screen.getByText("선택 0.25–0.75초 (0.50초)")).toBeTruthy();
   });
 
-  it("선택 구간의 범위 문구는 파형 상자 안에 있고 시간 표시줄에는 없다", async () => {
+  it("선택 구간의 범위 문구는 파형 상자 안에 있고 맨 아래 상태 영역에는 없다", async () => {
     const { container } = setupOneSecond();
     await dragSelect(container, 250, 750);
     const label = screen.getByText("0.25–0.75 s (0.50 s)");
     expect(container.querySelector('[class*="waveformContainer"]')?.contains(label)).toBe(true);
-    expect(container.querySelector('[class*="timeReadout"]')?.contains(label)).toBe(false);
+    expect(container.querySelector('[class*="status"]')?.contains(label)).toBe(false);
   });
 
   it("적용 범위 문구는 선택 여부와 관계없이 화면에서 숨기고 효과 버튼의 설명으로만 남긴다", async () => {
@@ -378,17 +377,6 @@ describe("SoundEditor 시간 표시줄", () => {
     expect(screen.getByText("Selection 0.10–0.75 s (0.65 s)")).toBeTruthy();
     await act(async () => fireEvent.mouseUp(window, { clientX: 100, clientY: 0 }));
     expect(screen.getByText("Selection 0.10–0.75 s (0.65 s)")).toBeTruthy();
-  });
-
-  it("재생 중에만 재생 위치를 보인다", async () => {
-    setupOneSecond();
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: en.play })));
-    act(() => FakeAudioBufferPlayer.last.onUpdate?.(0.37));
-    expect(screen.getByText("Playing 0.37 s")).toBeTruthy();
-    act(() => FakeAudioBufferPlayer.last.onUpdate?.(0.5));
-    expect(screen.getByText("Playing 0.50 s")).toBeTruthy();
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: en.stop })));
-    expect(screen.queryByText(/Playing/)).toBeNull();
   });
 
   it("편집, 되돌리기 뒤에 전체 길이를 새로 읽는다", async () => {

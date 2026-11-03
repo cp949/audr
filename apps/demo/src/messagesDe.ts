@@ -23,7 +23,6 @@ export const MESSAGES_DE: MessageOverrides = {
   robot: "Roboter",
   timeLength: "Dauer {seconds} s",
   timeSelection: "Auswahl {start}–{end} s ({length} s)",
-  timePlaying: "Wiedergabe {seconds} s",
   selectionActions: "Auswahlaktionen",
   effects: "Effekte",
   recordTitle: "Klang aufnehmen",

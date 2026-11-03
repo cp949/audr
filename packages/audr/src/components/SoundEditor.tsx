@@ -116,7 +116,7 @@ export type SoundEditorProps = {
    */
   onError?: (error: SoundEditorError) => void;
   /**
-   * 편집 실패를 에디터 맨 아래 시간 표시줄 밑에 `role="alert"` 문구로 보인다. 기본값은 `true`다.
+   * 편집 실패를 에디터 맨 아래 상태 영역에 `role="alert"` 문구로 보인다. 기본값은 `true`다.
    * 다음 편집·undo·redo가 성공하면 지운다. 호스트가 자체 알림을 쓰면 `false`로 끈다.
    * 끄더라도 `onError`는 그대로 호출한다.
    */
@@ -178,7 +178,7 @@ export function SoundEditor({
   } = useSoundEditor(props);
   // 파형은 상자 폭을 가득 채운다. 막대 개수는 이 폭으로 정한다(잴 수 없으면 380)
   const [waveWidth, setWaveContainer] = useElementWidth(DEFAULT_WAVE_WIDTH);
-  // 드래그 중 임시 선택. 확정 전이라 훅의 trim에는 없고, 시간 표시줄의 선택 구간에만 쓴다
+  // 드래그 중 임시 선택. 확정 전이라 훅의 trim에는 없고, 파형 위 선택 구간 문구에만 쓴다
   const [preview, setPreview] = useState<{ start: number; end: number } | null>(null);
   // 끄는 중 소리가 전환되면 AudioSelector는 다시 만들어지며 null을 알리지 않는다. 여기서 임시 선택을 지운다
   const [previewSwitchCount, setPreviewSwitchCount] = useState(switchCount);
@@ -442,8 +442,7 @@ export function SoundEditor({
           </EffectPanel>
         </div>
       </div>
-      {/* 화면용 정보다. 재생 위치가 프레임마다 바뀌므로 aria-live를 달지 않는다(스크린 리더는 핸들의 aria-valuetext를 쓴다) */}
-      <div className={styles.timeReadout}>
+      <div className={styles.status}>
         {/*
           효과 버튼이 aria-describedby로 가리킨다. 선택을 끌 때마다 낭독되지 않도록 aria-live는 달지 않는다.
           화면에는 보이지 않고 보조기기만 읽는다. 선택 구간은 파형 위 범위 문구와 핸들로 이미 보인다
@@ -451,11 +450,8 @@ export function SoundEditor({
         <span id={scopeId} className={styles.visuallyHidden}>
           {effectScopeText}
         </span>
-        {playhead !== null ? (
-          <span>{m.timePlaying.replace("{seconds}", sec(playhead))}</span>
-        ) : null}
         {/*
-          시간 줄 아래에 둬서 시간 줄 위치는 그대로다. 포커스를 옮기지 않는다.
+          포커스를 옮기지 않는다.
           key가 실패마다 바뀌어 같은 문구여도 요소를 새로 넣는다. 그래야 스크린 리더가 다시 읽는다
         */}
         {errorNotice && editError ? (
