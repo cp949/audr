@@ -115,6 +115,8 @@ export function App() {
   const [recording, setRecording] = useState(false);
   const [dropping, setDropping] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // 디코드 중인 가져오기 요청 수. 파일을 연달아 끌어 놓아도 마지막 요청이 끝날 때까지 표시한다
+  const [importing, setImporting] = useState(0);
   const [themeValue, setThemeValue] = useState<"" | AudrTheme>("");
   // 빈 값은 기본 보라이므로 prop을 생략한다
   const theme = themeValue || undefined;
@@ -128,28 +130,33 @@ export function App() {
    * 파일 선택과 끌어 놓기가 같은 경로를 쓴다. 열지 못한 파일은 모아서 한 번에 알린다.
    */
   const importFiles = async (files: File[]) => {
-    const failed: string[] = [];
-    const tooLong: string[] = [];
-    for (const file of files) {
-      try {
-        const buffer = await decodeAudioFile(file);
-        // 한도를 넘는 소리는 이후 모든 편집이 거부되므로 목록에 넣지 않는다
-        if (buffer.samples.length > maxEditableSamples(buffer.sampleRate)) {
-          tooLong.push(file.name);
-          continue;
+    setImporting((n) => n + 1);
+    try {
+      const failed: string[] = [];
+      const tooLong: string[] = [];
+      for (const file of files) {
+        try {
+          const buffer = await decodeAudioFile(file);
+          // 한도를 넘는 소리는 이후 모든 편집이 거부되므로 목록에 넣지 않는다
+          if (buffer.samples.length > maxEditableSamples(buffer.sampleRate)) {
+            tooLong.push(file.name);
+            continue;
+          }
+          addSound(buffer, file.name.replace(/\.[^.]+$/, ""));
+        } catch (error) {
+          console.error(error);
+          failed.push(file.name);
         }
-        addSound(buffer, file.name.replace(/\.[^.]+$/, ""));
-      } catch (error) {
-        console.error(error);
-        failed.push(file.name);
       }
+      const messages = [];
+      if (failed.length > 0) messages.push(`${failed.join(", ")}을(를) 열 수 없다`);
+      if (tooLong.length > 0) {
+        messages.push(`${tooLong.join(", ")}은(는) 너무 길어 편집할 수 없어 추가하지 않았다`);
+      }
+      setNotice(messages.length > 0 ? messages.join(". ") : null);
+    } finally {
+      setImporting((n) => n - 1);
     }
-    const messages = [];
-    if (failed.length > 0) messages.push(`${failed.join(", ")}을(를) 열 수 없다`);
-    if (tooLong.length > 0) {
-      messages.push(`${tooLong.join(", ")}은(는) 너무 길어 편집할 수 없어 추가하지 않았다`);
-    }
-    setNotice(messages.length > 0 ? messages.join(". ") : null);
   };
 
   const importFile = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -257,6 +264,7 @@ export function App() {
           />
           <output>{hostWidth}px</output>
         </label>
+        {importing > 0 && <span role="status">Loading…</span>}
         {notice && <span role="alert">{notice}</span>}
       </header>
       <div
