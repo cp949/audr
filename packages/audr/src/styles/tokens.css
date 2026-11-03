@@ -32,6 +32,7 @@
   --audr-stage-bar: #5fe0c8;
   --audr-stage-line: #5fe0c8;
   --audr-stage-guide: hsla(0, 0%, 100%, 0.12);
+  --audr-stage-ruler-text: #9fb4bf;
   /* 아이콘 SVG는 <img>로 불러 CSS 변수가 닿지 않는다. 테마가 색조를 filter로 옮긴다 */
   --audr-icon-filter-accent: hue-rotate(-85deg);
   --audr-icon-filter-effect: hue-rotate(-85deg);

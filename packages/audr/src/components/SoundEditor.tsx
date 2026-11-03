@@ -7,7 +7,6 @@ import coasterIcon from "../assets/icons/sound-editor/icon--coaster.svg";
 import copyToNewIcon from "../assets/icons/sound-editor/icon--copy-to-new.svg";
 import copyIcon from "../assets/icons/sound-editor/icon--copy.svg";
 import cyborgIcon from "../assets/icons/sound-editor/icon--cyborg.svg";
-import deleteIcon from "../assets/icons/sound-editor/icon--delete.svg";
 import echoIcon from "../assets/icons/sound-editor/icon--echo.svg";
 import fadeInIcon from "../assets/icons/sound-editor/icon--fade-in.svg";
 import fadeOutIcon from "../assets/icons/sound-editor/icon--fade-out.svg";
@@ -40,6 +39,8 @@ import { IconButton } from "./IconButton";
 import { NameInput } from "./NameInput";
 import styles from "./sound-editor.module.css";
 import { SelectionLabel } from "./SelectionLabel";
+import { SelectionToolbar } from "./SelectionToolbar";
+import toolbarStyles from "./selection-toolbar.module.css";
 import { ShortcutHelp } from "./ShortcutHelp";
 import { Waveform } from "./Waveform";
 
@@ -94,6 +95,9 @@ const VISIBLE_EFFECT_BUTTONS = EFFECT_BUTTONS.filter(
 
 /** 파형 위 세로 기준선의 가로 위치(%) */
 const GUIDE_POSITIONS = [25, 50, 75];
+
+/** 눈금자에 시간을 적는 위치(0~1). 100%는 전체 길이가 맡는다 */
+const RULER_POSITIONS = [0, 0.25, 0.5, 0.75];
 
 /**
  * SoundEditor props.
@@ -170,6 +174,7 @@ export function SoundEditor({
     onPaste,
     onCopyToNew,
     onDelete,
+    onKeepSelection,
     onEffect,
   } = useSoundEditor(props);
   // 드래그 중 임시 선택. 확정 전이라 훅의 trim에는 없고, 시간 표시줄의 선택 구간에만 쓴다
@@ -272,21 +277,30 @@ export function SoundEditor({
             onClick={onCopyToNew}
           />
         </div>
-        <IconButton
-          className={styles.toolButton}
-          disabled={trimStart === null || busy}
-          img={deleteIcon}
-          title={m.delete}
-          tooltip={tip(m.delete, "delete")}
-          keyShortcuts={ariaKeyShortcuts(SHORTCUTS.delete)}
-          onClick={onDelete}
-        />
       </div>
       {/* 왼쪽은 파형과 재생 줄, 오른쪽은 효과 패널이다. 폭이 모자라면 패널이 아래로 내려간다 */}
       <div className={styles.workArea}>
         <div className={styles.workMain}>
           <div className={styles.waveformArea}>
             <div className={styles.waveformContainer}>
+              {/*
+                눈금자. 시간 0, 25%, 50%, 75%와 전체 길이를 화면에만 보인다. 보조기기는 아래의 읽기 문구와 핸들을 쓴다.
+                세로 기준선이 25%·50%·75% 눈금선을 겸한다
+              */}
+              <div className={styles.ruler} aria-hidden="true">
+                {RULER_POSITIONS.map((fraction) => (
+                  <span
+                    key={fraction}
+                    className={styles.rulerTick}
+                    style={{ left: `${fraction * 100}%` }}
+                  >
+                    {sec(fraction)}
+                  </span>
+                ))}
+                <span className={styles.rulerEnd}>
+                  {m.timeLengthValue.replace("{seconds}", formatSeconds(durationSeconds))}
+                </span>
+              </div>
               <Waveform data={chunkLevels} height={160} width={380} />
               {/* 진폭 0(가로선)과 시간 25%·50%·75%(세로선)를 가리키는 연한 기준선. 선택 영역 아래에 두어 입력을 막지 않는다 */}
               <div className={styles.guideHorizontal} aria-hidden="true" />
@@ -310,6 +324,37 @@ export function SoundEditor({
                 valueText={secondsValueText(m, formatSeconds, durationSeconds)}
                 onPreviewChange={setPreview}
               />
+              {/*
+                선택에만 쓰는 작업 막대. 확정된 선택이 있고 끄는 중이 아닐 때만 보인다.
+                끄는 중에는 선택이 계속 바뀌어 막대가 따라다니지 않게 한다
+              */}
+              {selection && preview === null ? (
+                <SelectionToolbar
+                  start={selection.start}
+                  end={selection.end}
+                  label={m.selectionActions}
+                >
+                  <button
+                    type="button"
+                    className={toolbarStyles.danger}
+                    disabled={busy}
+                    title={tip(m.delete, "delete")}
+                    aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.delete)}
+                    onClick={onDelete}
+                  >
+                    {m.delete}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    title={tip(m.shortcutActions.keepSelection, "keepSelection")}
+                    aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.keepSelection)}
+                    onClick={onKeepSelection}
+                  >
+                    {m.shortcutActions.keepSelection}
+                  </button>
+                </SelectionToolbar>
+              ) : null}
               {/* 선택 구간의 시간 범위. 파형 바로 위에 띄우고, 드래그하는 동안 임시 선택(preview)도 따라간다 */}
               {selection ? (
                 <SelectionLabel
@@ -320,17 +365,9 @@ export function SoundEditor({
                 />
               ) : null}
             </div>
-            {/*
-              파형 아래 여백의 오른쪽 끝에 띄운다. 파형과 선택 영역을 가리지 않고 줄 높이도 바꾸지 않는다.
-              화면에는 숫자와 단위만 보이고, 보조기기는 "길이"가 붙은 문구를 읽는다
-            */}
-            <span className={styles.totalLength}>
-              <span aria-hidden="true">
-                {m.timeLengthValue.replace("{seconds}", formatSeconds(durationSeconds))}
-              </span>
-              <span className={styles.visuallyHidden}>
-                {m.timeLength.replace("{seconds}", formatSeconds(durationSeconds))}
-              </span>
+            {/* 눈금자 끝의 전체 길이는 숫자와 단위만 보인다. 보조기기는 "길이"가 붙은 이 문구를 읽는다 */}
+            <span className={styles.visuallyHidden}>
+              {m.timeLength.replace("{seconds}", formatSeconds(durationSeconds))}
             </span>
           </div>
           <div className={styles.transport}>

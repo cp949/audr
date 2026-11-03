@@ -40,6 +40,8 @@ const en = {
   fadeOut: "Fade out",
   fadeIn: "Fade in",
   mute: "Mute",
+  /** 선택 구간 위에 뜨는 작업 막대의 접근 가능한 이름 */
+  selectionActions: "Selection actions",
   /** 효과 패널의 묶음 이름 */
   effectGroupVolume: "Volume",
   effectGroupSpeed: "Speed & direction",
@@ -159,6 +161,7 @@ const ko: Messages = {
   fadeOut: "점점 작게",
   fadeIn: "점점 크게",
   mute: "음소거",
+  selectionActions: "선택 구간 작업",
   effectGroupVolume: "소리 크기",
   effectGroupSpeed: "속도·방향",
   effectGroupVoice: "목소리",

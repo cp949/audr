@@ -335,16 +335,67 @@ test.describe("UI 경유 (데모 화면)", () => {
     expect(play.y).toBeGreaterThanOrEqual(wave.y + wave.height - 0.5);
   });
 
-  test("전체 길이는 파형 아래 오른쪽 끝에 있고 파형을 가리지 않는다", async ({ page }) => {
+  test("전체 길이는 눈금자의 오른쪽 끝에 있고 파형 막대 영역을 가리지 않는다", async ({ page }) => {
     const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
     const length = await page.getByText(/^\d+\.\d\d s$/).boundingBox();
-    const play = await editorButton(page, "Play").boundingBox();
-    if (!wave || !length || !play) throw new Error("요소의 위치를 구하지 못했다");
-    // 파형 바로 아래: 파형 밑변보다 아래이고 재생 버튼 줄보다 위다
-    expect(length.y).toBeGreaterThanOrEqual(wave.y + wave.height - 0.5);
-    expect(length.y + length.height).toBeLessThanOrEqual(play.y);
-    // 오른쪽 끝을 파형의 오른쪽 끝에 맞춘다
-    expect(Math.abs(length.x + length.width - (wave.x + wave.width))).toBeLessThanOrEqual(1);
+    if (!wave || !length) throw new Error("요소의 위치를 구하지 못했다");
+    // 눈금자는 파형 상자 위쪽 22px이다
+    expect(length.y).toBeGreaterThanOrEqual(wave.y - 0.5);
+    expect(length.y + length.height).toBeLessThanOrEqual(wave.y + 22 + 0.5);
+    // 오른쪽 끝에서 6px 안쪽이다
+    expect(wave.x + wave.width - (length.x + length.width)).toBeLessThanOrEqual(8);
+    expect(wave.x + wave.width - (length.x + length.width)).toBeGreaterThanOrEqual(4);
+  });
+
+  for (const [ratio, text] of [
+    [0.25, "0.25"],
+    [0.5, "0.50"],
+    [0.75, "0.75"],
+  ] as const) {
+    test(`눈금 ${text}은 파형 폭의 ${ratio * 100}% 눈금선 오른쪽에 붙는다`, async ({ page }) => {
+      const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+      const tick = await page.locator('[class*="rulerTick"]', { hasText: text }).boundingBox();
+      if (!wave || !tick) throw new Error("눈금의 위치를 구하지 못했다");
+      // 눈금 상자는 눈금선 위치에서 시작하고 글자는 4px 안쪽에서 시작한다
+      expect(Math.abs(tick.x - (wave.x + wave.width * ratio))).toBeLessThanOrEqual(1.5);
+      expect(tick.y + tick.height).toBeLessThanOrEqual(wave.y + 22 + 0.5);
+    });
+  }
+
+  test("선택 도구 막대는 선택이 없으면 없고, 선택하면 눈금자 아래 파형 상자 안에 선택 가운데로 뜬다", async ({
+    page,
+  }) => {
+    const group = page.getByRole("group", { name: "Selection actions" });
+    await expect(group).toHaveCount(0);
+    await dragSelect(page, 0.2, 0.8);
+    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+    const box = await group.boundingBox();
+    if (!wave || !box) throw new Error("파형이나 도구 막대의 위치를 구하지 못했다");
+    expect(box.y).toBeGreaterThanOrEqual(wave.y + 22 - 0.5);
+    expect(box.x).toBeGreaterThanOrEqual(wave.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(wave.x + wave.width);
+    // 선택 0.2~0.8의 가운데(0.5)에 막대 가운데가 온다
+    expect(Math.abs(box.x + box.width / 2 - (wave.x + wave.width * 0.5))).toBeLessThanOrEqual(2);
+  });
+
+  test("오른쪽 끝에 붙은 좁은 선택에서도 도구 막대가 파형 상자 밖으로 나가지 않는다", async ({
+    page,
+  }) => {
+    await dragSelect(page, 0.96, 1);
+    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+    const box = await page.getByRole("group", { name: "Selection actions" }).boundingBox();
+    if (!wave || !box) throw new Error("파형이나 도구 막대의 위치를 구하지 못했다");
+    expect(box.x + box.width).toBeLessThanOrEqual(wave.x + wave.width + 0.5);
+    expect(box.x).toBeGreaterThanOrEqual(wave.x - 0.5);
+  });
+
+  test("선택 구간만 남기기 버튼: 25%~75% 선택이면 약 절반이 남는다", async ({ page }) => {
+    await dragSelect(page, 0.25, 0.75);
+    await editorButton(page, "Keep only selection").click();
+    // 끌기 좌표가 픽셀 단위라 정확히 절반이 되지는 않는다
+    await expect.poll(() => samplesOf(page)).toBeLessThan(44100);
+    expect(await samplesOf(page)).toBeGreaterThan(21900);
+    expect(await samplesOf(page)).toBeLessThan(22200);
   });
 
   /** 선택 범위 문구와 파형 상자의 위치. x는 파형 안쪽(테두리 1px 안) 기준이다 */
@@ -369,13 +420,14 @@ test.describe("UI 경유 (데모 화면)", () => {
     expect(wave.y - label.y).toBeLessThanOrEqual(20);
   });
 
-  test("가로 기준선은 파형 상자의 세로 가운데에 파형 폭만큼 놓인다", async ({ page }) => {
+  test("가로 기준선은 눈금자 아래 파형 높이의 가운데에 파형 폭만큼 놓인다", async ({ page }) => {
     const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
     const guide = await page.locator('[class*="guideHorizontal"]').boundingBox();
     if (!wave || !guide) throw new Error("파형이나 기준선의 위치를 구하지 못했다");
-    expect(Math.abs(guide.y + guide.height / 2 - (wave.y + wave.height / 2))).toBeLessThanOrEqual(
-      1,
-    );
+    // 눈금자(22px)를 뺀 파형 높이의 가운데다
+    expect(
+      Math.abs(guide.y + guide.height / 2 - (wave.y + 22 + (wave.height - 22) / 2)),
+    ).toBeLessThanOrEqual(1);
     expect(guide.height).toBeLessThanOrEqual(1.5);
     expect(guide.width).toBeGreaterThanOrEqual(wave.width - 2);
   });

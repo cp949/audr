@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { placeLabel } from "../src/lib/labelPlacement";
+import { centerOnRange, placeLabel } from "../src/lib/labelPlacement";
 
 // 영역 폭 600, 글자 폭 100, 핸들 여유 30 기준
 const place = (start: number, end: number, label = 100, area = 600) =>
@@ -40,5 +40,27 @@ describe("placeLabel", () => {
   it("길이 0 선택도 같은 규칙을 따른다", () => {
     expect(place(300, 300)).toBe(330);
     expect(place(600, 600)).toBe(470);
+  });
+});
+
+describe("centerOnRange", () => {
+  // 영역 폭 600, 상자 폭 200, 가장자리 여유 4 기준
+  const center = (start: number, end: number) => centerOnRange(start, end, 200, 600, 4);
+
+  it("선택 가운데에 상자 가운데를 맞춘다", () => {
+    expect(center(200, 400)).toBe(200);
+    expect(center(250, 350)).toBe(200);
+  });
+
+  it("왼쪽 끝을 넘으면 가장자리 여유만큼 띄운다", () => {
+    expect(center(0, 20)).toBe(4);
+  });
+
+  it("오른쪽 끝을 넘으면 오른쪽 끝에서 여유만큼 띄운다", () => {
+    expect(center(580, 600)).toBe(396);
+  });
+
+  it("상자가 영역보다 넓으면 왼쪽 여유 위치에 둔다", () => {
+    expect(centerOnRange(100, 200, 700, 600, 4)).toBe(4);
   });
 });

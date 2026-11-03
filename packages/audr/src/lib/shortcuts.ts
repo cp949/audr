@@ -10,6 +10,7 @@ export const SHORTCUTS = {
   copy: { mod: true, key: "C" },
   paste: { mod: true, key: "V" },
   delete: { key: "Delete" },
+  keepSelection: { shift: true, key: "Delete" },
   playStop: { key: "Space" },
 } as const satisfies Record<string, Shortcut>;
 
@@ -38,10 +39,7 @@ export const SHORTCUT_HELP: readonly { action: ShortcutAction; keys: readonly Sh
   { action: "delete", keys: [SHORTCUTS.delete, { key: "Backspace" }] },
   {
     action: "keepSelection",
-    keys: [
-      { shift: true, key: "Delete" },
-      { shift: true, key: "Backspace" },
-    ],
+    keys: [SHORTCUTS.keepSelection, { shift: true, key: "Backspace" }],
   },
   { action: "clearSelection", keys: [{ key: "Escape" }] },
   { action: "selectAll", keys: [{ mod: true, key: "A" }] },

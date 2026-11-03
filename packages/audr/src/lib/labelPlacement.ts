@@ -23,3 +23,19 @@ export function placeLabel(
   if (left >= 0) return left;
   return Math.min(Math.max(0, centered), Math.max(0, areaWidth - labelWidth));
 }
+
+/**
+ * 선택 구간 `[startPx, endPx]`의 가운데에 폭 `boxWidth`인 상자를 맞춘 왼쪽 끝 위치를 돌려준다.
+ * 영역(`areaWidth`) 안으로 `margin`만큼 띄워 밀어 넣고, 상자가 영역보다 넓으면 왼쪽 여유 위치에 둔다.
+ */
+export function centerOnRange(
+  startPx: number,
+  endPx: number,
+  boxWidth: number,
+  areaWidth: number,
+  margin: number,
+): number {
+  const centered = (startPx + endPx) / 2 - boxWidth / 2;
+  const max = Math.max(margin, areaWidth - boxWidth - margin);
+  return Math.min(Math.max(margin, centered), max);
+}

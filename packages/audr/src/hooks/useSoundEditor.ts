@@ -239,6 +239,7 @@ export function useSoundEditor(props: SoundEditorHookProps) {
     onPaste: session.paste,
     onCopyToNew: session.copyToNew,
     onDelete: session.deleteSelection,
+    onKeepSelection: session.keepSelection,
     onEffect: session.effect,
   };
 }

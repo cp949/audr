@@ -75,7 +75,6 @@ describe("SoundEditor 단축키 툴팁", () => {
     expect(titleOf(en.redo)).toBe("Redo (Ctrl+Shift+Z)");
     expect(titleOf(en.copy)).toBe("Copy (Ctrl+C)");
     expect(titleOf(en.paste)).toBe("Paste (Ctrl+V)");
-    expect(titleOf(en.delete)).toBe("Delete (Delete)");
     expect(titleOf(en.play)).toBe("Play (Space)");
   });
 
@@ -95,7 +94,7 @@ describe("SoundEditor 단축키 툴팁", () => {
 
   it("title을 붙여도 getByRole의 이름은 라벨 그대로 찾힌다", () => {
     setup();
-    for (const label of [en.undo, en.redo, en.copy, en.paste, en.delete, en.play]) {
+    for (const label of [en.undo, en.redo, en.copy, en.paste, en.play]) {
       expect(button(label)).toBeTruthy();
     }
   });
@@ -107,7 +106,6 @@ describe("SoundEditor 단축키 툴팁", () => {
     expect(keys(en.redo)).toBe("Control+Shift+Z Meta+Shift+Z");
     expect(keys(en.copy)).toBe("Control+C Meta+C");
     expect(keys(en.paste)).toBe("Control+V Meta+V");
-    expect(keys(en.delete)).toBe("Delete");
     expect(keys(en.play)).toBe("Space");
   });
 

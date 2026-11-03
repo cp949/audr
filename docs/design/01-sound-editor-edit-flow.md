@@ -42,7 +42,7 @@
 - 대기 수가 0이 되면 아직 울리지 않은 타이머를 취소하고 `busy`를 바로 내린다.
 - `detach` 뒤에는 타이머를 만들지 않고, `detach`가 남은 타이머를 취소한다.
 
-비활성 대상은 Undo, Redo, Paste, Delete, 효과 버튼(Faster, Slower, Louder, Softer, Fade in, Fade out, Cyborg, Robot, Alien, Echo, Broadcast, Walkie-talkie, Reverse reverb, Scratch, Roller coaster, Stutter, Vibrato, Reverse)이다. Copy, Copy to New, 재생·정지는 활성으로 둔다.
+비활성 대상은 Undo, Redo, Paste, 선택 작업 막대의 Delete·Keep only selection, 효과 버튼(Faster, Slower, Louder, Softer, Fade in, Fade out, Cyborg, Robot, Alien, Echo, Broadcast, Walkie-talkie, Reverse reverb, Scratch, Roller coaster, Stutter, Vibrato, Reverse)이다. Copy, Copy to New, 재생·정지는 활성으로 둔다.
 
 - 해석: 비활성은 대기 중임을 보이는 표시다. 순서를 지키는 것은 큐다.
 - 근거: 키보드 단축키는 busy 중에도 막지 않고 큐에 쌓는다. 비활성이 정확성을 지키는 장치라면 단축키도 막아야 한다.
@@ -61,7 +61,7 @@
 - busy가 끝나면 다음 조건을 모두 만족할 때만 `focus({ preventScroll: true })`를 부른다.
   - 기억한 요소가 문서에 연결되어 있다.
   - 현재 포커스가 `body`이거나 없다. 사용자가 busy 중에 다른 곳으로 옮겼으면 그대로 둔다.
-- 한계: 끝난 뒤에도 비활성인 버튼(선택이 없는 Delete 등)은 `focus()`가 무시된다. 대체 대상을 찾지 않는다.
+- 한계: 끝난 뒤에도 비활성이거나 사라진 버튼은 `focus()`가 무시된다. 선택 작업 막대의 Delete·Keep only selection은 실행 뒤 선택이 지워져 막대째 사라지므로 포커스가 `body`로 간다. 대체 대상을 찾지 않는다.
 - 포커스가 `body`로 빠져도 단축키 활성 상태는 유지된다. [02-shortcut-scope.md](./02-shortcut-scope.md)의 "활성 에디터" 참고.
 
 ## 현재 samples의 기준은 재생기 AudioBuffer다

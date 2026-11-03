@@ -31,6 +31,12 @@
   flex-direction: row;
 }
 
+/* 줄의 마지막 묶음 뒤에는 구분선을 두지 않는다 */
+.row > .inputGroup:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
 .inputGroup + .inputGroup {
   margin-left: calc(2 * var(--audr-space));
 }
@@ -46,17 +52,6 @@
   width: 100%;
   /* 파형 상자의 위아래 margin이 바깥으로 빠지지 않게 한다. 전체 길이가 아래 여백 안에 놓이는 기준이다 */
   display: flow-root;
-}
-
-/* 파형 아래 여백(20px) 안, 파형 오른쪽 끝에 맞춘다. 효과 버튼 라벨과 같은 크기이고 높이 12px이라 여백을 넘지 않는다 */
-.totalLength {
-  position: absolute;
-  right: 0;
-  bottom: 4px;
-  font-size: 0.625rem;
-  line-height: 0.75rem;
-  color: var(--audr-text-primary);
-  white-space: nowrap;
 }
 
 /* 화면에는 보이지 않고 보조기기만 읽는 텍스트. 레이아웃에 자리를 차지하지 않는다. */
@@ -85,6 +80,8 @@
   --audr-playhead: var(--audr-ui-white);
   background: var(--audr-stage-bg);
   border-radius: 8px;
+  /* 위 22px은 눈금자 자리다. 파형은 그 아래에 놓인다 */
+  padding-top: 22px;
 
   margin-top: 20px;
   margin-bottom: 20px;
@@ -98,12 +95,40 @@
   pointer-events: none;
 }
 
-/* 진폭 0. 세로 가운데에서 폭 전체를 가로지른다 */
+/* 진폭 0. 눈금자(22px)를 뺀 파형 높이의 가운데에서 폭 전체를 가로지른다 */
 .guideHorizontal {
-  top: 50%;
+  top: calc(50% + 11px);
   left: 0;
   right: 0;
   height: 1px;
+}
+
+/* 눈금자. 파형 상자 위쪽 22px에 시간을 적는다. 25%·50%·75% 눈금선은 아래의 세로 기준선이 맡는다 */
+.ruler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 22px;
+  border-bottom: 1px solid var(--audr-stage-guide);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.625rem;
+  line-height: 22px;
+  color: var(--audr-stage-ruler-text);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.rulerTick {
+  position: absolute;
+  top: 0;
+  padding-left: 4px;
+}
+
+.rulerEnd {
+  position: absolute;
+  top: 0;
+  right: 6px;
 }
 
 /* 시간 25%, 50%, 75%. 가로 위치는 인라인 `left`로 정하고 높이 전체를 가로지른다 */

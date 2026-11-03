@@ -24,6 +24,7 @@ export const MESSAGES_DE: MessageOverrides = {
   timeLength: "Dauer {seconds} s",
   timeSelection: "Auswahl {start}–{end} s ({length} s)",
   timePlaying: "Wiedergabe {seconds} s",
+  selectionActions: "Auswahlaktionen",
   effectGroupVolume: "Lautstärke",
   effectGroupSpeed: "Tempo & Richtung",
   effectGroupVoice: "Stimme",

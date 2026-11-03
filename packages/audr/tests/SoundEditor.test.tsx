@@ -62,7 +62,7 @@ beforeEach(() => {
 });
 
 describe("SoundEditor 레이아웃", () => {
-  it("버튼이 3행 순서(undo·redo / copy·paste·copy to new·delete / 재생 + 효과 18개)에 이어 시간 표시줄의 단축키 버튼으로 나온다", () => {
+  it("버튼이 순서(undo·redo / copy·paste·copy to new / 재생 + 효과 18개)에 이어 시간 표시줄의 단축키 버튼으로 나온다", () => {
     setup();
     const names = screen
       .getAllByRole("button")
@@ -73,7 +73,6 @@ describe("SoundEditor 레이아웃", () => {
       en.copy,
       en.paste,
       en.copyToNew,
-      en.delete,
       en.play,
       ...effectLabels,
       en.shortcutsToggle,
@@ -169,9 +168,9 @@ describe("SoundEditor 레이아웃", () => {
 });
 
 describe("SoundEditor 버튼 상태", () => {
-  it("선택이 없으면 Delete가 비활성이고, 선택하면 활성이다", async () => {
+  it("선택이 없으면 Delete 버튼이 없고, 선택하면 활성 상태로 나타난다", async () => {
     const { container } = setup();
-    expect(screen.getByRole("button", { name: en.delete })).toHaveProperty("disabled", true);
+    expect(screen.queryByRole("button", { name: en.delete })).toBeNull();
     await dragSelect(container, 250, 750);
     expect(screen.getByRole("button", { name: en.delete })).toHaveProperty("disabled", false);
   });
@@ -260,7 +259,8 @@ describe("SoundEditor 시간 표시줄", () => {
   it("전체 길이는 숫자와 단위만 보이고 보조기기는 앞에 '길이'를 붙여 읽는다", () => {
     setupOneSecond();
     const visible = screen.getByText("1.00 s");
-    expect(visible.getAttribute("aria-hidden")).toBe("true");
+    // 눈금자 전체가 보조기기에서 숨겨져 있다
+    expect(visible.closest('[aria-hidden="true"]')).not.toBeNull();
     // 화면에는 보이지 않는 읽기용 문구
     expect(screen.getByText("Length 1.00 s").getAttribute("aria-hidden")).toBeNull();
     expect(screen.queryByText("Length")).toBeNull();
@@ -523,7 +523,7 @@ describe("SoundEditor 상호작용", () => {
     expect(screen.getByRole("button", { name: en.delete })).toHaveProperty("disabled", false);
     const root = container.firstElementChild as HTMLElement;
     await act(async () => fireEvent.mouseDown(root));
-    expect(screen.getByRole("button", { name: en.delete })).toHaveProperty("disabled", true);
+    expect(screen.queryByRole("button", { name: en.delete })).toBeNull();
   });
 
   it("효과 버튼은 해당 효과 이름으로 applyEffect를 부른다 (Louder는 higher, Softer는 lower)", async () => {
@@ -647,7 +647,7 @@ describe("SoundEditor 단축키 범위", () => {
       fireEvent.pointerDown(outside);
       expect(await pressOnBody("a", { ctrlKey: true })).toBe(true);
       expect(await pressOnBody("c", { ctrlKey: true })).toBe(true);
-      expect(screen.getByRole("button", { name: en.delete })).toHaveProperty("disabled", true);
+      expect(screen.queryByRole("button", { name: en.delete })).toBeNull();
     } finally {
       outside.remove();
     }
@@ -1031,5 +1031,90 @@ describe("SoundEditor 소리 전환(soundId)", () => {
     expect(screen.queryByText(/^Selection/)).toBeNull();
     expect(screen.queryAllByRole("slider")).toHaveLength(0);
     expect(screen.getByText(en.effectScopeWhole)).toBeTruthy();
+  });
+});
+
+describe("SoundEditor 선택 도구 막대", () => {
+  it("선택이 없으면 보이지 않고 상단 도구 줄에도 Delete가 없다", () => {
+    setup();
+    expect(screen.queryByRole("group", { name: en.selectionActions })).toBeNull();
+    expect(screen.queryByRole("button", { name: en.delete })).toBeNull();
+  });
+
+  it("선택하면 파형 상자 안에 Delete와 선택 구간만 남기기 버튼이 나타난다", async () => {
+    const { container } = setup();
+    await dragSelect(container, 250, 750);
+    const group = screen.getByRole("group", { name: en.selectionActions });
+    const names = within(group)
+      .getAllByRole("button")
+      .map((b) => b.getAttribute("aria-label") ?? b.textContent);
+    expect(names).toEqual([en.delete, en.shortcutActions.keepSelection]);
+    expect(container.querySelector('[class*="waveformContainer"]')?.contains(group)).toBe(true);
+  });
+
+  it("선택 구간만 남기기 버튼은 선택 밖을 지운다", async () => {
+    const { container, onChange } = setup();
+    await dragSelect(container, 250, 750);
+    await act(async () =>
+      fireEvent.click(screen.getByRole("button", { name: en.shortcutActions.keepSelection })),
+    );
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    expect(onChange.mock.calls[0]?.[0].samples.length).toBe(500);
+  });
+
+  it("버튼 title에 단축키를 알린다", async () => {
+    const { container } = setup();
+    await dragSelect(container, 250, 750);
+    const del = screen.getByRole("button", { name: en.delete });
+    const keep = screen.getByRole("button", { name: en.shortcutActions.keepSelection });
+    expect(del.getAttribute("title")).toBe("Delete (Delete)");
+    expect(keep.getAttribute("title")).toBe("Keep only selection (Shift+Delete)");
+    expect(del.getAttribute("aria-keyshortcuts")).toBe("Delete");
+    expect(keep.getAttribute("aria-keyshortcuts")).toBe("Shift+Delete");
+  });
+
+  it("끄는 동안에는 보이지 않고 놓으면 나타난다", async () => {
+    const { container } = setup();
+    const selector = container.querySelector('[class*="selector"]') as HTMLElement;
+    await act(async () => {
+      fireEvent.mouseDown(selector, { clientX: 250, clientY: 0 });
+      fireEvent.mouseMove(window, { clientX: 750, clientY: 0 });
+    });
+    expect(screen.queryByRole("group", { name: en.selectionActions })).toBeNull();
+    await act(async () => fireEvent.mouseUp(window, { clientX: 750, clientY: 0 }));
+    expect(screen.getByRole("group", { name: en.selectionActions })).toBeTruthy();
+  });
+
+  it("묶음 이름은 한국어 로케일에서 한국어 문구다", async () => {
+    const { container } = setup({ locale: "ko" });
+    await dragSelect(container, 250, 750);
+    expect(screen.getByRole("group", { name: getMessages("ko").selectionActions })).toBeTruthy();
+  });
+});
+
+describe("SoundEditor 눈금자", () => {
+  it("0, 25%, 50%, 75% 시간과 전체 길이를 화면에만 보이고 보조기기에서는 숨긴다", () => {
+    const { container } = setup({ samples: ramp(1000), sampleRate: 1000 });
+    const ruler = container.querySelector('[class*="ruler"]') as HTMLElement;
+    expect(ruler.getAttribute("aria-hidden")).toBe("true");
+    expect(Array.from(ruler.children).map((c) => c.textContent)).toEqual([
+      "0.00",
+      "0.25",
+      "0.50",
+      "0.75",
+      "1.00 s",
+    ]);
+  });
+
+  it("눈금 글자는 로케일의 소수점 기호를 따른다", () => {
+    const { container } = setup({ samples: ramp(1000), sampleRate: 1000, locale: "de" });
+    const ruler = container.querySelector('[class*="ruler"]') as HTMLElement;
+    expect(Array.from(ruler.children).map((c) => c.textContent)).toEqual([
+      "0,00",
+      "0,25",
+      "0,50",
+      "0,75",
+      "1,00 s",
+    ]);
   });
 });
