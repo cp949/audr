@@ -152,6 +152,26 @@ body {
   height: 673px;
 }
 
+/* 소리가 하나도 없을 때 편집기 자리에 보이는 안내 */
+.empty-state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--audr-text-primary);
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 0.25rem 0;
+}
+
+.empty-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
 /* 파일을 끌어 오면 놓을 수 있는 영역임을 보인다. outline이라 레이아웃은 움직이지 않는다. */
 .workspace[data-dropping] {
   outline: 3px dashed var(--audr-accent);

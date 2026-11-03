@@ -167,12 +167,13 @@ export function App() {
 
   /** 선택한 소리를 WAV 파일로 내려받는다. */
   const downloadSelected = () => {
+    if (!selected) return;
     downloadBlob(createWavBlob(selected.samples, selected.sampleRate), wavFileName(selected.name));
   };
 
   /** 선택한 소리를 지운다. 되돌릴 수 없어서 확인을 받는다. */
   const confirmRemoveSelected = () => {
-    if (!canRemove) return;
+    if (!selected) return;
     if (!window.confirm(`"${selected.name}"을(를) 삭제할까요? 되돌릴 수 없다`)) return;
     removeSelected();
   };
@@ -231,7 +232,7 @@ export function App() {
                 <button
                   type="button"
                   className="sound-item"
-                  aria-current={sound.id === selected.id}
+                  aria-current={sound.id === selected?.id}
                   data-samples={sound.samples.length}
                   data-sample-rate={sound.sampleRate}
                   data-peak={peakOf(sound.samples).toFixed(4)}
@@ -246,7 +247,7 @@ export function App() {
             ))}
           </ul>
           <div className="sound-actions">
-            <button type="button" onClick={downloadSelected}>
+            <button type="button" disabled={!selected} onClick={downloadSelected}>
               Download WAV
             </button>
             <button type="button" disabled={!canRemove} onClick={confirmRemoveSelected}>
@@ -257,22 +258,29 @@ export function App() {
         <main className="editor-pane">
           {/* soundId로 소리가 바뀔 때 undo 이력과 선택을 새로 시작한다. 복사한 내용은 소리 사이에서 유지된다 */}
           <div className="editor-frame">
-            <SoundEditor
-              soundId={selected.id}
-              samples={selected.samples}
-              sampleRate={selected.sampleRate}
-              name={selected.name}
-              onChange={({ samples, sampleRate }) => {
-                updateSelected({ samples, sampleRate });
-                // 편집이 성공하면 가져오기·녹음 오류 안내를 지운다. 편집 실패는 에디터가 기본 알림으로 보인다
-                setNotice(null);
-              }}
-              onCopyToNew={(buffer) => addSound(buffer, selected.name)}
-              onRename={(name) => updateSelected({ name })}
-              theme={theme}
-              locale={language.value}
-              messages={language.messages}
-            />
+            {selected ? (
+              <SoundEditor
+                soundId={selected.id}
+                samples={selected.samples}
+                sampleRate={selected.sampleRate}
+                name={selected.name}
+                onChange={({ samples, sampleRate }) => {
+                  updateSelected({ samples, sampleRate });
+                  // 편집이 성공하면 가져오기·녹음 오류 안내를 지운다. 편집 실패는 에디터가 기본 알림으로 보인다
+                  setNotice(null);
+                }}
+                onCopyToNew={(buffer) => addSound(buffer, selected.name)}
+                onRename={(name) => updateSelected({ name })}
+                theme={theme}
+                locale={language.value}
+                messages={language.messages}
+              />
+            ) : (
+              <div className="empty-state">
+                <p className="empty-title">No sounds yet</p>
+                <p>Record, import a file, or drop one here.</p>
+              </div>
+            )}
           </div>
         </main>
       </div>

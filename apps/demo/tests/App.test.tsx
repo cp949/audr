@@ -213,13 +213,37 @@ describe("데모 App 소리 삭제", () => {
     vi.restoreAllMocks();
   });
 
-  it("소리가 1개뿐이면 Remove sound가 비활성이고 확인창도 뜨지 않는다", () => {
+  it("소리가 1개뿐이어도 확인하면 지우고 소리 0개 화면을 보인다", async () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<App />);
+    await act(async () => fireEvent.click(remove()));
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(within(soundList()).queryAllByRole("listitem")).toHaveLength(0);
+    expect(screen.getByText("No sounds yet")).toBeTruthy();
+    // 편집기는 소리가 있어야 그려진다
+    expect(screen.queryByLabelText("Sound")).toBeNull();
+  });
+
+  it("소리 0개이면 Remove sound와 Download WAV가 비활성이다", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<App />);
+    await act(async () => fireEvent.click(remove()));
     expect(remove()).toHaveProperty("disabled", true);
-    fireEvent.click(remove());
-    expect(confirm).not.toHaveBeenCalled();
-    expect(items().length).toBe(1);
+    expect(screen.getByRole("button", { name: "Download WAV" })).toHaveProperty("disabled", true);
+  });
+
+  it("소리 0개에서 파일을 가져오면 편집기가 다시 나타난다", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<App />);
+    await act(async () => fireEvent.click(remove()));
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Import sound"), {
+        target: { files: [fileOf("beep.wav")] },
+      });
+    });
+    await waitFor(() => expect(items().length).toBe(1));
+    expect(nameInput().value).toBe("beep");
+    expect(screen.queryByText("No sounds yet")).toBeNull();
   });
 
   it("확인을 거절하면 지우지 않는다", async () => {
@@ -273,13 +297,13 @@ describe("데모 App 소리 삭제", () => {
     expect(nameInput().value).toBe("Sine 440Hz2");
   });
 
-  it("지운 뒤 하나만 남으면 다시 비활성이 된다", async () => {
+  it("지운 뒤 하나만 남아도 Remove sound는 활성이다", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<App />);
     await growTo(2);
-    expect(remove()).toHaveProperty("disabled", false);
     await act(async () => fireEvent.click(remove()));
-    expect(remove()).toHaveProperty("disabled", true);
+    expect(items().length).toBe(1);
+    expect(remove()).toHaveProperty("disabled", false);
   });
 
   it("가져오기 디코드가 끝나고 렌더되기 전에 지워도 가져온 소리는 남는다", async () => {
