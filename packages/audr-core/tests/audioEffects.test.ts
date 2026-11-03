@@ -23,16 +23,27 @@ describe("planEffect (길이 44100, 44100Hz, 전체 구간)", () => {
     expect(planEffect(RATE, RATE, "echo", 0, 1).sampleCount).toBe(97020);
   });
 
-  it("길이를 바꾸지 않는 효과는 sampleCount 44100, playbackRate 1, 전체 구간 trim 0~1을 유지한다", () => {
-    const names: EffectName[] = [
-      "robot",
-      "reverse",
-      "higher",
-      "lower",
-      "fade in",
-      "fade out",
-      "mute",
+  it("새 효과와 로봇의 전체 구간 sampleCount는 효과별 꼬리를 더한 값이다", () => {
+    // 길이 식이 바뀌면 실패하도록 상수를 import하지 않고 리터럴로 둔다.
+    const expected: [EffectName, number][] = [
+      ["robot", 52920], // 44100 + floor(0.2 × 44100)
+      ["cyborg", 52920],
+      ["broadcast", 61740], // 44100 + floor(0.4 × 44100)
+      ["walkie", 54243], // 44100 + 2 × 2205 + 1323 + 4410
+      ["reverse reverb", 110250], // 44100 + floor(1.5 × 44100)
+      ["alien", 44100],
+      ["scratch", 44100],
+      ["coaster", 44100],
+      ["stutter", 44100],
+      ["vibrato", 44100],
     ];
+    for (const [name, count] of expected) {
+      expect(planEffect(RATE, RATE, name, 0, 1).sampleCount, name).toBe(count);
+    }
+  });
+
+  it("길이를 바꾸지 않는 효과는 sampleCount 44100, playbackRate 1, 전체 구간 trim 0~1을 유지한다", () => {
+    const names: EffectName[] = ["reverse", "higher", "lower", "fade in", "fade out", "mute"];
     for (const name of names) {
       const plan = planEffect(RATE, RATE, name, 0, 1);
       expect(plan.sampleCount).toBe(RATE);
@@ -50,8 +61,21 @@ describe("planEffect (길이 44100, 44100Hz, 전체 구간)", () => {
   });
 });
 
-describe("runEffect (그래프를 쓰지 않는 효과)", () => {
+describe("runEffect", () => {
+  /** 새 효과 9개. 로봇은 새 구현으로 바꿨지만 이름이 그대로라 여기에 넣지 않는다. */
+  const newNames: EffectName[] = [
+    "cyborg",
+    "alien",
+    "broadcast",
+    "walkie",
+    "reverse reverb",
+    "scratch",
+    "coaster",
+    "stutter",
+    "vibrato",
+  ];
   const names: EffectName[] = [
+    "robot",
     "reverse",
     "higher",
     "lower",
@@ -61,6 +85,7 @@ describe("runEffect (그래프를 쓰지 않는 효과)", () => {
     "fade in",
     "fade out",
     "mute",
+    ...newNames,
   ];
 
   function tone(rate: number): Float32Array {
@@ -88,6 +113,27 @@ describe("runEffect (그래프를 쓰지 않는 효과)", () => {
       const copy = input.slice();
       await runEffect(name, input, RATE, 0, 1);
       expect(input, name).toEqual(copy);
+    }
+  });
+
+  it("새 효과는 입력 배열을 바꾸지 않는다", async () => {
+    for (const name of newNames) {
+      const input = tone(RATE);
+      const copy = input.slice();
+      await runEffect(name, input, RATE, 0, 1);
+      expect(input, name).toEqual(copy);
+    }
+  });
+
+  it("새 효과와 로봇은 풀스케일 사인에서 절댓값 1 이하다", async () => {
+    const full = Float32Array.from({ length: RATE }, (_, i) =>
+      Math.sin((2 * Math.PI * 440 * i) / RATE),
+    );
+    for (const name of ["robot", ...newNames] as EffectName[]) {
+      const { samples } = await runEffect(name, full, RATE, 0, 1);
+      let peak = 0;
+      for (const v of samples) peak = Math.max(peak, Math.abs(v));
+      expect(peak, name).toBeLessThanOrEqual(1);
     }
   });
 

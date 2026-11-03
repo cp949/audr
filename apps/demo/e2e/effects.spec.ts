@@ -67,13 +67,23 @@ test.describe("applyEffect 실제 렌더링 (코어 직접 호출)", () => {
     ["fade in", 44100],
     ["fade out", 44100],
     ["reverse", 44100],
-    ["robot", 44100],
+    ["robot", 52920],
+    ["cyborg", 52920],
+    ["alien", 44100],
+    ["broadcast", 61740],
+    ["walkie", 54243],
+    ["reverse reverb", 110250],
+    ["scratch", 44100],
+    ["coaster", 44100],
+    ["stutter", 44100],
+    ["vibrato", 44100],
   ];
   for (const [name, expected] of cases) {
     test(`${name}: 전체 구간 적용 후 샘플 수가 ${expected}이고 무음이 아니다`, async ({ page }) => {
       const stats = await runCoreEffect(page, name, 0, 1);
       expect(stats.length).toBe(expected);
       expect(stats.peak).toBeGreaterThan(0.05);
+      expect(stats.peak).toBeLessThanOrEqual(1);
       expect(stats.rms).toBeGreaterThan(0.02);
     });
   }
@@ -207,7 +217,7 @@ test.describe("UI 경유 (데모 화면)", () => {
     ["Fade in", 44100, [0.05, Infinity]],
     ["Fade out", 44100, [0.05, Infinity]],
     ["Reverse", 44100, [0.05, Infinity]],
-    ["Robot", 44100, [0.05, Infinity]],
+    ["Robot", 52920, [0.05, Infinity]],
   ];
   for (const [title, expected, [minPeak, maxPeak]] of uiCases) {
     test(`${title} 버튼: 편집이 적용되고 샘플 수가 ${expected}이 된다`, async ({ page }) => {

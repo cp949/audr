@@ -385,7 +385,7 @@ export class EditSession {
         .applyEffect(buffer, name, start, end)
         .then((result) => {
           if (!this.queue.isLive(generation)) return undefined;
-          // OfflineAudioContext가 2샘플 이상을 요구해서 원본을 그대로 돌려준 경우다
+          // `applyEffect`는 소리가 2샘플 미만(`buffer.length < 2`)이면 원본 버퍼를 그대로 돌려준다
           if (result.buffer === buffer) return undefined;
           return this.submitNewSamples(
             result.buffer.getChannelData(0),

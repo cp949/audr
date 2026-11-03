@@ -1,12 +1,21 @@
 // 효과는 `effects/`의 정의(EffectDef)를 이름으로 찾아 실행한다.
 // 구간 규칙과 길이 계산은 effects/segment.ts, 설계 배경은 docs/design/04-effect-engine.md에 있다.
+import { alien } from "./effects/alien";
+import { broadcast } from "./effects/broadcast";
+import { coaster } from "./effects/coaster";
+import { cyborg } from "./effects/cyborg";
 import { echo } from "./effects/echoTrail";
 import { fadeIn, fadeOut } from "./effects/fadeCurve";
 import { louder, mute, softer } from "./effects/gain";
 import { reverse } from "./effects/reverse";
-import { robotLegacy } from "./effects/robot";
+import { reverseReverb } from "./effects/reverseReverb";
+import { robot } from "./effects/robot";
+import { scratch } from "./effects/scratch";
 import type { EffectDef } from "./effects/segment";
 import { faster, slower } from "./effects/speed";
+import { stutter } from "./effects/stutter";
+import { vibrato } from "./effects/vibrato";
+import { walkie } from "./effects/walkie";
 
 export { reverseRange } from "./effects/reverse";
 
@@ -21,7 +30,16 @@ export type EffectName =
   | "echo"
   | "fade in"
   | "fade out"
-  | "mute";
+  | "mute"
+  | "cyborg"
+  | "alien"
+  | "broadcast"
+  | "walkie"
+  | "reverse reverb"
+  | "scratch"
+  | "coaster"
+  | "stutter"
+  | "vibrato";
 
 export type EffectPlan = {
   sampleCount: number;
@@ -31,7 +49,7 @@ export type EffectPlan = {
 };
 
 const EFFECTS: Record<EffectName, EffectDef> = {
-  robot: robotLegacy,
+  robot,
   reverse,
   higher: louder,
   lower: softer,
@@ -41,6 +59,15 @@ const EFFECTS: Record<EffectName, EffectDef> = {
   "fade in": fadeIn,
   "fade out": fadeOut,
   mute,
+  cyborg,
+  alien,
+  broadcast,
+  walkie,
+  "reverse reverb": reverseReverb,
+  scratch,
+  coaster,
+  stutter,
+  vibrato,
 };
 
 /** 0~1 비율 구간을 샘플 인덱스 [시작, 끝)로 바꾼다. 시작과 끝이 뒤집혀 들어와도 순서를 바로잡는다. */
@@ -80,7 +107,7 @@ export function planEffect(
 
 /**
  * 샘플 배열에 효과를 적용한 새 배열과 조정된 trim(0~1)을 돌려준다. 입력 배열은 바꾸지 않는다.
- * AudioBuffer를 만들지 않아 `applyEffect`보다 가볍고, 그래프를 쓰지 않는 효과는 node에서 시험할 수 있다.
+ * AudioBuffer를 만들지 않아 `applyEffect`보다 가볍고, node에서 모든 효과를 시험할 수 있다.
  */
 export async function runEffect(
   name: EffectName,
