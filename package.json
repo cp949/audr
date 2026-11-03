@@ -11,7 +11,7 @@
     "url": "git+https://github.com/cp949/audr.git"
   },
   "scripts": {
-    "demo": "pnpm --filter demo dev",
+    "dev": "pnpm --filter demo dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "check-types": "turbo run check-types",
