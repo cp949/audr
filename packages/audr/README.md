@@ -284,6 +284,26 @@ export default defineConfig({
 - Chrome 75~85에는 `:focus-visible`이 없다. 에디터 버튼은 마우스로 눌러도 포커스 링이 보인다.
 - Safari, Firefox의 하한은 정하지 않았다.
 
+## 레이아웃과 폭
+
+호스트가 에디터의 폭을 정하고, 에디터는 부모 폭을 따라간다.
+
+- 에디터 루트는 부모 폭을 채운다. 고정 폭을 가지지 않는다.
+- 호스트는 에디터를 감싼 요소에 `width: 100%`, `min-width`, `max-width`를 준다.
+- 폭이 줄면 도구 줄과 효과 버튼이 줄바꿈하고 높이가 늘어난다. 파형은 부모 폭에 맞춰 다시 그려진다.
+- Chromium에서 에디터 폭 300px까지 가로 넘침이 없고 280px부터 넘친다. 권장 최소 폭은 320px이다.
+- 높이를 고정하는 호스트는 폭이 좁을수록 내용이 길어지므로 `overflow: auto`를 준다. 데모(Chromium, 영어 문구)에서 에디터의 자연 높이는 폭 629px에서 471px, 420px에서 563px, 320px에서 615px이다.
+
+```css
+.editor-host {
+  width: 100%;
+  min-width: 320px;
+  max-width: 800px;
+}
+```
+
+`apps/demo`의 상단 Host width 슬라이더로 호스트 폭을 바꿔 볼 수 있다. 녹음 대화상자(`RecordDialog`)는 이 계약에 들어가지 않는다. 폭이 600px로 고정이다.
+
 ## 알려진 제약
 
 - `SoundEditor`의 부모 요소는 flex 컨테이너(`display: flex; flex-direction: column`)여야 한다. 에디터 루트가 `flex-grow: 1`로 높이를 채운다. 아니면 높이가 내용 높이가 된다.

@@ -12,6 +12,12 @@ import { MESSAGES_DE } from "./messagesDe";
 import { useSoundLibrary } from "./useSoundLibrary";
 
 /** 데모에서 고를 수 있는 테마. 빈 값은 기본 청록이다. */
+// 호스트 폭 슬라이더(px). 기본값은 예전 고정 폭이다.
+// 범위는 에디터 최소 폭(demo.css의 .editor-frame) 아래까지 내려가서, 최소 폭에서 멈추고 가로 스크롤이 생기는 모습도 보인다.
+const HOST_WIDTH_MIN = 200;
+const HOST_WIDTH_MAX = 1000;
+const HOST_WIDTH_DEFAULT = 629;
+
 const THEMES: { value: "" | AudrTheme; label: string }[] = [
   { value: "", label: "Teal" },
   { value: "blue", label: "Blue" },
@@ -104,6 +110,8 @@ export function App() {
   // 빈 값은 기본 보라이므로 prop을 생략한다
   const theme = themeValue || undefined;
   const [language, setLanguage] = useState<(typeof LANGUAGES)[number]>(LANGUAGES[0]);
+  // 호스트가 에디터에 주는 가로 폭. 에디터는 이 폭을 따라가고, 그 범위는 demo.css의 .editor-frame이 정한다
+  const [hostWidth, setHostWidth] = useState(HOST_WIDTH_DEFAULT);
 
   /**
    * 파일을 차례로 디코드해 소리로 추가한다. 이름은 확장자를 뗀 파일명이다.
@@ -215,6 +223,17 @@ export function App() {
             ))}
           </select>
         </label>
+        <label className="themePicker widthPicker">
+          Host width
+          <input
+            type="range"
+            min={HOST_WIDTH_MIN}
+            max={HOST_WIDTH_MAX}
+            value={hostWidth}
+            onChange={(event) => setHostWidth(Number(event.target.value))}
+          />
+          <output>{hostWidth}px</output>
+        </label>
         {notice && <span role="alert">{notice}</span>}
       </header>
       <div
@@ -257,30 +276,32 @@ export function App() {
         </div>
         <main className="editor-pane">
           {/* soundId로 소리가 바뀔 때 undo 이력과 선택을 새로 시작한다. 복사한 내용은 소리 사이에서 유지된다 */}
-          <div className="editor-frame">
-            {selected ? (
-              <SoundEditor
-                soundId={selected.id}
-                samples={selected.samples}
-                sampleRate={selected.sampleRate}
-                name={selected.name}
-                onChange={({ samples, sampleRate }) => {
-                  updateSelected({ samples, sampleRate });
-                  // 편집이 성공하면 가져오기·녹음 오류 안내를 지운다. 편집 실패는 에디터가 기본 알림으로 보인다
-                  setNotice(null);
-                }}
-                onCopyToNew={(buffer) => addSound(buffer, selected.name)}
-                onRename={(name) => updateSelected({ name })}
-                theme={theme}
-                locale={language.value}
-                messages={language.messages}
-              />
-            ) : (
-              <div className="empty-state">
-                <p className="empty-title">No sounds yet</p>
-                <p>Record, import a file, or drop one here.</p>
-              </div>
-            )}
+          <div className="editor-host" style={{ width: hostWidth }}>
+            <div className="editor-frame">
+              {selected ? (
+                <SoundEditor
+                  soundId={selected.id}
+                  samples={selected.samples}
+                  sampleRate={selected.sampleRate}
+                  name={selected.name}
+                  onChange={({ samples, sampleRate }) => {
+                    updateSelected({ samples, sampleRate });
+                    // 편집이 성공하면 가져오기·녹음 오류 안내를 지운다. 편집 실패는 에디터가 기본 알림으로 보인다
+                    setNotice(null);
+                  }}
+                  onCopyToNew={(buffer) => addSound(buffer, selected.name)}
+                  onRename={(name) => updateSelected({ name })}
+                  theme={theme}
+                  locale={language.value}
+                  messages={language.messages}
+                />
+              ) : (
+                <div className="empty-state">
+                  <p className="empty-title">No sounds yet</p>
+                  <p>Record, import a file, or drop one here.</p>
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>

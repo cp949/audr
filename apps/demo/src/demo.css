@@ -50,6 +50,17 @@ body {
   cursor: pointer;
 }
 
+.widthPicker input {
+  width: 8rem;
+  margin: 0 0.5rem;
+  vertical-align: middle;
+}
+
+.widthPicker output {
+  display: inline-block;
+  min-width: 3.5rem;
+}
+
 .themePicker select {
   margin-left: 0.5rem;
   height: 2rem;
@@ -144,11 +155,24 @@ body {
   background: var(--audr-ui-white);
 }
 
-/* 에디터를 고정 크기(629×673) 영역에 보여 준다 */
+/*
+  호스트 상자. 슬라이더가 인라인 width로 폭을 정한다.
+  실제 사용처의 부모 요소 역할이다.
+*/
+.editor-host {
+  min-width: 0;
+}
+
+/*
+  에디터를 담는 상자. 라이브러리 사용 계약(packages/audr/README.md "레이아웃과 폭")대로
+  width: 100%에 min-width와 max-width를 준다. 높이는 고정한다.
+*/
 .editor-frame {
   display: flex;
   flex-direction: column;
-  width: 629px;
+  width: 100%;
+  min-width: 320px;
+  max-width: 800px;
   height: 673px;
 }
 

@@ -363,6 +363,37 @@ test.describe("UI 경유 (데모 화면)", () => {
     }
   });
 
+  // 호스트 폭 슬라이더로 부모 폭을 바꿔 사용 계약(width: 100% + min-width + max-width)을 확인한다.
+  // 데모의 .editor-frame은 min-width 320px, max-width 800px이다. 값은 demo.css와 같아야 한다.
+  for (const [hostWidth, frameWidth] of [
+    [200, 320],
+    [320, 320],
+    [420, 420],
+    [629, 629],
+    [1000, 800],
+  ] as const) {
+    test(`호스트 폭 ${hostWidth}px에서 에디터는 ${frameWidth}px이고 가로로 넘치지 않는다`, async ({
+      page,
+    }) => {
+      await page.getByRole("slider", { name: "Host width" }).fill(String(hostWidth));
+      const frame = page.locator(".editor-frame");
+      await expect(async () => {
+        const box = await frame.boundingBox();
+        expect(box?.width).toBeCloseTo(frameWidth, 0);
+        // 도구 줄이 줄바꿈하므로 에디터 안 어떤 요소도 에디터 오른쪽을 넘지 않는다
+        const overflow = await page
+          .locator('[class*="editorContainer"]')
+          .first()
+          .evaluate((el) => el.scrollWidth - el.clientWidth);
+        expect(overflow).toBeLessThanOrEqual(0);
+        // 파형 SVG도 상자 폭을 따라 다시 그려진다
+        const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+        const svg = await page.locator("svg[data-waveform]").boundingBox();
+        expect(svg?.width).toBeCloseTo(wave?.width ?? -1, 0);
+      }).toPass();
+    });
+  }
+
   test("재생 버튼은 파형 아래 가로 가운데에 있다", async ({ page }) => {
     const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
     const play = await editorButton(page, "Play").boundingBox();
