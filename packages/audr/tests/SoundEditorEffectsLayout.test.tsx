@@ -4,6 +4,7 @@
 import { applyEffect } from "@cp949/audr-core";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AUTO_OVERFLOW_BELOW } from "../src/components/EffectPanel";
 import { SoundEditor } from "../src/components/SoundEditor";
 import { getMessages } from "../src/i18n";
 import { FakeAudioBufferPlayer, ramp } from "./helpers/fakePlayer";
@@ -17,7 +18,7 @@ vi.mock("@cp949/audr-core", async (importOriginal) => {
 const mockedApplyEffect = vi.mocked(applyEffect);
 const en = getMessages("en");
 
-function setup(effectsLayout?: "expanded" | "minimized" | "overflow") {
+function setup(effectsLayout?: "expanded" | "minimized" | "overflow" | "auto") {
   return render(
     <SoundEditor
       samples={ramp(1000)}
@@ -181,5 +182,51 @@ describe("effectsLayout overflow", () => {
     fireEvent.keyDown(document.body, { key: "Escape" });
     expect(moreButton().getAttribute("aria-expanded")).toBe("false");
     expect(document.activeElement).toBe(moreButton());
+  });
+});
+
+describe("effectsLayout auto", () => {
+  const originalTop = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetTop");
+  const originalWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
+
+  /** 모든 요소의 clientWidth를 같은 값으로 돌려 효과 상자 폭을 정한다. 칩은 앞 5개만 첫 줄에 둔다 */
+  function stubLayout(width: number) {
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+      configurable: true,
+      get: () => width,
+    });
+    Object.defineProperty(HTMLElement.prototype, "offsetTop", {
+      configurable: true,
+      get(this: HTMLElement) {
+        const index = Array.from(this.parentElement?.children ?? []).indexOf(this);
+        return index < 5 ? 0 : 30;
+      },
+    });
+  }
+
+  afterEach(() => {
+    if (originalTop) Object.defineProperty(HTMLElement.prototype, "offsetTop", originalTop);
+    if (originalWidth) Object.defineProperty(HTMLElement.prototype, "clientWidth", originalWidth);
+  });
+
+  it("폭을 잴 수 없으면(jsdom) 펼친다", () => {
+    setup("auto");
+    expect(screen.queryByRole("button", { name: en.moreEffects })).toBeNull();
+    expect(
+      within(screen.getByRole("group", { name: en.effects })).getAllByRole("button"),
+    ).toHaveLength(19);
+  });
+
+  it("기준 폭 이상이면 펼치고 미만이면 첫 줄만 보이고 더보기 버튼이 생긴다", () => {
+    stubLayout(AUTO_OVERFLOW_BELOW);
+    const wide = setup("auto");
+    expect(screen.queryByRole("button", { name: en.moreEffects })).toBeNull();
+    expect(document.querySelectorAll("[data-clipped]")).toHaveLength(0);
+    wide.unmount();
+
+    stubLayout(AUTO_OVERFLOW_BELOW - 1);
+    setup("auto");
+    expect(moreButton().getAttribute("aria-expanded")).toBe("false");
+    expect(document.querySelectorAll("[data-clipped]")).toHaveLength(14);
   });
 });

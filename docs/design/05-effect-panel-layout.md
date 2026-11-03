@@ -1,6 +1,6 @@
 # 05. 효과 버튼 배치(effectsLayout)
 
-`SoundEditor`의 `effectsLayout`(`"expanded"`, `"minimized"`, `"overflow"`)이 효과 버튼 19개를 어떻게 보이는지, 그 구조를 왜 이렇게 만들었는지 적는다.
+`SoundEditor`의 `effectsLayout`(`"expanded"`, `"minimized"`, `"overflow"`, `"auto"`)이 효과 버튼 19개를 어떻게 보이는지, 그 구조를 왜 이렇게 만들었는지 적는다.
 
 - 사용자에게 보이는 값과 동작은 `packages/audr/README.md`의 "레이아웃과 폭"이 소유한다.
 - 구현은 `packages/audr/src/components/EffectPanel.tsx`, 스타일은 `sound-editor.module.css`의 `effect*` 규칙이다.
@@ -9,7 +9,7 @@
 ## 호스트가 고른다
 
 - 값은 prop으로 받는다. 기본값은 `"expanded"`라서 기존 호스트의 모양이 바뀌지 않는다.
-- 폭에 따라 자동으로 바꾸지 않는다. 임계값을 라이브러리가 정하면 호스트의 의도와 부딪힌다. 호스트는 `ResizeObserver`로 자기 폭을 이미 안다.
+- 폭에 따라 바꾸는 `"auto"`는 `expanded`와 `overflow` 사이만 오간다. `minimized`는 호스트가 고를 때만 쓴다. 호스트가 자기 폭을 보고 직접 고를 수도 있다.
 
 ## minimized
 
@@ -34,6 +34,17 @@
 - `visibility: hidden`은 포커스와 접근성 트리에서 함께 빠진다. 자르기만 하면 Tab이 보이지 않는 버튼으로 간다.
 - `inert`는 Chrome 102부터라서 쓰지 않는다.
 - 속성은 effect에서 DOM에 직접 단다. 버튼은 `SoundEditor`가 만든 `IconButton`이라 `EffectPanel`이 props를 줄 수 없고, React가 관리하지 않는 속성이라 렌더가 지우지 않는다.
+
+## auto
+
+효과 상자의 폭이 `AUTO_OVERFLOW_BELOW`(560px) 미만이면 `overflow`, 이상이면 `expanded`를 그린다.
+
+- 기준을 폭 하나로 정했다. 영어 문구에서 상자 폭 572px는 3줄, 532px는 4줄이다. 4줄 이상이 되기 전까지 펼친다.
+- 줄 수로 정하지 않는다. 줄 수는 펼쳐 봐야 알 수 있고, 모드마다 상자 폭이 달라지면 두 모드 사이를 오가게 된다. 폭은 모드와 무관하다.
+- 폭은 두 모드가 공유하는 바깥 `div`에서 잰다(`useElementWidth`). 모드를 바꿔도 잰 폭이 변하지 않는다.
+- 모드가 바뀌면 안쪽 컴포넌트가 달라져 효과 버튼을 다시 만든다. 열려 있던 팝오버는 닫힌다.
+- 폭을 잴 수 없으면(첫 그리기 전, jsdom, 서버 렌더링) 펼친다.
+- 문구가 긴 로케일은 같은 폭에서 줄이 더 늘어난다. 기준은 로케일에 따라 바꾸지 않는다.
 
 ## 팝오버 공통
 

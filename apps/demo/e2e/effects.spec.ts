@@ -480,6 +480,28 @@ test.describe("UI 경유 (데모 화면)", () => {
       await page.getByRole("slider", { name: "Host width" }).fill("320");
       await expect.poll(count).toBeLessThan(wide);
     });
+
+    test("auto: 효과 상자 폭이 560px 이상이면 펼치고 미만이면 overflow로 바뀐다", async ({
+      page,
+    }) => {
+      await page.getByLabel("Effects layout").selectOption("auto");
+      const slider = page.getByRole("slider", { name: "Host width" });
+      const more = page.getByRole("button", { name: "More effects" });
+      const visibleChips = async () =>
+        (await Promise.all(CHIPS.map((c) => editorButton(page, c).isVisible()))).filter(Boolean)
+          .length;
+      // 호스트 폭 600px는 효과 상자 572px(3줄), 560px는 532px(4줄)다
+      await slider.fill("600");
+      await expect(more).toHaveCount(0);
+      await expect.poll(visibleChips).toBe(CHIPS.length);
+      await slider.fill("560");
+      await expect(more).toBeVisible();
+      await expect.poll(visibleChips).toBeLessThan(CHIPS.length);
+      // 다시 넓히면 펼친다
+      await slider.fill("629");
+      await expect(more).toHaveCount(0);
+      await expect.poll(visibleChips).toBe(CHIPS.length);
+    });
   });
 
   test("재생 버튼은 파형 아래 가로 가운데에 있다", async ({ page }) => {

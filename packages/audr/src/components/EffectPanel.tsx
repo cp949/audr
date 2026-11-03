@@ -1,6 +1,7 @@
 // 효과 버튼 상자. `effectsLayout`에 따라 전부 펼치거나, 버튼 하나로 접거나, 한 줄만 보이고 나머지는 팝오버로 둔다.
 // 규칙과 이유는 docs/design/05-effect-panel-layout.md를 따른다.
 import { useId, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { useElementWidth } from "../hooks/useElementWidth";
 import { keepSpaceForButton, usePopoverDismiss } from "../hooks/usePopoverDismiss";
 import type { Messages } from "../i18n";
 import styles from "./sound-editor.module.css";
@@ -10,8 +11,19 @@ import styles from "./sound-editor.module.css";
  * - `"expanded"`: 전체를 펼쳐 놓고 폭이 모자라면 줄바꿈한다.
  * - `"minimized"`: `Effects` 버튼 하나만 두고, 누르면 전체가 팝오버로 뜬다.
  * - `"overflow"`: 한 줄만 보이고, 들어가지 못한 효과는 `⋯` 버튼의 팝오버로 뜬다.
+ * - `"auto"`: 효과 상자 폭이 `AUTO_OVERFLOW_BELOW`(px) 이상이면 `"expanded"`, 미만이면 `"overflow"`로 바뀐다.
  */
-export type EffectsLayout = "expanded" | "minimized" | "overflow";
+export type EffectsLayout = "expanded" | "minimized" | "overflow" | "auto";
+
+/**
+ * `"auto"`가 `"overflow"`로 바뀌는 효과 상자 폭(px). 이 값 미만이면 overflow다.
+ * 영어 문구에서 상자 폭 572px는 3줄, 532px는 4줄이다. 4줄 이상이 되기 전까지 펼친다.
+ * 문구가 길면 같은 폭에서 줄 수가 늘어나지만 기준은 폭 하나로 고정한다. 폭만으로 정해야 모드가 폭에 대해 안정적이다.
+ */
+export const AUTO_OVERFLOW_BELOW = 560;
+
+/** 폭을 재기 전(첫 그리기 전)이나 레이아웃이 없을 때(jsdom, 서버 렌더링)는 펼친다 */
+const AUTO_FALLBACK_WIDTH = Number.POSITIVE_INFINITY;
 
 export type EffectPanelProps = {
   layout: EffectsLayout;
@@ -21,13 +33,33 @@ export type EffectPanelProps = {
 };
 
 export function EffectPanel({ layout, messages, children }: EffectPanelProps) {
+  if (layout === "auto") return <AutoEffects messages={messages}>{children}</AutoEffects>;
   if (layout === "minimized")
     return <MinimizedEffects messages={messages}>{children}</MinimizedEffects>;
   if (layout === "overflow")
     return <OverflowEffects messages={messages}>{children}</OverflowEffects>;
+  return <ExpandedEffects messages={messages}>{children}</ExpandedEffects>;
+}
+
+function ExpandedEffects({ messages, children }: Pick<EffectPanelProps, "messages" | "children">) {
   return (
     <div role="group" aria-label={messages.effects} className={styles.effectChips}>
       {children}
+    </div>
+  );
+}
+
+/**
+ * 자기 폭을 재서 `expanded`와 `overflow` 중 하나를 그린다.
+ * 폭은 어느 모드에서나 같은 바깥 상자에서 잰다. 그래야 모드를 바꿔도 잰 폭이 달라지지 않아 둘 사이를 오가지 않는다.
+ * 모드가 바뀌면 안쪽 컴포넌트를 다시 만든다. 열려 있던 팝오버는 닫힌다.
+ */
+function AutoEffects({ messages, children }: Pick<EffectPanelProps, "messages" | "children">) {
+  const [width, ref] = useElementWidth(AUTO_FALLBACK_WIDTH);
+  const Inner = width < AUTO_OVERFLOW_BELOW ? OverflowEffects : ExpandedEffects;
+  return (
+    <div ref={ref}>
+      <Inner messages={messages}>{children}</Inner>
     </div>
   );
 }

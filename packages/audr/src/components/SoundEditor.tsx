@@ -130,6 +130,7 @@ export type SoundEditorProps = {
    * 효과 버튼을 보이는 방식. 기본값은 `"expanded"`(전체를 펼치고 줄바꿈)다.
    * `"minimized"`는 `Effects` 버튼 하나만 두고 팝오버로 연다.
    * `"overflow"`는 한 줄만 보이고 나머지는 `⋯` 버튼의 팝오버로 연다.
+   * `"auto"`는 효과 상자 폭이 560px 이상이면 `"expanded"`, 미만이면 `"overflow"`로 바뀐다.
    */
   effectsLayout?: EffectsLayout;
 };

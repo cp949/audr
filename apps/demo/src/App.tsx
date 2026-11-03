@@ -24,6 +24,7 @@ const EFFECTS_LAYOUTS: { value: EffectsLayout; label: string }[] = [
   { value: "expanded", label: "Expanded" },
   { value: "minimized", label: "Minimized" },
   { value: "overflow", label: "Overflow" },
+  { value: "auto", label: "Auto" },
 ];
 
 const THEMES: { value: "" | AudrTheme; label: string }[] = [
