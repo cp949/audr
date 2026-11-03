@@ -72,7 +72,7 @@ import { SoundEditor } from "@cp949/audr";
 
 효과 적용 범위 표시:
 
-- 선택이 있으면 맨 아래 줄 왼쪽에 `Effects apply to: selection`을 보인다. 한국어는 `효과 적용 범위: 선택 구간`이다. 소리 전체에 적용할 때의 `Effects apply to: whole sound`(`효과 적용 범위: 소리 전체`)는 화면에 보이지 않고 스크린 리더만 읽는다.
+- `Effects apply to: whole sound`와 `Effects apply to: selection`은 화면에 보이지 않고 스크린 리더만 읽는다. 한국어는 `효과 적용 범위: 소리 전체`, `효과 적용 범위: 선택 구간`이다. 선택 구간은 파형 위 범위 문구와 핸들로 보인다.
 - 효과(Faster, Slower, Louder, Softer, Fade in, Fade out, Cyborg, Robot, Alien, Echo, Broadcast, Walkie-talkie, Reverse reverb, Scratch, Roller coaster, Stutter, Vibrato, Reverse)는 확정된 선택이 있으면 그 구간에, 없으면 소리 전체에 적용된다. 문구는 이 기준을 따른다.
 - Copy와 Copy to New도 선택이 있으면 그 구간을, 없으면 전체를 복사한다. 이 두 버튼에는 문구를 연결하지 않았다.
 - Delete는 선택이 있을 때만 켜진다. Paste는 선택이 있으면 그 구간을 교체하고, 없으면 끝에 붙인다.

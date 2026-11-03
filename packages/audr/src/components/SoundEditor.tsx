@@ -184,8 +184,8 @@ export function SoundEditor({
   // 효과는 훅의 선택(trim)을 기준으로 적용된다. 드래그 중 임시 선택(preview)은 쓰지 않는다.
   // 새 선택은 누르는 순간 길이 0으로 trim에 들어가므로 길이 0 선택도 선택 구간으로 표시한다(효과도 그 지점에 적용된다)
   const scopeId = useId();
-  const scopeIsWhole = trimStart === null || trimEnd === null;
-  const effectScopeText = scopeIsWhole ? m.effectScopeWhole : m.effectScopeSelection;
+  const effectScopeText =
+    trimStart === null || trimEnd === null ? m.effectScopeWhole : m.effectScopeSelection;
 
   return (
     <div
@@ -357,9 +357,9 @@ export function SoundEditor({
       <div className={styles.timeReadout}>
         {/*
           효과 버튼이 aria-describedby로 가리킨다. 선택을 끌 때마다 낭독되지 않도록 aria-live는 달지 않는다.
-          소리 전체에 적용할 때는 화면에 보이지 않고 보조기기만 읽는다. 선택이 있을 때만 화면에 보인다
+          화면에는 보이지 않고 보조기기만 읽는다. 선택 구간은 파형 위 범위 문구와 핸들로 이미 보인다
         */}
-        <span id={scopeId} className={scopeIsWhole ? styles.visuallyHidden : undefined}>
+        <span id={scopeId} className={styles.visuallyHidden}>
           {effectScopeText}
         </span>
         {playhead !== null ? (

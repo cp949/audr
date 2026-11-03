@@ -258,7 +258,7 @@ describe("SoundEditor 시간 표시줄", () => {
     expect(container.querySelector('[class*="timeReadout"]')?.contains(label)).toBe(false);
   });
 
-  it("소리 전체에 적용할 때 적용 범위 문구는 화면에서 숨기고, 선택이 있으면 보인다", async () => {
+  it("적용 범위 문구는 선택 여부와 관계없이 화면에서 숨기고 효과 버튼의 설명으로만 남긴다", async () => {
     const { container } = setupOneSecond();
     const hidden = screen.getByText(en.effectScopeWhole);
     expect(hidden.className).toContain("visuallyHidden");
@@ -268,7 +268,7 @@ describe("SoundEditor 시간 표시줄", () => {
       .getAttribute("aria-describedby");
     expect(describedBy).toBe(hidden.id);
     await dragSelect(container, 250, 750);
-    expect(screen.getByText(en.effectScopeSelection).className).not.toContain("visuallyHidden");
+    expect(screen.getByText(en.effectScopeSelection).className).toContain("visuallyHidden");
   });
 
   it("소수점 기호는 locale을 따른다", async () => {

@@ -313,12 +313,14 @@ test.describe("UI 경유 (데모 화면)", () => {
     return { wave, label, innerX: wave.x + 1, innerWidth: wave.width - 2 };
   }
 
-  test("선택 범위 문구는 파형 바로 위에 있고 소리 전체일 때의 적용 범위 문구는 보이지 않는다", async ({
+  test("선택 범위 문구는 파형 바로 위에 있고 효과 적용 범위 문구는 화면에 보이지 않는다", async ({
     page,
   }) => {
     const whole = await page.getByText("Effects apply to: whole sound").boundingBox();
     expect(whole && whole.width <= 1).toBe(true);
     await dragSelect(page, 0.2, 0.8);
+    const selection = await page.getByText("Effects apply to: selection").boundingBox();
+    expect(selection && selection.width <= 1).toBe(true);
     const { wave, label } = await selectionLabelGeometry(page);
     // 파형 윗변 위에 있고, 위 줄(편집 버튼)과 겹치지 않을 만큼만 올라온다
     expect(label.y + label.height).toBeLessThanOrEqual(wave.y + 0.5);
