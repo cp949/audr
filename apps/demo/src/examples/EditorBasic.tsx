@@ -1,16 +1,7 @@
-import { SoundEditor, type SoundBuffer } from "@cp949/audr";
+import { SoundEditor } from "@cp949/audr";
 import { createWavBlob, decodeAudioFile, maxEditableSamples } from "@cp949/audr-core";
 import { useState, type ChangeEvent } from "react";
-
-/** 에디터에 처음 넣을 440Hz 사인파 1초 */
-function createSine(): SoundBuffer {
-  const sampleRate = 44100;
-  const samples = Float32Array.from(
-    { length: sampleRate },
-    (_, i) => 0.5 * Math.sin((2 * Math.PI * 440 * i) / sampleRate),
-  );
-  return { samples, sampleRate };
-}
+import { createSine } from "./sampleSound";
 
 /**
  * 예제: SoundEditor 하나로 파일을 열고, 고치고, WAV로 내려받는다. 소리는 하나만 다룬다.

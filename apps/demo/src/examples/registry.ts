@@ -2,6 +2,8 @@ import type { ComponentType } from "react";
 import { App } from "../App";
 import { EditorBasicExample } from "./EditorBasic";
 import editorBasicSource from "./EditorBasic.tsx?raw";
+import { ThemeAndLocaleExample } from "./ThemeAndLocale";
+import themeAndLocaleSource from "./ThemeAndLocale.tsx?raw";
 import { RecordOnlyExample } from "./RecordOnly";
 import recordOnlySource from "./RecordOnly.tsx?raw";
 
@@ -37,6 +39,13 @@ export const EXAMPLES: Example[] = [
     summary: "SoundEditor 하나로 파일을 열고, 편집하고, WAV로 내려받는다.",
     Component: EditorBasicExample,
     source: editorBasicSource,
+  },
+  {
+    id: "theme-locale",
+    title: "테마와 언어",
+    summary: "theme, locale, messages로 색과 문구를 호스트가 정한다.",
+    Component: ThemeAndLocaleExample,
+    source: themeAndLocaleSource,
   },
   {
     id: "record",
