@@ -203,6 +203,8 @@ export function SoundEditor({
       : "";
   // 효과는 훅의 선택(trim)을 기준으로 적용된다. 드래그 중 임시 선택(preview)은 쓰지 않는다.
   // 새 선택은 누르는 순간 길이 0으로 trim에 들어가므로 길이 0 선택도 선택 구간으로 표시한다(효과도 그 지점에 적용된다)
+  // 소리가 비어 있으면 재생·복사·효과는 할 일이 없으므로 막는다. 붙이기는 빈 소리에도 된다
+  const isEmpty = durationSeconds === 0;
   const scopeId = useId();
   const effectScopeText =
     trimStart === null || trimEnd === null ? m.effectScopeWhole : m.effectScopeSelection;
@@ -255,6 +257,7 @@ export function SoundEditor({
         <div className={styles.inputGroup}>
           <IconButton
             className={styles.toolButton}
+            disabled={isEmpty}
             img={copyIcon}
             title={m.copy}
             tooltip={tip(m.copy, "copy")}
@@ -272,6 +275,7 @@ export function SoundEditor({
           />
           <IconButton
             className={styles.toolButton}
+            disabled={isEmpty}
             img={copyToNewIcon}
             title={m.copyToNew}
             onClick={onCopyToNew}
@@ -288,7 +292,8 @@ export function SoundEditor({
                 세로 기준선이 25%·50%·75% 눈금선을 겸한다
               */}
               <div className={styles.ruler} aria-hidden="true">
-                {RULER_POSITIONS.map((fraction) => (
+                {/* 길이가 0이면 모든 눈금이 0.00이라 겹쳐 보이므로 전체 길이만 둔다 */}
+                {(isEmpty ? [] : RULER_POSITIONS).map((fraction) => (
                   <span
                     key={fraction}
                     className={styles.rulerTick}
@@ -387,6 +392,7 @@ export function SoundEditor({
               <button
                 type="button"
                 className={styles.playButton}
+                disabled={isEmpty}
                 aria-label={m.play}
                 title={tip(m.play, "playStop")}
                 aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.playStop)}
@@ -421,7 +427,7 @@ export function SoundEditor({
                         key={effect}
                         className={styles.effectButton}
                         describedBy={scopeId}
-                        disabled={blocked || busy}
+                        disabled={blocked || busy || isEmpty}
                         disabledReason={blocked ? m.tooLoudHint : undefined}
                         img={icon}
                         title={m[label]}

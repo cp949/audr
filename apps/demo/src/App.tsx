@@ -186,13 +186,6 @@ export function App() {
         <button type="button" onClick={() => setRecording(true)}>
           Record
         </button>
-        {/* 길이 0 소리에서 편집기가 어떻게 보이는지 확인하는 데모 전용 버튼 */}
-        <button
-          type="button"
-          onClick={() => addSound({ samples: new Float32Array(0), sampleRate: 44100 }, "empty")}
-        >
-          New empty sound
-        </button>
         <input type="file" accept="audio/*" aria-label="Import sound" onChange={importFile} />
         <label className="themePicker">
           Theme

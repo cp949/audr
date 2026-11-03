@@ -702,22 +702,40 @@ describe("SoundEditor 길이 0 samples", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("빈 samples에서 Play와 효과 버튼을 눌러도 크래시하지 않는다", async () => {
-    const { onChange } = setup({ samples: new Float32Array(0) });
-    // 실제 applyEffect는 2샘플 미만이면 입력 버퍼를 그대로 돌려준다
-    mockedApplyEffect.mockImplementation(async (buffer, _n, s, e) => ({
-      buffer,
-      trimStart: s,
-      trimEnd: e,
-    }));
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: en.play })));
-    expect(FakeAudioBufferPlayer.last.play).toHaveBeenCalledTimes(1);
-    for (const label of [en.faster, en.reverse, en.robot]) {
-      await act(async () => fireEvent.click(screen.getByRole("button", { name: label })));
+  it("빈 samples에서는 Play, Copy, Copy to New와 모든 효과 버튼이 비활성이다", async () => {
+    setup({ samples: new Float32Array(0) });
+    await act(async () => {});
+    const disabled = (name: string) =>
+      (screen.getByRole("button", { name }) as HTMLButtonElement).disabled;
+    for (const name of [en.play, en.copy, en.copyToNew, en.faster, en.reverse, en.robot, en.echo]) {
+      expect(disabled(name), name).toBe(true);
     }
-    expect(mockedApplyEffect).toHaveBeenCalledTimes(3);
+    // 효과 버튼 전체: 화면에 보이는 효과마다 비활성이어야 한다
+    for (const { label } of VISIBLE_EFFECTS) {
+      expect(disabled(en[label]), label).toBe(true);
+    }
+  });
+
+  it("빈 samples에서 효과 버튼을 눌러도 효과를 실행하지 않는다", async () => {
+    const { onChange } = setup({ samples: new Float32Array(0) });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: en.faster })));
+    expect(mockedApplyEffect).not.toHaveBeenCalled();
     expect(onChange).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: en.faster })).toBeTruthy();
+  });
+
+  it("소리가 있으면 Play, Copy, 효과 버튼이 활성이다", () => {
+    setup();
+    for (const name of [en.play, en.copy, en.copyToNew, en.faster]) {
+      expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled, name).toBe(
+        false,
+      );
+    }
+  });
+
+  it("빈 samples의 눈금자는 의미 없는 0.00 눈금을 빼고 전체 길이만 보인다", () => {
+    const { container } = setup({ samples: new Float32Array(0) });
+    const ruler = container.querySelector('[class*="ruler"]') as HTMLElement;
+    expect(Array.from(ruler.children).map((c) => c.textContent)).toEqual(["0.00 s"]);
   });
 });
 

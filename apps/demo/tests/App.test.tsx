@@ -206,17 +206,6 @@ describe("데모 App 소리 내려받기", () => {
   });
 });
 
-describe("데모 App 빈 소리 추가", () => {
-  it("New empty sound는 길이 0 소리를 추가하고 선택한다", async () => {
-    render(<App />);
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "New empty sound" })));
-    expect(items().length).toBe(2);
-    expect(nameInput().value).toBe("empty");
-    const button = within(items()[1] as HTMLElement).getByRole("button");
-    expect(button.getAttribute("data-samples")).toBe("0");
-  });
-});
-
 describe("데모 App 소리 삭제", () => {
   const remove = () => screen.getByRole("button", { name: "Remove sound" });
 

@@ -227,6 +227,12 @@
   user-select: none;
 }
 
+/* 소리가 비면 재생할 것이 없다. 흐리게 하고 누를 수 없음을 보인다 */
+.playButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .playButton > img {
   width: 1.25rem;
   height: 1.25rem;
