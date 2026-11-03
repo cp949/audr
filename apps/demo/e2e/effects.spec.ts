@@ -293,6 +293,63 @@ test.describe("UI 경유 (데모 화면)", () => {
     expect(last.x + last.width).toBeLessThanOrEqual(wave.x + wave.width + 0.5);
   });
 
+  test("전체 길이는 파형 아래 오른쪽 끝에 있고 파형을 가리지 않는다", async ({ page }) => {
+    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+    const length = await page.getByText(/^\d+\.\d\d s$/).boundingBox();
+    const play = await editorButton(page, "Play").boundingBox();
+    if (!wave || !length || !play) throw new Error("요소의 위치를 구하지 못했다");
+    // 파형 바로 아래: 파형 밑변보다 아래이고 재생 버튼 줄보다 위다
+    expect(length.y).toBeGreaterThanOrEqual(wave.y + wave.height - 0.5);
+    expect(length.y + length.height).toBeLessThanOrEqual(play.y);
+    // 오른쪽 끝을 파형의 오른쪽 끝에 맞춘다
+    expect(Math.abs(length.x + length.width - (wave.x + wave.width))).toBeLessThanOrEqual(1);
+  });
+
+  /** 선택 범위 문구와 파형 상자의 위치. x는 파형 안쪽(테두리 1px 안) 기준이다 */
+  async function selectionLabelGeometry(page: Page) {
+    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+    const label = await page.getByText(/^\d+\.\d\d–\d+\.\d\d s \(/).boundingBox();
+    if (!wave || !label) throw new Error("파형이나 범위 문구의 위치를 구하지 못했다");
+    return { wave, label, innerX: wave.x + 1, innerWidth: wave.width - 2 };
+  }
+
+  test("선택 범위 문구는 파형 바로 위에 있고 소리 전체일 때의 적용 범위 문구는 보이지 않는다", async ({
+    page,
+  }) => {
+    const whole = await page.getByText("Effects apply to: whole sound").boundingBox();
+    expect(whole && whole.width <= 1).toBe(true);
+    await dragSelect(page, 0.2, 0.8);
+    const { wave, label } = await selectionLabelGeometry(page);
+    // 파형 윗변 위에 있고, 위 줄(편집 버튼)과 겹치지 않을 만큼만 올라온다
+    expect(label.y + label.height).toBeLessThanOrEqual(wave.y + 0.5);
+    expect(wave.y - label.y).toBeLessThanOrEqual(20);
+  });
+
+  test("선택이 넓으면 범위 문구가 선택의 가운데에 온다", async ({ page }) => {
+    await dragSelect(page, 0.2, 0.8);
+    const { label, innerX, innerWidth } = await selectionLabelGeometry(page);
+    const selectionCenter = innerX + innerWidth * 0.5;
+    expect(Math.abs(label.x + label.width / 2 - selectionCenter)).toBeLessThanOrEqual(2);
+  });
+
+  // 선택 핸들은 시작선 왼쪽과 끝선 오른쪽으로 30px 나온다. 좁은 선택의 문구는 그 바깥에 둔다
+  test("선택이 좁으면 끝 핸들 오른쪽에 둔다", async ({ page }) => {
+    await dragSelect(page, 0.05, 0.07);
+    const { label, innerX, innerWidth } = await selectionLabelGeometry(page);
+    expect(Math.abs(label.x - (innerX + innerWidth * 0.07 + 30))).toBeLessThanOrEqual(2);
+  });
+
+  test("선택이 좁고 오른쪽 끝에 붙어 있으면 시작 핸들 왼쪽에 두어 파형 안에 머문다", async ({
+    page,
+  }) => {
+    await dragSelect(page, 0.93, 0.95);
+    const { wave, label, innerX, innerWidth } = await selectionLabelGeometry(page);
+    expect(Math.abs(label.x + label.width - (innerX + innerWidth * 0.93 - 30))).toBeLessThanOrEqual(
+      2,
+    );
+    expect(label.x + label.width).toBeLessThanOrEqual(wave.x + wave.width);
+  });
+
   test("기본 글꼴 크기를 150%로 키워도 이웃한 효과 라벨이 겹치지 않는다", async ({ page }) => {
     await page.evaluate(() => {
       document.documentElement.style.fontSize = "24px";

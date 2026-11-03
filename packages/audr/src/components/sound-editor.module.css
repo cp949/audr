@@ -40,6 +40,36 @@
   border-right: 1px dashed var(--audr-ui-black-transparent);
 }
 
+/* 파형과 그 아래 전체 길이를 묶는다. 전체 길이를 파형 아래 여백에 띄우는 기준 상자다 */
+.waveformArea {
+  position: relative;
+  width: 100%;
+}
+
+/* 파형 아래 여백(20px) 안, 파형 오른쪽 끝에 맞춘다. 효과 버튼 라벨과 같은 크기이고 높이 12px이라 여백을 넘지 않는다 */
+.totalLength {
+  position: absolute;
+  right: 0;
+  bottom: 4px;
+  font-size: 0.625rem;
+  line-height: 0.75rem;
+  color: var(--audr-text-primary);
+  white-space: nowrap;
+}
+
+/* 화면에는 보이지 않고 보조기기만 읽는 텍스트. 레이아웃에 자리를 차지하지 않는다. */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 .waveformContainer {
   display: flex;
   justify-content: space-around;

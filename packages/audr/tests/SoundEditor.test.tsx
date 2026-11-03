@@ -212,7 +212,7 @@ describe("SoundEditor 시간 표시줄", () => {
 
   it("선택과 재생이 없으면 전체 길이만 보인다", () => {
     setupOneSecond();
-    expect(screen.getByText("Length 1.00 s")).toBeTruthy();
+    expect(screen.getByText("1.00 s")).toBeTruthy();
     expect(screen.queryByText(/Selection/)).toBeNull();
     expect(screen.queryByText(/Playing/)).toBeNull();
   });
@@ -220,28 +220,76 @@ describe("SoundEditor 시간 표시줄", () => {
   it("선택하면 시작–끝과 선택 길이를 소수 둘째 자리 초로 보인다", async () => {
     const { container } = setupOneSecond();
     await dragSelect(container, 250, 750);
-    expect(screen.getByText("Selection 0.25–0.75 s (0.50 s)")).toBeTruthy();
+    expect(screen.getByText("0.25–0.75 s (0.50 s)")).toBeTruthy();
+  });
+
+  it("선택 범위는 숫자와 단위만 보이고 보조기기는 앞에 'Selection'을 붙여 읽는다", async () => {
+    const { container } = setupOneSecond();
+    await dragSelect(container, 250, 750);
+    expect(screen.getByText("0.25–0.75 s (0.50 s)").getAttribute("aria-hidden")).toBe("true");
+    expect(
+      screen.getByText("Selection 0.25–0.75 s (0.50 s)").getAttribute("aria-hidden"),
+    ).toBeNull();
+  });
+
+  it("전체 길이는 숫자와 단위만 보이고 보조기기는 앞에 '길이'를 붙여 읽는다", () => {
+    setupOneSecond();
+    const visible = screen.getByText("1.00 s");
+    expect(visible.getAttribute("aria-hidden")).toBe("true");
+    // 화면에는 보이지 않는 읽기용 문구
+    expect(screen.getByText("Length 1.00 s").getAttribute("aria-hidden")).toBeNull();
+    expect(screen.queryByText("Length")).toBeNull();
   });
 
   it("한국어 로케일이면 한국어 문구를 쓴다", async () => {
     const { container } = setupOneSecond({ locale: "ko" });
+    expect(screen.getByText("1.00초")).toBeTruthy();
     expect(screen.getByText("길이 1.00초")).toBeTruthy();
     await dragSelect(container, 250, 750);
+    expect(screen.getByText("0.25–0.75초 (0.50초)")).toBeTruthy();
     expect(screen.getByText("선택 0.25–0.75초 (0.50초)")).toBeTruthy();
+  });
+
+  it("선택 구간의 범위 문구는 파형 상자 안에 있고 시간 표시줄에는 없다", async () => {
+    const { container } = setupOneSecond();
+    await dragSelect(container, 250, 750);
+    const label = screen.getByText("0.25–0.75 s (0.50 s)");
+    expect(container.querySelector('[class*="waveformContainer"]')?.contains(label)).toBe(true);
+    expect(container.querySelector('[class*="timeReadout"]')?.contains(label)).toBe(false);
+  });
+
+  it("소리 전체에 적용할 때 적용 범위 문구는 화면에서 숨기고, 선택이 있으면 보인다", async () => {
+    const { container } = setupOneSecond();
+    const hidden = screen.getByText(en.effectScopeWhole);
+    expect(hidden.className).toContain("visuallyHidden");
+    // 효과 버튼의 설명이 가리키는 요소라 DOM에는 남는다
+    const describedBy = screen
+      .getByRole("button", { name: en.faster })
+      .getAttribute("aria-describedby");
+    expect(describedBy).toBe(hidden.id);
+    await dragSelect(container, 250, 750);
+    expect(screen.getByText(en.effectScopeSelection).className).not.toContain("visuallyHidden");
   });
 
   it("소수점 기호는 locale을 따른다", async () => {
     const { container } = setupOneSecond({ locale: "de" });
+    expect(screen.getByText("1,00 s")).toBeTruthy();
     expect(screen.getByText("Length 1,00 s")).toBeTruthy();
     await dragSelect(container, 250, 750);
+    expect(screen.getByText("0,25–0,75 s (0,50 s)")).toBeTruthy();
     expect(screen.getByText("Selection 0,25–0,75 s (0,50 s)")).toBeTruthy();
   });
 
   it("messages로 넘긴 문구가 locale 문구보다 우선하고 나머지는 locale 문구를 쓴다", () => {
     setupOneSecond({
       locale: "ko",
-      messages: { timeLength: "Dauer {seconds} s", play: "Abspielen" },
+      messages: {
+        timeLengthValue: "{seconds} Sek.",
+        timeLength: "Dauer {seconds} s",
+        play: "Abspielen",
+      },
     });
+    expect(screen.getByText("1.00 Sek.")).toBeTruthy();
     expect(screen.getByText("Dauer 1.00 s")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Abspielen" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "복사" })).toBeTruthy();
@@ -302,9 +350,9 @@ describe("SoundEditor 시간 표시줄", () => {
     const { container } = setupOneSecond();
     await dragSelect(container, 250, 750);
     await act(async () => fireEvent.click(screen.getByRole("button", { name: en.delete })));
-    await waitFor(() => expect(screen.getByText("Length 0.50 s")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("0.50 s")).toBeTruthy());
     await act(async () => fireEvent.click(screen.getByRole("button", { name: en.undo })));
-    await waitFor(() => expect(screen.getByText("Length 1.00 s")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("1.00 s")).toBeTruthy());
   });
 });
 

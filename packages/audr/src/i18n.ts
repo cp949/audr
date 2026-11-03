@@ -46,9 +46,15 @@ const en = {
   trimEnd: "Trim end",
   /** 핸들 위치를 시간으로 읽을 때 쓴다. {seconds}는 초다. 소리가 1초 이상이면 소수 둘째 자리, 1초 미만이면 셋째 자리까지 쓴다 */
   seconds: "{seconds} seconds",
-  /** 에디터 아래 시간 표시줄. {seconds}, {start}, {end}, {length}는 소수 둘째 자리 초다 */
+  /**
+   * 소리 전체 길이. 파형 아래 오른쪽에는 `timeLengthValue`만 보이고, 보조기기는 `timeLength`를 읽는다.
+   * {seconds}, {start}, {end}, {length}는 소수 둘째 자리 초다
+   */
   timeLength: "Length {seconds} s",
+  timeLengthValue: "{seconds} s",
+  /** 선택 구간. 파형 위에는 `timeSelectionValue`만 보이고, 보조기기는 `timeSelection`을 읽는다 */
   timeSelection: "Selection {start}–{end} s ({length} s)",
+  timeSelectionValue: "{start}–{end} s ({length} s)",
   timePlaying: "Playing {seconds} s",
   /** 효과 버튼이 적용되는 범위. 확정된 선택이 있으면 선택 구간, 없으면 소리 전체다. 시간 표시줄에 보이고 효과 버튼의 설명으로도 읽힌다 */
   effectScopeWhole: "Effects apply to: whole sound",
@@ -153,7 +159,9 @@ const ko: Messages = {
   trimEnd: "자르기 끝",
   seconds: "{seconds}초",
   timeLength: "길이 {seconds}초",
+  timeLengthValue: "{seconds}초",
   timeSelection: "선택 {start}–{end}초 ({length}초)",
+  timeSelectionValue: "{start}–{end}초 ({length}초)",
   timePlaying: "재생 {seconds}초",
   effectScopeWhole: "효과 적용 범위: 소리 전체",
   effectScopeSelection: "효과 적용 범위: 선택 구간",

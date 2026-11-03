@@ -39,6 +39,7 @@ import { AudioSelector } from "./AudioSelector";
 import { IconButton } from "./IconButton";
 import { NameInput } from "./NameInput";
 import styles from "./sound-editor.module.css";
+import { SelectionLabel } from "./SelectionLabel";
 import { ShortcutHelp } from "./ShortcutHelp";
 import { Waveform } from "./Waveform";
 
@@ -172,11 +173,19 @@ export function SoundEditor({
     effect: m.editErrorEffect,
   };
   const sec = (position: number) => formatSeconds(position * durationSeconds);
+  /** 선택 구간 문구의 {start}, {end}, {length}를 채운다. 선택이 없으면 쓰지 않는다 */
+  const fillRange = (template: string) =>
+    selection
+      ? template
+          .replace("{start}", sec(selection.start))
+          .replace("{end}", sec(selection.end))
+          .replace("{length}", sec(selection.end - selection.start))
+      : "";
   // 효과는 훅의 선택(trim)을 기준으로 적용된다. 드래그 중 임시 선택(preview)은 쓰지 않는다.
   // 새 선택은 누르는 순간 길이 0으로 trim에 들어가므로 길이 0 선택도 선택 구간으로 표시한다(효과도 그 지점에 적용된다)
   const scopeId = useId();
-  const effectScopeText =
-    trimStart !== null && trimEnd !== null ? m.effectScopeSelection : m.effectScopeWhole;
+  const scopeIsWhole = trimStart === null || trimEnd === null;
+  const effectScopeText = scopeIsWhole ? m.effectScopeWhole : m.effectScopeSelection;
 
   return (
     <div
@@ -259,20 +268,43 @@ export function SoundEditor({
         />
       </div>
       <div className={styles.row}>
-        <div className={styles.waveformContainer}>
-          <Waveform data={chunkLevels} height={160} width={600} />
-          {/* 끄는 중 소리가 전환되면 드래그를 버린다. 끝날 때 이전 소리에서 잡은 구간이 새 소리의 선택이 되지 않게 한다 */}
-          <AudioSelector
-            key={switchCount}
-            playhead={playhead}
-            trimStart={trimStart}
-            trimEnd={trimEnd}
-            onSetTrim={onSetTrim}
-            startLabel={m.selectionStart}
-            endLabel={m.selectionEnd}
-            valueText={secondsValueText(m, formatSeconds, durationSeconds)}
-            onPreviewChange={setPreview}
-          />
+        <div className={styles.waveformArea}>
+          <div className={styles.waveformContainer}>
+            <Waveform data={chunkLevels} height={160} width={600} />
+            {/* 끄는 중 소리가 전환되면 드래그를 버린다. 끝날 때 이전 소리에서 잡은 구간이 새 소리의 선택이 되지 않게 한다 */}
+            <AudioSelector
+              key={switchCount}
+              playhead={playhead}
+              trimStart={trimStart}
+              trimEnd={trimEnd}
+              onSetTrim={onSetTrim}
+              startLabel={m.selectionStart}
+              endLabel={m.selectionEnd}
+              valueText={secondsValueText(m, formatSeconds, durationSeconds)}
+              onPreviewChange={setPreview}
+            />
+            {/* 선택 구간의 시간 범위. 파형 바로 위에 띄우고, 드래그하는 동안 임시 선택(preview)도 따라간다 */}
+            {selection ? (
+              <SelectionLabel
+                start={selection.start}
+                end={selection.end}
+                text={fillRange(m.timeSelectionValue)}
+                readText={fillRange(m.timeSelection)}
+              />
+            ) : null}
+          </div>
+          {/*
+            파형 아래 여백의 오른쪽 끝에 띄운다. 파형과 선택 영역을 가리지 않고 줄 높이도 바꾸지 않는다.
+            화면에는 숫자와 단위만 보이고, 보조기기는 "길이"가 붙은 문구를 읽는다
+          */}
+          <span className={styles.totalLength}>
+            <span aria-hidden="true">
+              {m.timeLengthValue.replace("{seconds}", formatSeconds(durationSeconds))}
+            </span>
+            <span className={styles.visuallyHidden}>
+              {m.timeLength.replace("{seconds}", formatSeconds(durationSeconds))}
+            </span>
+          </span>
         </div>
       </div>
       <div className={styles.row}>
@@ -323,20 +355,13 @@ export function SoundEditor({
       </div>
       {/* 화면용 정보다. 재생 위치가 프레임마다 바뀌므로 aria-live를 달지 않는다(스크린 리더는 핸들의 aria-valuetext를 쓴다) */}
       <div className={styles.timeReadout}>
-        <span>{m.timeLength.replace("{seconds}", formatSeconds(durationSeconds))}</span>
         {/*
           효과 버튼이 aria-describedby로 가리킨다. 선택을 끌 때마다 낭독되지 않도록 aria-live는 달지 않는다.
-          Length 바로 뒤에 둬서 항상 있는 항목이 앞에 오고, 뒤의 선택·재생 항목만 늘고 준다
+          소리 전체에 적용할 때는 화면에 보이지 않고 보조기기만 읽는다. 선택이 있을 때만 화면에 보인다
         */}
-        <span id={scopeId}>{effectScopeText}</span>
-        {selection ? (
-          <span>
-            {m.timeSelection
-              .replace("{start}", sec(selection.start))
-              .replace("{end}", sec(selection.end))
-              .replace("{length}", sec(selection.end - selection.start))}
-          </span>
-        ) : null}
+        <span id={scopeId} className={scopeIsWhole ? styles.visuallyHidden : undefined}>
+          {effectScopeText}
+        </span>
         {playhead !== null ? (
           <span>{m.timePlaying.replace("{seconds}", sec(playhead))}</span>
         ) : null}
