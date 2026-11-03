@@ -90,4 +90,21 @@ describe("예제 소리 목록과 삭제", () => {
     expect(screen.queryByText(/소리가 없다/)).toBeNull();
     expect(editing()).toBe(names()[0]);
   });
+
+  it("다른 소리와 같은 이름으로는 바꿀 수 없고 원래 이름으로 돌아간다", () => {
+    render(<SoundListExample />);
+    const input = screen.getByLabelText("Sound") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Sine 660Hz" } });
+    fireEvent.blur(input);
+    expect(input.value).toBe("Sine 440Hz");
+    expect(names()).toEqual(["Sine 440Hz", "Sine 660Hz", "Sine 880Hz"]);
+  });
+
+  it("쓰지 않은 이름으로는 바꿀 수 있고 목록에 반영된다", () => {
+    render(<SoundListExample />);
+    const input = screen.getByLabelText("Sound") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Low A" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(names()).toEqual(["Low A", "Sine 660Hz", "Sine 880Hz"]);
+  });
 });

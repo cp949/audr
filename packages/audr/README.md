@@ -57,7 +57,8 @@ import { SoundEditor } from "@cp949/audr";
 | `name`          | `string`                                            | 이름 입력란에 보이는 이름.                                                                                                                                                                                                                                                    |
 | `onChange`      | `(buffer: SoundBuffer) => void`                     | 편집, undo, redo가 끝날 때마다 새 `samples`와 `sampleRate`로 호출한다. 이 콜백이 던진 예외는 `console.error`로만 남기고 편집은 반영된 채로 둔다.                                                                                                                              |
 | `onCopyToNew`   | `(buffer: SoundBuffer) => void`                     | Copy to New. 선택 구간(없으면 전체)을 넘긴다. 복사한 구간을 칠해 보인 뒤 600ms 뒤에 부른다. 그 사이 에디터가 사라지면 바로 부른다.                                                                                                                                            |
-| `onRename`      | `(name: string) => void`                            | 이름 입력란에서 Enter 또는 blur 했을 때 호출한다.                                                                                                                                                                                                                             |
+| `onRename`      | `(name: string) => void`                            | 이름 입력란에서 Enter 또는 blur로 새 이름을 적용할 때 호출한다. 타이핑하는 동안에는 부르지 않는다. 받는 값은 `validateName`을 통과한 이름이고 앞뒤 공백은 뗀 상태다. 바꾸지 않았으면 부르지 않는다.                                                                           |
+| `validateName`  | `(name: string) => boolean`                         | 이름 규칙. 앞뒤 공백을 뗀 이름을 받아 쓸 수 있으면 `true`를 돌려준다. 생략하면 비어 있지 않은 이름만 허용한다. 넘기면 기본 규칙을 대신하므로 빈 이름도 이 함수가 정한다.                                                                                                      |
 | `onError`       | `(error: SoundEditorError) => void`                 | 편집을 반영하지 못했을 때 호출한다. `error.kind`는 `"apply"`(용량 초과 등으로 반영 실패), `"paste"`, `"effect"`이고 `error.cause`에 원인이 있다. 화면 알림은 `errorNotice`가 따로 보인다.                                                                                     |
 | `errorNotice`   | `boolean`                                           | 편집 실패를 에디터 안에 보이는 기본 알림. 기본값은 `true`. 호스트가 자체 알림을 쓰면 `false`로 끈다. `onError`는 켜고 꺼도 호출한다. 자세한 내용은 아래 "편집 실패 알림".                                                                                                     |
 | `locale`        | `string`                                            | BCP 47 언어 태그. 기본값은 `"en"`. 자세한 내용은 "다국어".                                                                                                                                                                                                                    |
@@ -119,6 +120,14 @@ import { SoundEditor } from "@cp949/audr";
 - 다른 소리로 바뀌면(`soundId`) 새 소리를 기준으로 삼는다.
 
 효과 적용처럼 오래 걸리는 편집이 200ms를 넘게 넘게 이어지면 에디터 루트에 `aria-busy="true"`를 두고, 끝날 때까지 편집 버튼(Undo, Redo, Revert to original, Paste, 작업 막대의 Delete·Keep only selection과 효과 버튼 전체)을 비활성한다. Copy, Copy to New는 누를 수 있고 앞 편집이 끝난 뒤 그 결과를 복사한다. 재생은 그대로 쓸 수 있다. 단축키 편집은 막지 않고 차례로 처리한다.
+
+### 이름 입력
+
+- 타이핑하는 동안에는 `onRename`을 부르지 않는다. Enter 또는 blur에서 `validateName`으로 검사하고 통과하면 `onRename`을 한 번 부른다.
+- 이름이 바뀌지 않았으면(앞뒤 공백을 뗀 값이 `name`과 같으면) 부르지 않고 효과도 없다.
+- 검사에서 거절하면 `onRename`을 부르지 않는다. Enter에서는 포커스와 입력을 남겨 고칠 수 있게 하고, blur에서는 원래 `name`으로 되돌린다.
+- 적용하면 입력창 테두리가 0.9초 동안 초록으로, 거절하면 주황으로 칠해졌다가 옅어진다. 거절하는 동안 입력창에 `aria-invalid="true"`를 건다. 움직임을 줄이도록 설정했으면 옅어지지 않고 0.9초 뒤 한 번에 사라진다.
+- 한글 조합 중의 Enter는 조합 확정이므로 제출하지 않는다.
 
 ## RecordDialog
 

@@ -601,6 +601,27 @@ describe("SoundEditor 상호작용", () => {
     expect(onRename).toHaveBeenCalledWith("Enter");
   });
 
+  it("validateName을 넘기면 그 규칙으로 이름을 거르고, 거절하면 원래 이름으로 복원한다", () => {
+    const { onRename } = setup({ validateName: (name) => !name.includes("/") });
+    const input = screen.getByLabelText(en.sound) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "a/b" } });
+    fireEvent.blur(input);
+    expect(onRename).not.toHaveBeenCalled();
+    expect(input.value).toBe("Meow");
+    fireEvent.change(input, { target: { value: "ab" } });
+    fireEvent.blur(input);
+    expect(onRename).toHaveBeenCalledWith("ab");
+  });
+
+  it("validateName을 생략하면 빈 이름은 onRename으로 가지 않는다", () => {
+    const { onRename } = setup();
+    const input = screen.getByLabelText(en.sound) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "  " } });
+    fireEvent.blur(input);
+    expect(onRename).not.toHaveBeenCalled();
+    expect(input.value).toBe("Meow");
+  });
+
   it("이름을 바꾸지 않고 blur하면 onRename을 부르지 않는다", () => {
     const { onRename } = setup();
     fireEvent.blur(screen.getByLabelText(en.sound));

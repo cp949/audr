@@ -36,6 +36,8 @@ function removeSound({ sounds, selectedId }: Library, id: number): Library {
  *   실제 앱에서는 지우기 전에 확인을 받는 편이 안전하다.
  * - 소리가 하나도 없으면 `SoundEditor`를 그리지 않고 안내를 보인다.
  * - `onCopyToNew`는 복사한 구간을 새 소리로 목록에 더한다.
+ * - 이름 규칙은 호스트가 `validateName`으로 정한다. 여기서는 다른 소리와 같은 이름을 거절한다.
+ *   거절하면 `onRename`이 불리지 않고, blur에서는 원래 이름으로 돌아간다.
  * - `demo-*` 클래스는 데모 자체 스타일이다. audr가 요구하지 않는다.
  */
 export function SoundListExample() {
@@ -110,6 +112,9 @@ export function SoundListExample() {
             }
             onCopyToNew={(buffer) => addSound(buffer, `${selected.name} copy`)}
             onRename={(name) => updateSound(selected.id, { name })}
+            validateName={(name) =>
+              name.length > 0 && !sounds.some((s) => s.id !== selected.id && s.name === name)
+            }
           />
         </div>
       ) : (

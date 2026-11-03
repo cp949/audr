@@ -16,6 +16,14 @@
   font-weight: bold;
 }
 
+/* 결과 효과를 입력창 위에 겹치려는 기준 상자. 입력창이 이 상자를 채운다 */
+.field {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .inputForm {
   flex: 1 1 auto;
   height: 2rem;
@@ -52,9 +60,52 @@
   box-shadow: 0 0 0 0.25rem var(--audr-accent-transparent);
 }
 
+/*
+  이름을 적용하거나 거절했을 때 입력창 테두리를 잠깐 칠한다. 입력창 상자와 같은 크기로 위에 겹치고 입력을 막지 않는다.
+  처음 0.3초는 그대로 두어 눈에 들어오게 하고 나머지로 옅어진다. 길이는 NameInput.tsx의 FLASH_MS와 맞춘다.
+  top/right/bottom/left를 쓴다. inset은 Chrome 87부터다.
+*/
+.flash {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  border: 2px solid transparent;
+  border-radius: 2rem;
+  opacity: 0;
+  pointer-events: none;
+  animation: nameFlashFade 0.9s ease-out;
+}
+
+.flashSuccess {
+  border-color: var(--audr-success);
+  box-shadow: 0 0 0 0.25rem var(--audr-success-transparent);
+}
+
+.flashFail {
+  border-color: var(--audr-red-tertiary);
+  box-shadow: 0 0 0 0.25rem var(--audr-fail-transparent);
+}
+
+@keyframes nameFlashFade {
+  0%,
+  33% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 /* 움직임을 줄이도록 설정한 사용자에게는 장식용 전환 효과를 끈다 */
 @media (prefers-reduced-motion: reduce) {
   .inputForm {
     transition: none;
+  }
+
+  /* 서서히 옅어지는 대신 지속 시간이 끝나면 한 번에 지운다 */
+  .flash {
+    animation-timing-function: steps(1, end);
   }
 }

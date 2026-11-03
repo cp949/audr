@@ -111,7 +111,18 @@ export type SoundEditorProps = {
   onChange: (buffer: SoundBuffer) => void;
   /** Copy to New: 선택 구간(없으면 전체)을 새 소리로 만들도록 바깥에 넘긴다 */
   onCopyToNew: (buffer: SoundBuffer) => void;
+  /**
+   * 이름 입력란에서 Enter나 blur로 새 이름을 적용할 때 호출한다. 타이핑하는 동안에는 부르지 않는다.
+   * 받는 값은 `validateName`을 통과한 이름이고 앞뒤 공백은 뗀 상태다. 바꾸지 않았으면 부르지 않는다.
+   */
   onRename: (name: string) => void;
+  /**
+   * 이름 규칙. 앞뒤 공백을 뗀 이름을 받아 쓸 수 있으면 true를 돌려준다.
+   * 생략하면 비어 있지 않은 이름만 허용한다. 넘기면 기본 규칙을 대신하므로 빈 이름도 이 함수가 정한다.
+   * 거절한 이름은 `onRename`으로 가지 않는다. Enter에서는 입력을 남겨 고치게 하고, blur에서는 원래 이름으로 되돌린다.
+   * 적용하면 입력창 테두리에 잠깐 성공 효과가, 거절하면 실패 효과가 보인다.
+   */
+  validateName?: (name: string) => boolean;
   /**
    * 편집을 반영하지 못했을 때 호출한다(용량 초과, 붙이기·효과 실패).
    * `errorNotice`가 꺼져 있으면 화면에 아무 표시가 없으므로 호스트가 알림을 띄워야 한다.
@@ -245,6 +256,7 @@ export function SoundEditor({
           label={m.sound}
           value={props.name}
           onSubmit={props.onRename}
+          validate={props.validateName}
         />
         <div className={styles.buttonGroup}>
           <button

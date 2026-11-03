@@ -202,10 +202,16 @@ describe("데모 App 소리 내려받기", () => {
     expect(clicked[0]?.download).toBe("a_b_c_d__e.wav");
   });
 
-  it("이름이 비어 있으면 파일명은 sound.wav다", () => {
+  it("이름이 비어 있으면 파일명은 sound.wav다", async () => {
     render(<App />);
-    fireEvent.change(nameInput(), { target: { value: "" } });
-    fireEvent.blur(nameInput());
+    // 이름 입력란은 빈 이름을 거절한다. 확장자만 있는 파일을 가져오면 이름이 빈 소리가 생긴다
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("Import sound"), {
+        target: { files: [fileOf(".wav")] },
+      });
+    });
+    await waitFor(() => expect(items().length).toBe(2));
+    expect(nameInput().value).toBe("");
     fireEvent.click(screen.getByRole("button", { name: "Download WAV" }));
     expect(clicked[0]?.download).toBe("sound.wav");
   });

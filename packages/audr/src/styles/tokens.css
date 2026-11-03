@@ -24,6 +24,10 @@
     이 값은 라벨 배경이 파형과 겹친 가장 어두운 경우에도 4.5:1 이상이다(themeTokens.test.ts가 검사).
   */
   --audr-red-text: hsla(20, 100%, 33%, 1);
+  /* 이름 적용 결과 효과의 테두리 색. 테마와 무관하다. 흰 바탕에서 테두리 기준(3:1) 이상이다 */
+  --audr-success: hsla(145, 63%, 32%, 1);
+  --audr-success-transparent: hsla(145, 63%, 32%, 0.35);
+  --audr-fail-transparent: hsla(20, 100%, 45%, 0.35);
   /* 파형 */
   /* 밝은 바탕(녹음창)의 막대 색 */
   --audr-wave-fill: #07898e;
