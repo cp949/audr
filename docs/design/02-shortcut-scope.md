@@ -124,8 +124,19 @@ Space, Delete, Backspace, Escape는 `event.key`로 직접 판정한다. Space는
 
 - 판정에 키를 더하거나 바꾸면 `SHORTCUT_HELP`, `Messages.shortcutActions`(영어, 한국어), 이 문서의 해당 절을 함께 고친다.
 
-## ShortcutHelp 버튼의 Space
+## ShortcutHelp 팝오버의 Space와 Esc
+
+`ShortcutHelp`는 도구 줄 오른쪽 끝의 `?` 버튼과 팝오버 목록이다. 팝오버는 네이티브 Popover API 없이 직접 만든다(Chrome 75 floor).
+
+Space:
 
 - `document`의 Space 처리는 `preventDefault`를 부른다. 도움말 버튼에 포커스가 있을 때 그대로 두면 버튼이 눌리지 않고 재생이 시작된다.
 - 버튼의 `onKeyDown`이 Space만 `stopPropagation`한다. React 19는 이벤트를 루트 컨테이너에서 받으므로 `document` 리스너까지 올라가지 않는다.
 - 이 예외는 도움말 버튼에만 있다. 다른 버튼에 포커스가 있을 때의 Space는 재생·정지로 가로채인다.
+
+Esc:
+
+- `useSoundEditor`는 `document`의 bubble 단계에서 Esc를 "선택 해제"로 처리한다. 팝오버를 Esc로 닫을 때 선택까지 풀리면 안 된다.
+- 팝오버가 열려 있는 동안만 `document`의 capture 단계에 keydown 리스너를 달아 Esc를 먼저 받고 `stopPropagation`한다. bubble 단계의 훅 리스너는 호출되지 않는다.
+- 팝오버가 닫혀 있으면 리스너가 없어 Esc는 선택 해제로 동작한다.
+- 바깥 누르기 닫기도 같은 방식으로 `pointerdown`을 capture 단계에서 듣는다.

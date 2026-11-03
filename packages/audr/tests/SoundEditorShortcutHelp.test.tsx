@@ -1,4 +1,4 @@
-// 단축키 도움말: 펼침·접힘, 목록과 handleKeyDown 대조, 에디터 상태와 간섭 없음
+// 단축키 도움말 팝오버: 열기·닫기, 목록과 handleKeyDown 대조, 에디터 상태와 간섭 없음
 import { applyEffect } from "@cp949/audr-core";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -64,15 +64,15 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("SoundEditor 단축키 도움말 열기·닫기", () => {
-  it("처음에는 접혀 있고 목록이 없다", () => {
+describe("SoundEditor 단축키 도움말 팝오버 열기·닫기", () => {
+  it("처음에는 닫혀 있고 목록이 없다", () => {
     setup();
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
     expect(toggle().hasAttribute("aria-controls")).toBe(false);
     expect(document.querySelector("dl")).toBeNull();
   });
 
-  it("버튼을 누르면 펼쳐 aria-expanded와 aria-controls가 목록을 가리키고, 다시 누르면 접힌다", () => {
+  it("버튼을 누르면 열려 aria-expanded와 aria-controls가 목록을 가리키고, 다시 누르면 닫힌다", () => {
     setup();
     fireEvent.click(toggle());
     expect(toggle().getAttribute("aria-expanded")).toBe("true");
@@ -107,18 +107,31 @@ describe("SoundEditor 단축키 도움말 열기·닫기", () => {
     expect(text).not.toContain("Ctrl");
   });
 
-  it("버튼은 목록과 편집 실패 알림보다 앞에 있고, 알림이 떠도 목록과 순서가 유지된다", async () => {
+  it("편집 실패 알림이 떠도 열린 목록은 그대로다", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     mockedApplyEffect.mockRejectedValue(new Error("render failed"));
     setup();
     fireEvent.click(toggle());
     await act(async () => fireEvent.click(screen.getByRole("button", { name: en.reverse })));
-    const list = document.querySelector("dl") as HTMLElement;
-    const alert = screen.getByRole("alert");
-    const follows = (a: Node, b: Node) =>
-      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(follows(toggle(), list)).toBe(true);
-    expect(follows(list, alert)).toBe(true);
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(toggle().getAttribute("aria-expanded")).toBe("true");
+    expect(document.querySelector("dl")).not.toBeNull();
+  });
+
+  it("버튼은 시간 표시줄이 아니라 도구 줄에 있다", () => {
+    const { container } = setup();
+    const row = container.querySelector('[class*="row"]') as HTMLElement;
+    expect(row.contains(toggle())).toBe(true);
+  });
+
+  it("바깥을 누르면 닫히고, 목록 안을 누르면 열린 채로 둔다", () => {
+    setup();
+    fireEvent.click(toggle());
+    fireEvent.pointerDown(document.querySelector("dl") as HTMLElement);
+    expect(toggle().getAttribute("aria-expanded")).toBe("true");
+    fireEvent.pointerDown(document.body);
+    expect(toggle().getAttribute("aria-expanded")).toBe("false");
+    expect(document.querySelector("dl")).toBeNull();
   });
 });
 
@@ -222,13 +235,15 @@ describe("SoundEditor 단축키 도움말과 에디터 상태", () => {
     expect(toggle().getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("목록을 펼친 채로 Esc를 누르면 선택만 해제하고 목록은 그대로 둔다", async () => {
+  it("목록이 열린 채 Esc를 누르면 목록만 닫고 선택은 유지하며, 한 번 더 누르면 선택을 해제한다", async () => {
     const { container } = setup();
     await dragSelect(container, 250, 750);
     fireEvent.pointerDown(editorRoot(container));
     fireEvent.click(toggle());
     await act(async () => fireEvent.keyDown(document.body, { key: "Escape" }));
+    expect(toggle().getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByText(/Selection 0/)).toBeTruthy();
+    await act(async () => fireEvent.keyDown(document.body, { key: "Escape" }));
     expect(screen.queryByText(/Selection 0/)).toBeNull();
-    expect(toggle().getAttribute("aria-expanded")).toBe("true");
   });
 });

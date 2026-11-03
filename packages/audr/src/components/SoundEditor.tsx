@@ -281,6 +281,8 @@ export function SoundEditor({
             onClick={onCopyToNew}
           />
         </div>
+        {/* 줄 오른쪽 끝에 붙는 작은 버튼이다. 목록은 팝오버로 떠서 줄 높이를 바꾸지 않는다 */}
+        <ShortcutHelp messages={m} apple={apple} />
       </div>
       {/* 왼쪽은 파형과 재생 줄, 오른쪽은 효과 패널이다. 폭이 모자라면 패널이 아래로 내려간다 */}
       <div className={styles.workArea}>
@@ -442,8 +444,6 @@ export function SoundEditor({
         {playhead !== null ? (
           <span>{m.timePlaying.replace("{seconds}", sec(playhead))}</span>
         ) : null}
-        {/* 버튼은 줄 오른쪽 끝에 붙여 재생 항목이 늘고 줄어도 제자리에 있게 하고, 목록은 알림 위에 한 줄로 펼친다 */}
-        <ShortcutHelp messages={m} apple={apple} />
         {/*
           시간 줄 아래에 둬서 시간 줄 위치는 그대로다. 포커스를 옮기지 않는다.
           key가 실패마다 바뀌어 같은 문구여도 요소를 새로 넣는다. 그래야 스크린 리더가 다시 읽는다

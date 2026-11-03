@@ -62,7 +62,7 @@ beforeEach(() => {
 });
 
 describe("SoundEditor 레이아웃", () => {
-  it("버튼이 순서(undo·redo / copy·paste·copy to new / 재생 + 효과 19개)에 이어 시간 표시줄의 단축키 버튼으로 나온다", () => {
+  it("버튼이 순서(undo·redo / copy·paste·copy to new / 단축키 도움말 / 재생 + 효과 19개)으로 나온다", () => {
     setup();
     const names = screen
       .getAllByRole("button")
@@ -73,9 +73,9 @@ describe("SoundEditor 레이아웃", () => {
       en.copy,
       en.paste,
       en.copyToNew,
+      en.shortcutsToggle,
       en.play,
       ...effectLabels,
-      en.shortcutsToggle,
     ]);
   });
 

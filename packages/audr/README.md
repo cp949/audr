@@ -93,7 +93,7 @@ import { SoundEditor } from "@cp949/audr";
 
 단축키 도움말:
 
-- 시간 표시줄 오른쪽 끝의 `Shortcuts` 버튼(한국어 `단축키`)으로 목록을 펼치고 접는다. 기본은 접힌 상태다. 버튼은 `aria-expanded`로 상태를 알리고, 펼치면 `aria-controls`가 목록(`dl`)을 가리킨다.
+- 도구 줄(Undo·Redo·Copy·Paste 줄) 오른쪽 끝의 작은 `?` 버튼(이름은 `Shortcuts`, 한국어 `단축키`)을 누르면 목록이 팝오버로 뜬다. 기본은 닫힌 상태다. 레이아웃은 밀지 않는다. 버튼을 다시 누르거나 Esc를 누르거나 바깥을 누르면 닫힌다. 팝오버가 열려 있을 때 Esc는 팝오버만 닫고 선택은 해제하지 않는다. 버튼은 `aria-expanded`로 상태를 알리고, 열리면 `aria-controls`가 목록(`dl`)을 가리킨다. 호버할 수 있는 입력 장치가 없는 기기(`any-hover: none`)에서는 버튼을 숨긴다.
 - 목록은 `resolveShortcutCommand`(`useSoundEditor`의 `handleKeyDown`이 사용)가 처리하는 키만 적는다: Space(재생·정지), Delete·Backspace(선택 삭제), Shift+Delete·Shift+Backspace(선택만 남기기), Esc(선택 해제), Ctrl/Cmd+A·Z·Shift+Z·C·V. Ctrl+Y는 처리하지 않으므로 적지 않는다.
 - Apple 플랫폼에서는 `⌘`와 `⇧`로 표기한다. `tests/keyCommand.test.ts`가 목록의 모든 키가 그 동작으로 판정되는지, 키와 수정자의 모든 조합 중 명령으로 판정되는 것이 목록에 같은 동작으로 있는지를 대조한다. `tests/SoundEditorShortcutHelp.test.tsx`는 목록의 모든 키를 눌러 훅이 처리하는지 확인한다.
 - 모달이나 포털이 아니라 시간 표시줄 안에서 펼친다. 포커스를 가져가지 않고, 편집 실패 알림(`role="alert"`)은 목록 아래에 그대로 나온다.
