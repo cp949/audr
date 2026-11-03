@@ -241,12 +241,15 @@ test.describe("UI 경유 (데모 화면)", () => {
     });
   }
 
-  test("음소거 버튼은 화면에 없다", async ({ page }) => {
-    await expect(editorButton(page, "Mute")).toHaveCount(0);
+  test("음소거 버튼은 Volume 묶음에 보이고 누르면 전체가 무음이 된다", async ({ page }) => {
+    const mute = editorButton(page, "Mute");
+    await expect(mute).toHaveCount(1);
+    await mute.click();
+    await expect(activeItem(page)).toHaveAttribute("data-peak", "0.0000");
   });
 
   const GROUPS: [string, string[]][] = [
-    ["Volume", ["Louder", "Softer", "Fade in", "Fade out"]],
+    ["Volume", ["Louder", "Softer", "Fade in", "Fade out", "Mute"]],
     ["Speed & direction", ["Faster", "Slower", "Reverse", "Scratch"]],
     ["Voice", ["Robot", "Cyborg", "Alien", "Walkie-talkie"]],
     ["Space", ["Echo", "Reverse reverb", "Broadcast"]],
@@ -263,7 +266,7 @@ test.describe("UI 경유 (데모 화면)", () => {
     a.y < b.y + b.height - 0.5 &&
     b.y < a.y + a.height - 0.5;
 
-  /** 효과 칩 18개의 상자를 묶음 순서대로 모은다 */
+  /** 효과 칩 19개의 상자를 묶음 순서대로 모은다 */
   async function chipBoxes(page: Page) {
     const boxes = [];
     for (const [, titles] of GROUPS) {
@@ -276,11 +279,11 @@ test.describe("UI 경유 (데모 화면)", () => {
     return boxes;
   }
 
-  test("효과 버튼 18개는 5개 묶음으로 나뉘고 묶음은 위에서 아래로 놓이며 서로 겹치지 않는다", async ({
+  test("효과 버튼 19개는 5개 묶음으로 나뉘고 묶음은 위에서 아래로 놓이며 서로 겹치지 않는다", async ({
     page,
   }) => {
     const boxes = await chipBoxes(page);
-    expect(boxes).toHaveLength(18);
+    expect(boxes).toHaveLength(19);
     for (let i = 0; i < boxes.length; i++) {
       for (let j = i + 1; j < boxes.length; j++) {
         expect(overlap(boxes[i]!, boxes[j]!), `${boxes[i]!.title}와 ${boxes[j]!.title}`).toBe(

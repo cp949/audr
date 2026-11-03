@@ -6,12 +6,13 @@ type TextMessageKey = {
   [K in keyof Messages]: Messages[K] extends string ? K : never;
 }[keyof Messages];
 
-/** 화면에 보이는 효과 버튼 18개. 배열 순서가 묶음 순서(소리 크기, 속도·방향, 목소리, 공간, 흔들기)이자 DOM 순서다. */
-export const VISIBLE_EFFECTS: ReadonlyArray<{ label: TextMessageKey; effect: EffectName }> = [
+/** 화면에 보이는 효과 버튼 19개. 배열 순서가 묶음 순서(소리 크기, 속도·방향, 목소리, 공간, 흔들기)이자 DOM 순서다. */
+export const EFFECTS: ReadonlyArray<{ label: TextMessageKey; effect: EffectName }> = [
   { label: "louder", effect: "higher" },
   { label: "softer", effect: "lower" },
   { label: "fadeIn", effect: "fade in" },
   { label: "fadeOut", effect: "fade out" },
+  { label: "mute", effect: "mute" },
   { label: "faster", effect: "faster" },
   { label: "slower", effect: "slower" },
   { label: "reverse", effect: "reverse" },
@@ -33,7 +34,7 @@ export const EFFECT_GROUPS: ReadonlyArray<{
   name: TextMessageKey;
   labels: ReadonlyArray<TextMessageKey>;
 }> = [
-  { name: "effectGroupVolume", labels: ["louder", "softer", "fadeIn", "fadeOut"] },
+  { name: "effectGroupVolume", labels: ["louder", "softer", "fadeIn", "fadeOut", "mute"] },
   { name: "effectGroupSpeed", labels: ["faster", "slower", "reverse", "scratch"] },
   { name: "effectGroupVoice", labels: ["robot", "cyborg", "alien", "walkie"] },
   { name: "effectGroupSpace", labels: ["echo", "reverseReverb", "broadcast"] },

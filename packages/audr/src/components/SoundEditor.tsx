@@ -58,14 +58,13 @@ type EffectGroupId = (typeof EFFECT_GROUPS)[number]["id"];
 /**
  * 효과 버튼. 배열 순서가 묶음 안의 화면 순서이자 Tab 순서다.
  * 화면의 Louder는 `higher`, Softer는 `lower` 효과다.
- * 음소거는 소스를 유지하고 화면에는 보이지 않는다(`hidden`).
  */
 const EFFECT_BUTTONS = [
   { group: "volume", effect: "higher", icon: louderIcon, label: "louder" },
   { group: "volume", effect: "lower", icon: softerIcon, label: "softer" },
   { group: "volume", effect: "fade in", icon: fadeInIcon, label: "fadeIn" },
   { group: "volume", effect: "fade out", icon: fadeOutIcon, label: "fadeOut" },
-  { group: "volume", effect: "mute", icon: muteIcon, label: "mute", hidden: true },
+  { group: "volume", effect: "mute", icon: muteIcon, label: "mute" },
   { group: "speed", effect: "faster", icon: fasterIcon, label: "faster" },
   { group: "speed", effect: "slower", icon: slowerIcon, label: "slower" },
   { group: "speed", effect: "reverse", icon: reverseIcon, label: "reverse" },
@@ -85,13 +84,7 @@ const EFFECT_BUTTONS = [
   effect: EffectName;
   icon: string;
   label: keyof Messages;
-  hidden?: boolean;
 }>;
-
-/** 화면에 그리는 효과 버튼. `hidden`인 항목은 거른다 */
-const VISIBLE_EFFECT_BUTTONS = EFFECT_BUTTONS.filter(
-  (b): b is Exclude<(typeof EFFECT_BUTTONS)[number], { hidden: true }> => !("hidden" in b),
-);
 
 /** 파형 위 세로 기준선의 가로 위치(%) */
 const GUIDE_POSITIONS = [25, 50, 75];
@@ -418,24 +411,22 @@ export function SoundEditor({
                 {m[name]}
               </div>
               <div className={styles.effectChips}>
-                {VISIBLE_EFFECT_BUTTONS.filter((b) => b.group === id).map(
-                  ({ effect, icon, label }) => {
-                    // Louder는 너무 큰 구간에서 막고 이유를 알린다
-                    const blocked = effect === "higher" && tooLoud;
-                    return (
-                      <IconButton
-                        key={effect}
-                        className={styles.effectButton}
-                        describedBy={scopeId}
-                        disabled={blocked || busy || isEmpty}
-                        disabledReason={blocked ? m.tooLoudHint : undefined}
-                        img={icon}
-                        title={m[label]}
-                        onClick={() => onEffect(effect)}
-                      />
-                    );
-                  },
-                )}
+                {EFFECT_BUTTONS.filter((b) => b.group === id).map(({ effect, icon, label }) => {
+                  // Louder는 너무 큰 구간에서 막고 이유를 알린다
+                  const blocked = effect === "higher" && tooLoud;
+                  return (
+                    <IconButton
+                      key={effect}
+                      className={styles.effectButton}
+                      describedBy={scopeId}
+                      disabled={blocked || busy || isEmpty}
+                      disabledReason={blocked ? m.tooLoudHint : undefined}
+                      img={icon}
+                      title={m[label]}
+                      onClick={() => onEffect(effect)}
+                    />
+                  );
+                })}
               </div>
             </div>
           ))}

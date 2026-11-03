@@ -820,7 +820,7 @@ describe("useSoundEditor 효과", () => {
     );
   });
 
-  it('화면에 버튼이 없어도 onEffect("mute")는 mute 효과로 applyEffect를 호출한다', async () => {
+  it('onEffect("mute")는 mute 효과로 applyEffect를 호출한다', async () => {
     const { result } = setup();
     mockedApplyEffect.mockResolvedValue({
       buffer: fakeAudioBuffer(ramp(500), 44100),
