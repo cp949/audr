@@ -337,8 +337,9 @@ export default defineConfig({
 - 팝오버는 버튼 다시 누르기, Esc, 바깥 누르기로 닫고, 효과를 적용해도 닫는다. 레이아웃을 밀지 않고 아래 내용 위에 뜬다.
 - 닫을 때 Esc나 효과 적용이면 포커스를 여는 버튼으로 돌려준다.
 - `"overflow"`에서 첫 줄 밖의 버튼은 닫힌 동안 보이지 않고 포커스도 받지 않는다. 한 줄에 모두 들어가면 `⋯` 버튼은 없다.
+- `직전 효과 대체` 체크박스는 `"expanded"`와 `"overflow"`에서 효과 버튼 묶음 아래 줄에, `"minimized"`에서 `Effects` 버튼 옆에 둔다. `"overflow"`의 팝오버가 열려 있는 동안은 체크박스를 덮는다.
 - `"minimized"`와 `"overflow"`의 접근 가능한 이름은 `messages.effects`(`Effects` 버튼 글자), `messages.moreEffects`(`⋯` 버튼)다.
-- 데모(Chromium, 영어 문구)에서 에디터의 자연 높이는 폭 320px에서 `expanded` 602px, `minimized` 456px, `overflow` 449px이다. 폭 629px에서는 각각 498px, 456px, 449px이다.
+- 데모(Chromium, 영어 문구)에서 에디터의 자연 높이는 폭 320px에서 `expanded` 625px, `minimized` 456px, `overflow` 472px이다. 폭 629px에서는 각각 521px, 456px, 472px이다. `직전 효과 대체` 체크박스를 포함한 값이다.
 
 `apps/demo`의 상단 Host width 슬라이더로 호스트 폭을, Effects layout 선택 상자로 배치를 바꿔 볼 수 있다. 녹음 대화상자(`RecordDialog`)는 이 계약에 들어가지 않는다. 폭이 600px로 고정이다.
 

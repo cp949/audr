@@ -30,22 +30,30 @@ export type EffectPanelProps = {
   messages: Messages;
   /** 효과 버튼들. 순서가 화면 순서이자 Tab 순서다. 각 버튼은 이 상자의 직접 자식이어야 한다 */
   children: ReactNode;
+  /**
+   * 효과와 함께 쓰는 설정 컨트롤(효과 시험 모드 체크박스). 효과 버튼 묶음 바로 아래에 둔다.
+   * `"minimized"`는 팝오버가 그 아래를 덮으므로 `Effects` 버튼과 같은 줄에 둔다.
+   */
+  extra?: ReactNode;
 };
 
-export function EffectPanel({ layout, messages, children }: EffectPanelProps) {
-  if (layout === "auto") return <AutoEffects messages={messages}>{children}</AutoEffects>;
-  if (layout === "minimized")
-    return <MinimizedEffects messages={messages}>{children}</MinimizedEffects>;
-  if (layout === "overflow")
-    return <OverflowEffects messages={messages}>{children}</OverflowEffects>;
-  return <ExpandedEffects messages={messages}>{children}</ExpandedEffects>;
+type LayoutProps = Pick<EffectPanelProps, "messages" | "children" | "extra">;
+
+export function EffectPanel({ layout, ...rest }: EffectPanelProps) {
+  if (layout === "auto") return <AutoEffects {...rest} />;
+  if (layout === "minimized") return <MinimizedEffects {...rest} />;
+  if (layout === "overflow") return <OverflowEffects {...rest} />;
+  return <ExpandedEffects {...rest} />;
 }
 
-function ExpandedEffects({ messages, children }: Pick<EffectPanelProps, "messages" | "children">) {
+function ExpandedEffects({ messages, children, extra }: LayoutProps) {
   return (
-    <div role="group" aria-label={messages.effects} className={styles.effectChips}>
-      {children}
-    </div>
+    <>
+      <div role="group" aria-label={messages.effects} className={styles.effectChips}>
+        {children}
+      </div>
+      {extra}
+    </>
   );
 }
 
@@ -54,12 +62,14 @@ function ExpandedEffects({ messages, children }: Pick<EffectPanelProps, "message
  * 폭은 어느 모드에서나 같은 바깥 상자에서 잰다. 그래야 모드를 바꿔도 잰 폭이 달라지지 않아 둘 사이를 오가지 않는다.
  * 모드가 바뀌면 안쪽 컴포넌트를 다시 만든다. 열려 있던 팝오버는 닫힌다.
  */
-function AutoEffects({ messages, children }: Pick<EffectPanelProps, "messages" | "children">) {
+function AutoEffects({ messages, children, extra }: LayoutProps) {
   const [width, ref] = useElementWidth(AUTO_FALLBACK_WIDTH);
   const Inner = width < AUTO_OVERFLOW_BELOW ? OverflowEffects : ExpandedEffects;
   return (
     <div ref={ref}>
-      <Inner messages={messages}>{children}</Inner>
+      <Inner messages={messages} extra={extra}>
+        {children}
+      </Inner>
     </div>
   );
 }
@@ -73,7 +83,7 @@ function isButtonClick(event: MouseEvent) {
  * `Effects` 버튼 하나만 둔다. 팝오버는 열려 있을 때만 그리고 레이아웃을 밀지 않는다.
  * 효과를 적용하면 닫는다. 이어서 여러 효과를 쓰려면 `"expanded"`를 쓴다.
  */
-function MinimizedEffects({ messages, children }: Pick<EffectPanelProps, "messages" | "children">) {
+function MinimizedEffects({ messages, children, extra }: LayoutProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -102,6 +112,7 @@ function MinimizedEffects({ messages, children }: Pick<EffectPanelProps, "messag
             ▾
           </span>
         </button>
+        {extra}
       </div>
       {open ? (
         <div
@@ -133,7 +144,7 @@ const CHIP_MARGIN_Y = 4;
  * 첫 줄에 들어가지 못한 버튼은 접힌 동안 `data-clipped`를 달아 보이지 않게 하고 포커스도 받지 않게 한다.
  * 줄 수는 `offsetTop`으로 센다. 모두 첫 줄에 들어가면 `⋯` 버튼을 그리지 않는다.
  */
-function OverflowEffects({ messages, children }: Pick<EffectPanelProps, "messages" | "children">) {
+function OverflowEffects({ messages, children, extra }: LayoutProps) {
   const [open, setOpen] = useState(false);
   // 첫 줄에 들어간 버튼 수와 전체 수. 아직 재지 못했으면 null이다
   const [fit, setFit] = useState<{ visible: number; total: number } | null>(null);
@@ -189,41 +200,44 @@ function OverflowEffects({ messages, children }: Pick<EffectPanelProps, "message
   }, [expanded, fit]);
 
   return (
-    <div ref={rootRef} className={styles.effectOverflow}>
-      <div className={styles.effectSlot} style={{ height: rowHeight ?? undefined }}>
-        <div
-          id={panelId}
-          role="group"
-          aria-label={messages.effects}
-          className={styles.effectClip}
-          data-open={expanded || undefined}
-          style={expanded ? undefined : { height: rowHeight ?? undefined }}
-          onClick={(event) => {
-            if (!expanded || !isButtonClick(event)) return;
-            setOpen(false);
-            moreRef.current?.focus();
-          }}
-        >
-          <div ref={listRef} className={styles.effectList}>
-            {children}
+    <>
+      <div ref={rootRef} className={styles.effectOverflow}>
+        <div className={styles.effectSlot} style={{ height: rowHeight ?? undefined }}>
+          <div
+            id={panelId}
+            role="group"
+            aria-label={messages.effects}
+            className={styles.effectClip}
+            data-open={expanded || undefined}
+            style={expanded ? undefined : { height: rowHeight ?? undefined }}
+            onClick={(event) => {
+              if (!expanded || !isButtonClick(event)) return;
+              setOpen(false);
+              moreRef.current?.focus();
+            }}
+          >
+            <div ref={listRef} className={styles.effectList}>
+              {children}
+            </div>
           </div>
         </div>
+        {hasOverflow ? (
+          <button
+            ref={moreRef}
+            type="button"
+            className={styles.effectMore}
+            aria-label={messages.moreEffects}
+            title={messages.moreEffects}
+            aria-expanded={expanded}
+            aria-controls={panelId}
+            onKeyDown={keepSpaceForButton}
+            onClick={() => setOpen((value) => !value)}
+          >
+            <span aria-hidden="true">⋯</span>
+          </button>
+        ) : null}
       </div>
-      {hasOverflow ? (
-        <button
-          ref={moreRef}
-          type="button"
-          className={styles.effectMore}
-          aria-label={messages.moreEffects}
-          title={messages.moreEffects}
-          aria-expanded={expanded}
-          aria-controls={panelId}
-          onKeyDown={keepSpaceForButton}
-          onClick={() => setOpen((value) => !value)}
-        >
-          <span aria-hidden="true">⋯</span>
-        </button>
-      ) : null}
-    </div>
+      {extra}
+    </>
   );
 }

@@ -117,6 +117,30 @@ describe("effectsLayout minimized", () => {
   });
 });
 
+describe("effectsLayout 효과 시험 모드 체크박스", () => {
+  const checkbox = () => screen.getByRole("checkbox", { name: en.replaceEffect });
+
+  it("minimized에서는 팝오버가 닫혀 있어도 보이고 Effects 버튼과 같은 줄에 있다", () => {
+    setup("minimized");
+    expect(checkbox().closest("label")?.parentElement).toBe(effectsButton().parentElement);
+  });
+
+  it("minimized에서 팝오버를 연 채 눌러도 팝오버가 닫히지 않는다", () => {
+    setup("minimized");
+    fireEvent.click(effectsButton());
+    fireEvent.click(checkbox());
+    expect((checkbox() as HTMLInputElement).checked).toBe(true);
+    expect(effectsButton().getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it.each(["expanded", "overflow"] as const)("%s에서는 효과 버튼 묶음 뒤에 온다", (layout) => {
+    setup(layout);
+    const group = screen.getByRole("group", { name: en.effects });
+    const label = checkbox().closest("label") as Node;
+    expect(group.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
 describe("effectsLayout overflow", () => {
   const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetTop");
 

@@ -457,7 +457,21 @@ export function SoundEditor({
             )}
           </div>
           {/* 효과 버튼은 `effectsLayout`에 따라 펼치거나 접는다. DOM 순서가 Tab 순서이자 화면 순서다 */}
-          <EffectPanel layout={effectsLayout} messages={m}>
+          {/* 켜면 효과가 직전 효과를 대체한다. 효과를 바꿔 가며 들어 볼 때 쓰고, 편집할 때는 꺼서 효과를 쌓는다 */}
+          <EffectPanel
+            layout={effectsLayout}
+            messages={m}
+            extra={
+              <label className={styles.replaceEffect}>
+                <input
+                  type="checkbox"
+                  checked={tryEffects}
+                  onChange={(e) => onSetTryEffects(e.target.checked)}
+                />
+                {m.replaceEffect}
+              </label>
+            }
+          >
             {EFFECT_BUTTONS.map(({ hue, effect, icon, label }) => {
               // Louder는 너무 큰 구간에서 막고 이유를 알린다
               const blocked = effect === "higher" && tooLoud;
@@ -475,15 +489,6 @@ export function SoundEditor({
               );
             })}
           </EffectPanel>
-          {/* 켜면 효과가 직전 효과를 대체한다. 효과를 바꿔 가며 들어 볼 때 쓰고, 편집할 때는 꺼서 효과를 쌓는다 */}
-          <label className={styles.replaceEffect}>
-            <input
-              type="checkbox"
-              checked={tryEffects}
-              onChange={(e) => onSetTryEffects(e.target.checked)}
-            />
-            {m.replaceEffect}
-          </label>
         </div>
       </div>
       <div className={styles.status}>

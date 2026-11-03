@@ -291,7 +291,14 @@
 
 .effectToggleRow {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
+}
+
+/* Effects 버튼 옆에 둔다. 좁아서 줄이 넘어가도 가운데에 맞는다 */
+.effectToggleRow > .replaceEffect {
+  margin: 0.25rem 0 0.25rem 0.75rem;
 }
 
 .effectToggle {
