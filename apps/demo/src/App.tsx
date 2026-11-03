@@ -8,6 +8,7 @@ import {
 import { createWavBlob, decodeAudioFile, maxEditableSamples } from "@cp949/audr-core";
 import { useEffect, useState, type ChangeEvent, type DragEvent } from "react";
 import "./demo.css";
+import { MESSAGES_DE } from "./messagesDe";
 import { useSoundLibrary } from "./useSoundLibrary";
 
 /** 데모에서 고를 수 있는 테마. 빈 값은 기본 보라다. */
@@ -16,6 +17,16 @@ const THEMES: { value: "" | AudrTheme; label: string }[] = [
   { value: "blue", label: "Blue" },
   { value: "teal", label: "Teal" },
 ];
+
+/**
+ * 데모에서 고를 수 있는 언어. 영어와 한국어는 라이브러리에 내장되어 있고,
+ * 독일어는 내장 문구가 없어 `locale`(숫자 표기)과 `messages`(문구)를 함께 넘긴다.
+ */
+const LANGUAGES = [
+  { value: "en", label: "English", messages: undefined },
+  { value: "ko", label: "한국어", messages: undefined },
+  { value: "de", label: "Deutsch", messages: MESSAGES_DE },
+] as const;
 
 /** 마이크 실패 원인(code)별 안내 문구 */
 const MICROPHONE_ERROR_NOTICE: Record<MicrophoneErrorCode, string> = {
@@ -92,6 +103,7 @@ export function App() {
   const [themeValue, setThemeValue] = useState<"" | AudrTheme>("");
   // 빈 값은 기본 보라이므로 prop을 생략한다
   const theme = themeValue || undefined;
+  const [language, setLanguage] = useState<(typeof LANGUAGES)[number]>(LANGUAGES[0]);
 
   /**
    * 파일을 차례로 디코드해 소리로 추가한다. 이름은 확장자를 뗀 파일명이다.
@@ -187,6 +199,21 @@ export function App() {
             ))}
           </select>
         </label>
+        <label className="themePicker">
+          Language
+          <select
+            value={language.value}
+            onChange={(event) =>
+              setLanguage(LANGUAGES.find((l) => l.value === event.target.value) ?? LANGUAGES[0])
+            }
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l.value} value={l.value}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+        </label>
         {notice && <span role="alert">{notice}</span>}
       </header>
       <div
@@ -243,6 +270,8 @@ export function App() {
               onCopyToNew={(buffer) => addSound(buffer, selected.name)}
               onRename={(name) => updateSelected({ name })}
               theme={theme}
+              locale={language.value}
+              messages={language.messages}
             />
           </div>
         </main>
@@ -250,6 +279,8 @@ export function App() {
       <RecordDialog
         open={recording}
         theme={theme}
+        locale={language.value}
+        messages={language.messages}
         onCancel={() => setRecording(false)}
         onError={(error) => setNotice(recordErrorNotice(error))}
         onSave={({ samples, sampleRate }) => {
