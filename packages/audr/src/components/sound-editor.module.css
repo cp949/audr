@@ -525,7 +525,6 @@
 .status {
   display: flex;
   flex-wrap: wrap;
-  margin-top: calc(2 * var(--audr-space));
   font-size: 0.75rem;
   line-height: 1rem;
   color: var(--audr-text-primary);
@@ -608,7 +607,8 @@
 */
 .editError {
   flex: 0 0 100%;
-  margin-top: var(--audr-space);
+  /* 상태 영역에 위쪽 margin이 없어서 효과 버튼과의 간격(24px)을 여기서 둔다 */
+  margin-top: calc(3 * var(--audr-space));
   padding: calc(var(--audr-space) / 2) var(--audr-space);
   border-left: 4px solid var(--audr-red-text);
   border-radius: 4px;
