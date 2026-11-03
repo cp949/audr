@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
  * - `onSave`가 trim한 구간의 `samples`, `sampleRate`와 16비트 PCM `wav`(Blob)를 준다.
  * - 대화상자를 닫는 일은 호스트가 한다. `onCancel`과 `onSave`에서 `open`을 끈다.
  * - `onError`의 `error.kind`가 `"microphone"`이면 `error.code`로 원인을 나눌 수 있다.
+ * - `demo-*` 클래스는 데모 자체 스타일이다. audr가 요구하지 않는다.
  */
 export function RecordOnlyExample() {
   const [open, setOpen] = useState(false);
@@ -33,12 +34,18 @@ export function RecordOnlyExample() {
 
   return (
     <div>
-      <button type="button" onClick={() => setOpen(true)}>
-        녹음하기
-      </button>
-      {error && <p role="alert">{error}</p>}
+      <div className="demo-toolbar">
+        <button type="button" onClick={() => setOpen(true)}>
+          녹음하기
+        </button>
+        {error && (
+          <p className="demo-error" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
       {result && (
-        <div>
+        <div className="demo-result">
           <p>
             길이 {(result.recorded.samples.length / result.recorded.sampleRate).toFixed(2)}초,{" "}
             {result.recorded.sampleRate}Hz, WAV {result.recorded.wav.size}바이트

@@ -12,6 +12,7 @@ import { createSine } from "./sampleSound";
  * - `onCopyToNew`는 필수다. 소리가 하나뿐이라 복사한 구간을 새 소리로 바꿔 연다. 목록이 있으면 항목을 더한다.
  * - 큰 파일은 디코드에 몇 초 걸린다. 끝날 때까지 `loading`으로 입력을 막고 안내를 보인다.
  * - `decodeAudioFile`은 길이를 제한하지 않는다. 편집 한도를 넘는 소리는 목록에 넣지 않는다.
+ * - `demo-*` 클래스는 데모 자체 스타일이다. audr가 요구하지 않는다.
  */
 export function EditorBasicExample() {
   const [sound, setSound] = useState(() => ({ id: 1, name: "Sine 440Hz", ...createSine() }));
@@ -53,18 +54,28 @@ export function EditorBasicExample() {
 
   return (
     <div>
-      <input
-        type="file"
-        accept="audio/*"
-        aria-label="Open sound file"
-        disabled={loading}
-        onChange={openFile}
-      />{" "}
-      <button type="button" onClick={download}>
-        WAV로 내려받기
-      </button>
-      {loading && <p role="status">불러오는 중…</p>}
-      {notice && <p role="alert">{notice}</p>}
+      <div className="demo-toolbar">
+        <input
+          type="file"
+          accept="audio/*"
+          aria-label="Open sound file"
+          disabled={loading}
+          onChange={openFile}
+        />
+        <button type="button" onClick={download}>
+          WAV로 내려받기
+        </button>
+        {loading && (
+          <p className="demo-status" role="status">
+            불러오는 중…
+          </p>
+        )}
+        {notice && (
+          <p className="demo-error" role="alert">
+            {notice}
+          </p>
+        )}
+      </div>
       <div style={{ display: "flex", flexDirection: "column", height: 600, maxWidth: 800 }}>
         <SoundEditor
           soundId={sound.id}

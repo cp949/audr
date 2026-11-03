@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { EXAMPLES, resolveExample } from "./examples/registry";
-import "./shell.css";
+import { SourceView } from "./SourceView";
 
 /** 주소 hash를 읽고, 바뀌면 다시 그린다. 라우터 라이브러리 없이 `#/<id>`만 쓴다. */
 function useHash(): string {
@@ -24,6 +24,10 @@ export function Shell() {
   return (
     <div className="shell">
       <nav className="shell-nav" aria-label="Examples">
+        <div className="shell-brand">
+          <span className="shell-brand-name">audr</span>
+          <span className="shell-brand-sub">사용 예제</span>
+        </div>
         <ul>
           {EXAMPLES.map((example) => (
             <li key={example.id}>
@@ -42,16 +46,16 @@ export function Shell() {
           <Component />
         ) : (
           <article className="example">
-            <h2>{current.title}</h2>
-            <p>{current.summary}</p>
+            <header className="example-header">
+              <h2>{current.title}</h2>
+              <p>{current.summary}</p>
+            </header>
             <section className="example-live" aria-label="실행 화면">
               <Component />
             </section>
             <details className="example-source" open>
               <summary>소스</summary>
-              <pre>
-                <code>{current.source}</code>
-              </pre>
+              <SourceView code={current.source.code} fileName={current.source.fileName} />
             </details>
           </article>
         )}

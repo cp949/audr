@@ -1,0 +1,160 @@
+/*
+  예제와 통합 데모의 호스트 컨트롤 모양. audr 사용 계약과는 관계없는 데모 자체 스타일이다.
+  - 범위 없는 요소 선택자(.example-live button 등)를 쓰지 않는다. 명시도가 라이브러리 CSS module(.button)보다 높아 에디터 버튼을 덮는다.
+  - 색은 무채색이고, 테마를 따를 곳만 --audr-accent를 쓴다. 흰 글자를 accent 바탕에 올리면 기본 청록에서 대비가 4.22라 쓰지 않는다.
+  - outline을 지우지 않는다. 포커스 링은 브라우저 기본을 쓴다.
+*/
+
+/* 에디터 안쪽 패딩(2 × --audr-space)과 같은 선에 맞춘다 */
+.demo-toolbar,
+.demo-note,
+.demo-result {
+  margin-right: calc(2 * var(--audr-space));
+  margin-left: calc(2 * var(--audr-space));
+}
+
+.demo-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+/* flex gap은 Chrome 84부터라 자식 margin으로 간격을 둔다 */
+.demo-toolbar > * {
+  margin: 0 0.5rem 0.5rem 0;
+}
+
+.demo-toolbar label {
+  color: var(--demo-text-muted);
+}
+
+.demo-toolbar select {
+  margin-left: 0.375rem;
+}
+
+.demo-button,
+.demo-toolbar button,
+.topbar button {
+  height: 2rem;
+  padding: 0 0.875rem;
+  border: 1px solid var(--demo-border-strong);
+  border-radius: var(--demo-radius-sm);
+  background: var(--demo-surface);
+  color: var(--demo-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.demo-button:hover:not(:disabled),
+.demo-toolbar button:hover:not(:disabled),
+.topbar button:hover:not(:disabled) {
+  border-color: var(--audr-accent);
+  background: var(--audr-accent-faint);
+}
+
+.demo-button:disabled,
+.demo-toolbar button:disabled,
+.topbar button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 화살표는 네이티브로 둔다. 바꾸려면 appearance: none(무접두 Chrome 84)이 필요하다 */
+.demo-toolbar select,
+.topbar select {
+  height: 2rem;
+  padding: 0 0.375rem;
+  border: 1px solid var(--demo-border-strong);
+  border-radius: var(--demo-radius-sm);
+  background: var(--demo-surface);
+  color: var(--demo-text);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.demo-toolbar input[type="file"],
+.topbar input[type="file"] {
+  max-width: 15rem;
+  color: var(--demo-text-muted);
+  font-family: inherit;
+  font-size: 0.8125rem;
+}
+
+/* ::file-selector-button은 Chrome 89라 접두어 이름만 쓴다 */
+.demo-toolbar input[type="file"]::-webkit-file-upload-button,
+.topbar input[type="file"]::-webkit-file-upload-button {
+  height: 2rem;
+  margin-right: 0.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--demo-border-strong);
+  border-radius: var(--demo-radius-sm);
+  background: var(--demo-surface);
+  color: var(--demo-text);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.demo-status,
+.demo-error {
+  padding: 0.25rem 0.625rem;
+  border: 1px solid transparent;
+  border-radius: var(--demo-radius-sm);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.demo-status {
+  background: var(--audr-accent-faint);
+  color: var(--demo-text);
+}
+
+.demo-error {
+  border-color: var(--demo-error-border);
+  background: var(--demo-error-bg);
+  color: var(--audr-red-text);
+}
+
+.demo-note {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.demo-result {
+  margin-top: 0.5rem;
+  /* 툴바 자식처럼 카드 아래 패딩 0.5rem을 보충해 위아래 여백을 맞춘다 */
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--demo-border);
+  border-radius: var(--demo-radius);
+  background: var(--demo-surface-muted);
+  font-size: 0.875rem;
+}
+
+.demo-result p {
+  margin: 0 0 0.5rem;
+}
+
+.demo-result > :last-child {
+  margin-bottom: 0;
+}
+
+.demo-result audio {
+  display: block;
+  /* 기본 폭 300px이 좁은 화면에서 상자를 넘는다 */
+  max-width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+/* accent 글자는 대비가 모자라 밑줄에만 테마 색을 쓴다 */
+.demo-result a {
+  color: var(--demo-text);
+  font-weight: 600;
+  text-decoration-color: var(--audr-accent);
+}

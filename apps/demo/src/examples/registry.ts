@@ -16,10 +16,10 @@ export type Example = {
   summary: string;
   Component: ComponentType;
   /**
-   * 화면 아래에 보여 줄 예제 소스. 예제 파일을 `?raw`로 읽어서 화면과 코드가 어긋나지 않는다.
+   * 화면 아래에 보여 줄 예제 소스와 파일명. 예제 파일을 `?raw`로 읽어서 화면과 코드가 어긋나지 않는다.
    * 없으면 예제 틀(제목, 설명, 소스) 없이 `Component`만 그린다.
    */
-  source?: string;
+  source?: { code: string; fileName: string };
 };
 
 /**
@@ -38,21 +38,21 @@ export const EXAMPLES: Example[] = [
     title: "에디터 기본",
     summary: "SoundEditor 하나로 파일을 열고, 편집하고, WAV로 내려받는다.",
     Component: EditorBasicExample,
-    source: editorBasicSource,
+    source: { code: editorBasicSource, fileName: "EditorBasic.tsx" },
   },
   {
     id: "theme-locale",
     title: "테마와 언어",
     summary: "theme, locale, messages로 색과 문구를 호스트가 정한다.",
     Component: ThemeAndLocaleExample,
-    source: themeAndLocaleSource,
+    source: { code: themeAndLocaleSource, fileName: "ThemeAndLocale.tsx" },
   },
   {
     id: "record",
     title: "녹음만 쓰기",
     summary: "에디터 없이 RecordDialog만 붙여 마이크 녹음 결과를 받는다.",
     Component: RecordOnlyExample,
-    source: recordOnlySource,
+    source: { code: recordOnlySource, fileName: "RecordOnly.tsx" },
   },
 ];
 

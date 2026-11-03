@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { EXAMPLES, resolveExample } from "../src/examples/registry";
 import { Shell } from "../src/Shell";
@@ -36,5 +36,15 @@ describe("Shell", () => {
     expect(screen.getByRole("heading", { level: 2, name: "녹음만 쓰기" })).toBeTruthy();
     // 소스는 예제 파일을 그대로 읽은 것이어야 한다
     expect(screen.getByText(/<RecordDialog/)).toBeTruthy();
+  });
+
+  it("클립보드 API가 없으면 소스를 선택하고 키보드 복사를 안내한다", async () => {
+    window.location.hash = "#/record";
+    render(<Shell />);
+
+    fireEvent.click(screen.getByRole("button", { name: "소스 복사" }));
+
+    expect(await screen.findByText(/선택했다/)).toBeTruthy();
+    expect(window.getSelection()?.toString()).toContain("<RecordDialog");
   });
 });

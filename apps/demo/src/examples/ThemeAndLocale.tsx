@@ -37,6 +37,7 @@ const LANGUAGES: { locale: string; label: string; messages?: MessageOverrides }[
  * - `RecordDialog`는 `body`에 포털로 그려져서 호스트의 래퍼 속성이 닿지 않는다. 그래서 prop으로 받는다.
  * - 호스트 자신의 UI 색도 맞추려면 래퍼에 `data-audr-theme`를 직접 건다.
  * - `locale`은 문구와 숫자 표기를 정한다. 내장 문구는 `en`, `ko`뿐이다.
+ * - `demo-*` 클래스는 데모 자체 스타일이다. audr가 요구하지 않는다.
  */
 export function ThemeAndLocaleExample() {
   const [sound, setSound] = useState(() => ({ name: "Sine 440Hz", ...createSine() }));
@@ -48,40 +49,42 @@ export function ThemeAndLocaleExample() {
 
   return (
     <div data-audr-theme={theme}>
-      <p style={{ color: "var(--audr-accent)" }}>
+      <p className="demo-note" style={{ color: "var(--audr-accent)" }}>
         이 줄은 호스트 UI다. 래퍼의 `data-audr-theme`를 따라 색이 바뀐다.
       </p>
-      <label>
-        테마{" "}
-        <select
-          value={themeValue}
-          onChange={(event) => setThemeValue(event.target.value as "" | AudrTheme)}
-        >
-          {THEMES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
-      </label>{" "}
-      <label>
-        언어{" "}
-        <select
-          value={language.locale}
-          onChange={(event) =>
-            setLanguage(LANGUAGES.find((l) => l.locale === event.target.value) ?? LANGUAGES[0])
-          }
-        >
-          {LANGUAGES.map((l) => (
-            <option key={l.locale} value={l.locale}>
-              {l.label}
-            </option>
-          ))}
-        </select>
-      </label>{" "}
-      <button type="button" onClick={() => setRecording(true)}>
-        녹음 대화상자 열기
-      </button>
+      <div className="demo-toolbar">
+        <label>
+          테마
+          <select
+            value={themeValue}
+            onChange={(event) => setThemeValue(event.target.value as "" | AudrTheme)}
+          >
+            {THEMES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          언어
+          <select
+            value={language.locale}
+            onChange={(event) =>
+              setLanguage(LANGUAGES.find((l) => l.locale === event.target.value) ?? LANGUAGES[0])
+            }
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l.locale} value={l.locale}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="button" onClick={() => setRecording(true)}>
+          녹음 대화상자 열기
+        </button>
+      </div>
       <div style={{ display: "flex", flexDirection: "column", height: 600, maxWidth: 800 }}>
         <SoundEditor
           samples={sound.samples}
