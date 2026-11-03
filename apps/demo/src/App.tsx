@@ -264,8 +264,16 @@ export function App() {
           />
           <output>{hostWidth}px</output>
         </label>
-        {importing > 0 && <span role="status">Loading…</span>}
-        {notice && <span role="alert">{notice}</span>}
+        {importing > 0 && (
+          <span className="demo-status" role="status">
+            Loading…
+          </span>
+        )}
+        {notice && (
+          <span className="demo-error" role="alert">
+            {notice}
+          </span>
+        )}
       </header>
       <div
         className="workspace"
