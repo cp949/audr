@@ -245,52 +245,94 @@ test.describe("UI 경유 (데모 화면)", () => {
     await expect(editorButton(page, "Mute")).toHaveCount(0);
   });
 
-  test("효과 버튼 18개는 9칸 × 2줄이고 서로 겹치지 않는다", async ({ page }) => {
-    const titles = [
-      "Faster",
-      "Slower",
-      "Louder",
-      "Softer",
-      "Fade in",
-      "Fade out",
-      "Cyborg",
-      "Robot",
-      "Alien",
-      "Echo",
-      "Broadcast",
-      "Walkie-talkie",
-      "Reverse reverb",
-      "Scratch",
-      "Roller coaster",
-      "Stutter",
-      "Vibrato",
-      "Reverse",
-    ];
+  const GROUPS: [string, string[]][] = [
+    ["Volume", ["Louder", "Softer", "Fade in", "Fade out"]],
+    ["Speed & direction", ["Faster", "Slower", "Reverse", "Scratch"]],
+    ["Voice", ["Robot", "Cyborg", "Alien", "Walkie-talkie"]],
+    ["Space", ["Echo", "Reverse reverb", "Broadcast"]],
+    ["Wobble", ["Vibrato", "Stutter", "Roller coaster"]],
+  ];
+
+  /** 두 상자가 겹치는지 */
+  const overlap = (
+    a: { x: number; y: number; width: number; height: number },
+    b: { x: number; y: number; width: number; height: number },
+  ) =>
+    a.x < b.x + b.width - 0.5 &&
+    b.x < a.x + a.width - 0.5 &&
+    a.y < b.y + b.height - 0.5 &&
+    b.y < a.y + a.height - 0.5;
+
+  /** 효과 칩 18개의 상자를 묶음 순서대로 모은다 */
+  async function chipBoxes(page: Page) {
     const boxes = [];
-    for (const title of titles) {
-      const box = await editorButton(page, title).boundingBox();
-      if (!box) throw new Error(`${title} 버튼의 위치를 구하지 못했다`);
-      boxes.push(box);
-    }
-    const rows = [boxes.slice(0, 9), boxes.slice(9)];
-    for (const row of rows) {
-      // 한 줄의 위 가장자리가 모두 같다
-      for (const box of row) expect(box.y).toBeCloseTo(row[0]!.y, 1);
-      // 왼쪽에서 오른쪽으로 놓이고 이웃과 가로로 겹치지 않는다
-      for (let i = 0; i < row.length - 1; i++) {
-        expect(row[i]!.x + row[i]!.width).toBeLessThanOrEqual(row[i + 1]!.x + 0.5);
+    for (const [, titles] of GROUPS) {
+      for (const title of titles) {
+        const box = await editorButton(page, title).boundingBox();
+        if (!box) throw new Error(`${title} 버튼의 위치를 구하지 못했다`);
+        boxes.push({ title, ...box });
       }
     }
-    // 2줄째는 1줄째의 가장 낮은 아래 가장자리 이후에서 시작한다
-    const firstRowBottom = Math.max(...rows[0]!.map((b) => b.y + b.height));
-    expect(rows[1]![0]!.y).toBeGreaterThanOrEqual(firstRowBottom - 0.5);
+    return boxes;
+  }
+
+  test("효과 버튼 18개는 5개 묶음으로 나뉘고 묶음은 위에서 아래로 놓이며 서로 겹치지 않는다", async ({
+    page,
+  }) => {
+    const boxes = await chipBoxes(page);
+    expect(boxes).toHaveLength(18);
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        expect(overlap(boxes[i]!, boxes[j]!), `${boxes[i]!.title}와 ${boxes[j]!.title}`).toBe(
+          false,
+        );
+      }
+    }
+    // 묶음 이름은 같은 묶음의 첫 칩 위에 있고, 묶음이 위에서 아래로 이어진다
+    let previousBottom = -Infinity;
+    for (const [name, titles] of GROUPS) {
+      const label = await page.getByText(name, { exact: true }).boundingBox();
+      const group = boxes.filter((b) => titles.includes(b.title));
+      if (!label) throw new Error(`${name} 묶음 이름의 위치를 구하지 못했다`);
+      expect(label.y, name).toBeGreaterThanOrEqual(previousBottom - 0.5);
+      expect(Math.min(...group.map((b) => b.y)), name).toBeGreaterThanOrEqual(
+        label.y + label.height - 0.5,
+      );
+      previousBottom = Math.max(...group.map((b) => b.y + b.height));
+    }
   });
 
-  test("효과 격자의 오른쪽 끝은 파형의 오른쪽 끝을 넘지 않는다", async ({ page }) => {
+  test("효과 패널은 파형 오른쪽에 있고 에디터 오른쪽 끝을 넘지 않는다", async ({ page }) => {
+    const editor = await page.locator('[class*="editorContainer"]').first().boundingBox();
     const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
-    const last = await editorButton(page, "Reverse").boundingBox();
-    if (!wave || !last) throw new Error("파형이나 버튼의 위치를 구하지 못했다");
-    expect(last.x + last.width).toBeLessThanOrEqual(wave.x + wave.width + 0.5);
+    if (!editor || !wave) throw new Error("에디터나 파형의 위치를 구하지 못했다");
+    for (const box of await chipBoxes(page)) {
+      expect(box.x, box.title).toBeGreaterThanOrEqual(wave.x + wave.width - 0.5);
+      expect(box.x + box.width, box.title).toBeLessThanOrEqual(editor.x + editor.width + 0.5);
+    }
+  });
+
+  test("폭이 좁으면 효과 패널이 파형 아래로 내려가고 가로로 넘치지 않는다", async ({ page }) => {
+    // 데모는 에디터 폭을 629px로 고정한다. 좁은 호스트를 흉내 내려 폭만 줄인다
+    await page.evaluate(() => {
+      const frame = document.querySelector<HTMLElement>(".editor-frame");
+      if (frame) frame.style.width = "420px";
+    });
+    const editor = await page.locator('[class*="editorContainer"]').first().boundingBox();
+    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+    if (!editor || !wave) throw new Error("에디터나 파형의 위치를 구하지 못했다");
+    for (const box of await chipBoxes(page)) {
+      expect(box.y, box.title).toBeGreaterThanOrEqual(wave.y + wave.height - 0.5);
+      expect(box.x + box.width, box.title).toBeLessThanOrEqual(editor.x + editor.width + 0.5);
+    }
+  });
+
+  test("재생 버튼은 파형 아래 왼쪽 끝에 있다", async ({ page }) => {
+    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+    const play = await editorButton(page, "Play").boundingBox();
+    if (!wave || !play) throw new Error("파형이나 재생 버튼의 위치를 구하지 못했다");
+    expect(play.x).toBeCloseTo(wave.x, 0);
+    expect(play.y).toBeGreaterThanOrEqual(wave.y + wave.height - 0.5);
   });
 
   test("전체 길이는 파형 아래 오른쪽 끝에 있고 파형을 가리지 않는다", async ({ page }) => {
@@ -379,21 +421,17 @@ test.describe("UI 경유 (데모 화면)", () => {
     expect(label.x + label.width).toBeLessThanOrEqual(wave.x + wave.width);
   });
 
-  test("기본 글꼴 크기를 150%로 키워도 이웃한 효과 라벨이 겹치지 않는다", async ({ page }) => {
+  test("기본 글꼴 크기를 150%로 키워도 효과 칩이 서로 겹치지 않는다", async ({ page }) => {
     await page.evaluate(() => {
       document.documentElement.style.fontSize = "24px";
     });
-    for (const [left, right] of [
-      ["Broadcast", "Walkie-talkie"],
-      ["Walkie-talkie", "Reverse reverb"],
-      ["Reverse reverb", "Scratch"],
-      ["Scratch", "Roller coaster"],
-      ["Roller coaster", "Stutter"],
-    ]) {
-      const a = await editorButton(page, left!).locator("div").boundingBox();
-      const b = await editorButton(page, right!).locator("div").boundingBox();
-      if (!a || !b) throw new Error(`${left}, ${right} 라벨의 위치를 구하지 못했다`);
-      expect(a.x + a.width, `${left}와 ${right}`).toBeLessThanOrEqual(b.x + 0.5);
+    const boxes = await chipBoxes(page);
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        expect(overlap(boxes[i]!, boxes[j]!), `${boxes[i]!.title}와 ${boxes[j]!.title}`).toBe(
+          false,
+        );
+      }
     }
   });
 

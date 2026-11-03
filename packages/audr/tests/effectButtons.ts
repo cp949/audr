@@ -6,24 +6,36 @@ type TextMessageKey = {
   [K in keyof Messages]: Messages[K] extends string ? K : never;
 }[keyof Messages];
 
-/** 화면에 보이는 효과 버튼 18개. 배열 순서가 화면 순서(위→아래, 왼쪽→오른쪽)이자 DOM 순서다. */
+/** 화면에 보이는 효과 버튼 18개. 배열 순서가 묶음 순서(소리 크기, 속도·방향, 목소리, 공간, 흔들기)이자 DOM 순서다. */
 export const VISIBLE_EFFECTS: ReadonlyArray<{ label: TextMessageKey; effect: EffectName }> = [
-  { label: "faster", effect: "faster" },
-  { label: "slower", effect: "slower" },
   { label: "louder", effect: "higher" },
   { label: "softer", effect: "lower" },
   { label: "fadeIn", effect: "fade in" },
   { label: "fadeOut", effect: "fade out" },
-  { label: "cyborg", effect: "cyborg" },
-  { label: "robot", effect: "robot" },
-  { label: "alien", effect: "alien" },
-  { label: "echo", effect: "echo" },
-  { label: "broadcast", effect: "broadcast" },
-  { label: "walkie", effect: "walkie" },
-  { label: "reverseReverb", effect: "reverse reverb" },
-  { label: "scratch", effect: "scratch" },
-  { label: "coaster", effect: "coaster" },
-  { label: "stutter", effect: "stutter" },
-  { label: "vibrato", effect: "vibrato" },
+  { label: "faster", effect: "faster" },
+  { label: "slower", effect: "slower" },
   { label: "reverse", effect: "reverse" },
+  { label: "scratch", effect: "scratch" },
+  { label: "robot", effect: "robot" },
+  { label: "cyborg", effect: "cyborg" },
+  { label: "alien", effect: "alien" },
+  { label: "walkie", effect: "walkie" },
+  { label: "echo", effect: "echo" },
+  { label: "reverseReverb", effect: "reverse reverb" },
+  { label: "broadcast", effect: "broadcast" },
+  { label: "vibrato", effect: "vibrato" },
+  { label: "stutter", effect: "stutter" },
+  { label: "coaster", effect: "coaster" },
+];
+
+/** 효과 묶음. 이름 키와 소속 효과 이름(화면 순서) */
+export const EFFECT_GROUPS: ReadonlyArray<{
+  name: TextMessageKey;
+  labels: ReadonlyArray<TextMessageKey>;
+}> = [
+  { name: "effectGroupVolume", labels: ["louder", "softer", "fadeIn", "fadeOut"] },
+  { name: "effectGroupSpeed", labels: ["faster", "slower", "reverse", "scratch"] },
+  { name: "effectGroupVoice", labels: ["robot", "cyborg", "alien", "walkie"] },
+  { name: "effectGroupSpace", labels: ["echo", "reverseReverb", "broadcast"] },
+  { name: "effectGroupWobble", labels: ["vibrato", "stutter", "coaster"] },
 ];

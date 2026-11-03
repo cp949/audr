@@ -43,32 +43,44 @@ import { SelectionLabel } from "./SelectionLabel";
 import { ShortcutHelp } from "./ShortcutHelp";
 import { Waveform } from "./Waveform";
 
+/** 효과 묶음. 배열 순서가 패널의 위→아래 순서다 */
+const EFFECT_GROUPS = [
+  { id: "volume", name: "effectGroupVolume" },
+  { id: "speed", name: "effectGroupSpeed" },
+  { id: "voice", name: "effectGroupVoice" },
+  { id: "space", name: "effectGroupSpace" },
+  { id: "wobble", name: "effectGroupWobble" },
+] as const satisfies ReadonlyArray<{ id: string; name: keyof Messages }>;
+
+type EffectGroupId = (typeof EFFECT_GROUPS)[number]["id"];
+
 /**
- * 효과 버튼. 배열 순서가 화면 순서다(9칸 × 2줄, 위→아래, 왼쪽→오른쪽).
+ * 효과 버튼. 배열 순서가 묶음 안의 화면 순서이자 Tab 순서다.
  * 화면의 Louder는 `higher`, Softer는 `lower` 효과다.
  * 음소거는 소스를 유지하고 화면에는 보이지 않는다(`hidden`).
  */
 const EFFECT_BUTTONS = [
-  { effect: "faster", icon: fasterIcon, label: "faster" },
-  { effect: "slower", icon: slowerIcon, label: "slower" },
-  { effect: "higher", icon: louderIcon, label: "louder" },
-  { effect: "lower", icon: softerIcon, label: "softer" },
-  { effect: "fade in", icon: fadeInIcon, label: "fadeIn" },
-  { effect: "fade out", icon: fadeOutIcon, label: "fadeOut" },
-  { effect: "cyborg", icon: cyborgIcon, label: "cyborg" },
-  { effect: "robot", icon: robotIcon, label: "robot" },
-  { effect: "alien", icon: alienIcon, label: "alien" },
-  { effect: "echo", icon: echoIcon, label: "echo" },
-  { effect: "broadcast", icon: broadcastIcon, label: "broadcast" },
-  { effect: "walkie", icon: walkieIcon, label: "walkie" },
-  { effect: "reverse reverb", icon: reverseReverbIcon, label: "reverseReverb" },
-  { effect: "scratch", icon: scratchIcon, label: "scratch" },
-  { effect: "coaster", icon: coasterIcon, label: "coaster" },
-  { effect: "stutter", icon: stutterIcon, label: "stutter" },
-  { effect: "vibrato", icon: vibratoIcon, label: "vibrato" },
-  { effect: "reverse", icon: reverseIcon, label: "reverse" },
-  { effect: "mute", icon: muteIcon, label: "mute", hidden: true },
+  { group: "volume", effect: "higher", icon: louderIcon, label: "louder" },
+  { group: "volume", effect: "lower", icon: softerIcon, label: "softer" },
+  { group: "volume", effect: "fade in", icon: fadeInIcon, label: "fadeIn" },
+  { group: "volume", effect: "fade out", icon: fadeOutIcon, label: "fadeOut" },
+  { group: "volume", effect: "mute", icon: muteIcon, label: "mute", hidden: true },
+  { group: "speed", effect: "faster", icon: fasterIcon, label: "faster" },
+  { group: "speed", effect: "slower", icon: slowerIcon, label: "slower" },
+  { group: "speed", effect: "reverse", icon: reverseIcon, label: "reverse" },
+  { group: "speed", effect: "scratch", icon: scratchIcon, label: "scratch" },
+  { group: "voice", effect: "robot", icon: robotIcon, label: "robot" },
+  { group: "voice", effect: "cyborg", icon: cyborgIcon, label: "cyborg" },
+  { group: "voice", effect: "alien", icon: alienIcon, label: "alien" },
+  { group: "voice", effect: "walkie", icon: walkieIcon, label: "walkie" },
+  { group: "space", effect: "echo", icon: echoIcon, label: "echo" },
+  { group: "space", effect: "reverse reverb", icon: reverseReverbIcon, label: "reverseReverb" },
+  { group: "space", effect: "broadcast", icon: broadcastIcon, label: "broadcast" },
+  { group: "wobble", effect: "vibrato", icon: vibratoIcon, label: "vibrato" },
+  { group: "wobble", effect: "stutter", icon: stutterIcon, label: "stutter" },
+  { group: "wobble", effect: "coaster", icon: coasterIcon, label: "coaster" },
 ] as const satisfies ReadonlyArray<{
+  group: EffectGroupId;
   effect: EffectName;
   icon: string;
   label: keyof Messages;
@@ -270,100 +282,120 @@ export function SoundEditor({
           onClick={onDelete}
         />
       </div>
-      <div className={styles.row}>
-        <div className={styles.waveformArea}>
-          <div className={styles.waveformContainer}>
-            <Waveform data={chunkLevels} height={160} width={600} />
-            {/* 진폭 0(가로선)과 시간 25%·50%·75%(세로선)를 가리키는 연한 기준선. 선택 영역 아래에 두어 입력을 막지 않는다 */}
-            <div className={styles.guideHorizontal} aria-hidden="true" />
-            {GUIDE_POSITIONS.map((percent) => (
-              <div
-                key={percent}
-                className={styles.guideVertical}
-                style={{ left: `${percent}%` }}
-                aria-hidden="true"
+      {/* 왼쪽은 파형과 재생 줄, 오른쪽은 효과 패널이다. 폭이 모자라면 패널이 아래로 내려간다 */}
+      <div className={styles.workArea}>
+        <div className={styles.workMain}>
+          <div className={styles.waveformArea}>
+            <div className={styles.waveformContainer}>
+              <Waveform data={chunkLevels} height={160} width={380} />
+              {/* 진폭 0(가로선)과 시간 25%·50%·75%(세로선)를 가리키는 연한 기준선. 선택 영역 아래에 두어 입력을 막지 않는다 */}
+              <div className={styles.guideHorizontal} aria-hidden="true" />
+              {GUIDE_POSITIONS.map((percent) => (
+                <div
+                  key={percent}
+                  className={styles.guideVertical}
+                  style={{ left: `${percent}%` }}
+                  aria-hidden="true"
+                />
+              ))}
+              {/* 끄는 중 소리가 전환되면 드래그를 버린다. 끝날 때 이전 소리에서 잡은 구간이 새 소리의 선택이 되지 않게 한다 */}
+              <AudioSelector
+                key={switchCount}
+                playhead={playhead}
+                trimStart={trimStart}
+                trimEnd={trimEnd}
+                onSetTrim={onSetTrim}
+                startLabel={m.selectionStart}
+                endLabel={m.selectionEnd}
+                valueText={secondsValueText(m, formatSeconds, durationSeconds)}
+                onPreviewChange={setPreview}
               />
-            ))}
-            {/* 끄는 중 소리가 전환되면 드래그를 버린다. 끝날 때 이전 소리에서 잡은 구간이 새 소리의 선택이 되지 않게 한다 */}
-            <AudioSelector
-              key={switchCount}
-              playhead={playhead}
-              trimStart={trimStart}
-              trimEnd={trimEnd}
-              onSetTrim={onSetTrim}
-              startLabel={m.selectionStart}
-              endLabel={m.selectionEnd}
-              valueText={secondsValueText(m, formatSeconds, durationSeconds)}
-              onPreviewChange={setPreview}
-            />
-            {/* 선택 구간의 시간 범위. 파형 바로 위에 띄우고, 드래그하는 동안 임시 선택(preview)도 따라간다 */}
-            {selection ? (
-              <SelectionLabel
-                start={selection.start}
-                end={selection.end}
-                text={fillRange(m.timeSelectionValue)}
-                readText={fillRange(m.timeSelection)}
-              />
-            ) : null}
+              {/* 선택 구간의 시간 범위. 파형 바로 위에 띄우고, 드래그하는 동안 임시 선택(preview)도 따라간다 */}
+              {selection ? (
+                <SelectionLabel
+                  start={selection.start}
+                  end={selection.end}
+                  text={fillRange(m.timeSelectionValue)}
+                  readText={fillRange(m.timeSelection)}
+                />
+              ) : null}
+            </div>
+            {/*
+              파형 아래 여백의 오른쪽 끝에 띄운다. 파형과 선택 영역을 가리지 않고 줄 높이도 바꾸지 않는다.
+              화면에는 숫자와 단위만 보이고, 보조기기는 "길이"가 붙은 문구를 읽는다
+            */}
+            <span className={styles.totalLength}>
+              <span aria-hidden="true">
+                {m.timeLengthValue.replace("{seconds}", formatSeconds(durationSeconds))}
+              </span>
+              <span className={styles.visuallyHidden}>
+                {m.timeLength.replace("{seconds}", formatSeconds(durationSeconds))}
+              </span>
+            </span>
           </div>
-          {/*
-            파형 아래 여백의 오른쪽 끝에 띄운다. 파형과 선택 영역을 가리지 않고 줄 높이도 바꾸지 않는다.
-            화면에는 숫자와 단위만 보이고, 보조기기는 "길이"가 붙은 문구를 읽는다
-          */}
-          <span className={styles.totalLength}>
-            <span aria-hidden="true">
-              {m.timeLengthValue.replace("{seconds}", formatSeconds(durationSeconds))}
-            </span>
-            <span className={styles.visuallyHidden}>
-              {m.timeLength.replace("{seconds}", formatSeconds(durationSeconds))}
-            </span>
-          </span>
+          <div className={styles.transport}>
+            {playhead !== null ? (
+              <button
+                type="button"
+                className={styles.playButton}
+                aria-label={m.stop}
+                title={tip(m.stop, "playStop")}
+                aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.playStop)}
+                onClick={onStop}
+              >
+                <img draggable={false} src={stopIcon} alt="" />
+                {m.stop}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={styles.playButton}
+                aria-label={m.play}
+                title={tip(m.play, "playStop")}
+                aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.playStop)}
+                onClick={onPlay}
+              >
+                <img draggable={false} src={playIcon} alt="" />
+                {m.play}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
-      <div className={styles.row}>
-        <div className={`${styles.inputGroup} ${styles.playGroup}`}>
-          {playhead !== null ? (
-            <button
-              type="button"
-              className={styles.roundButton}
-              aria-label={m.stop}
-              title={tip(m.stop, "playStop")}
-              aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.playStop)}
-              onClick={onStop}
+        {/* DOM 순서가 Tab 순서이자 화면 순서다. 묶음마다 이름을 붙여 스크린 리더가 묶음을 알린다 */}
+        <div className={styles.effectPanel}>
+          {EFFECT_GROUPS.map(({ id, name }) => (
+            <div
+              key={id}
+              role="group"
+              aria-labelledby={`${scopeId}-${id}`}
+              className={styles.effectGroup}
+              data-group={id}
             >
-              <img draggable={false} src={stopIcon} alt="" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={styles.roundButton}
-              aria-label={m.play}
-              title={tip(m.play, "playStop")}
-              aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.playStop)}
-              onClick={onPlay}
-            >
-              <img draggable={false} src={playIcon} alt="" />
-            </button>
-          )}
-        </div>
-        {/* 9칸 × 2줄. DOM 순서가 Tab 순서이자 화면 순서다 */}
-        <div className={styles.effectGrid}>
-          {VISIBLE_EFFECT_BUTTONS.map(({ effect, icon, label }) => {
-            // Louder는 너무 큰 구간에서 막고 이유를 알린다
-            const blocked = effect === "higher" && tooLoud;
-            return (
-              <IconButton
-                key={effect}
-                className={styles.effectButton}
-                describedBy={scopeId}
-                disabled={blocked || busy}
-                disabledReason={blocked ? m.tooLoudHint : undefined}
-                img={icon}
-                title={m[label]}
-                onClick={() => onEffect(effect)}
-              />
-            );
-          })}
+              <div id={`${scopeId}-${id}`} className={styles.effectGroupName}>
+                {m[name]}
+              </div>
+              <div className={styles.effectChips}>
+                {VISIBLE_EFFECT_BUTTONS.filter((b) => b.group === id).map(
+                  ({ effect, icon, label }) => {
+                    // Louder는 너무 큰 구간에서 막고 이유를 알린다
+                    const blocked = effect === "higher" && tooLoud;
+                    return (
+                      <IconButton
+                        key={effect}
+                        className={styles.effectButton}
+                        describedBy={scopeId}
+                        disabled={blocked || busy}
+                        disabledReason={blocked ? m.tooLoudHint : undefined}
+                        img={icon}
+                        title={m[label]}
+                        onClick={() => onEffect(effect)}
+                      />
+                    );
+                  },
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
       {/* 화면용 정보다. 재생 위치가 프레임마다 바뀌므로 aria-live를 달지 않는다(스크린 리더는 핸들의 aria-valuetext를 쓴다) */}

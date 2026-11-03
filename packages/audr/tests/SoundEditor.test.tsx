@@ -3,7 +3,7 @@ import { applyEffect } from "@cp949/audr-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SoundEditor } from "../src/components/SoundEditor";
 import { getMessages } from "../src/i18n";
-import { VISIBLE_EFFECTS } from "./effectButtons";
+import { EFFECT_GROUPS, VISIBLE_EFFECTS } from "./effectButtons";
 import { fakeAudioBuffer, FakeAudioBufferPlayer, ramp } from "./helpers/fakePlayer";
 
 vi.mock("@cp949/audr-core", async (importOriginal) => {
@@ -88,14 +88,36 @@ describe("SoundEditor 레이아웃", () => {
     expect(screen.queryByRole("button", { name: getMessages("ko").mute })).toBeNull();
   });
 
-  it("효과 버튼은 9칸 × 2줄 영역에 DOM 순서대로 들어 있다", () => {
+  it("효과 버튼은 5개 묶음으로 나뉘고 묶음마다 이름이 붙으며 DOM 순서가 묶음 순서다", () => {
     setup();
-    const buttons = effectLabels.map((name) => screen.getByRole("button", { name }));
-    const grid = buttons[0]?.parentElement as HTMLElement;
-    expect(buttons.every((b) => b.parentElement === grid)).toBe(true);
-    expect(grid.className).toContain("effectGrid");
-    expect(Array.from(grid.children)).toEqual(buttons);
-    expect(buttons).toHaveLength(18);
+    const all: HTMLElement[] = [];
+    for (const { name, labels } of EFFECT_GROUPS) {
+      const group = screen.getByRole("group", { name: en[name] });
+      const buttons = labels.map((label) => screen.getByRole("button", { name: en[label] }));
+      expect(buttons.every((b) => group.contains(b))).toBe(true);
+      expect(Array.from(group.querySelectorAll("button"))).toEqual(buttons);
+      all.push(...buttons);
+    }
+    expect(all).toHaveLength(18);
+    expect(all.map((b) => b.getAttribute("aria-label") ?? b.textContent)).toEqual(effectLabels);
+  });
+
+  it("묶음 이름은 한국어 로케일에서 한국어 문구다", () => {
+    setup({ locale: "ko" });
+    const ko = getMessages("ko");
+    for (const { name } of EFFECT_GROUPS) {
+      expect(screen.getByRole("group", { name: ko[name] })).toBeTruthy();
+    }
+  });
+
+  it("재생 버튼은 아이콘 옆에 글자가 보이고, 재생 중에는 멈추기 글자로 바뀐다", async () => {
+    setup();
+    const play = screen.getByRole("button", { name: en.play });
+    expect(play.textContent).toBe(en.play);
+    await act(async () => fireEvent.click(play));
+    act(() => FakeAudioBufferPlayer.last.onUpdate?.(0.4));
+    const stop = screen.getByRole("button", { name: en.stop });
+    expect(stop.textContent).toBe(en.stop);
   });
 
   it("undo, redo, 재생 버튼의 aria-label은 i18n 영어 문자열이고 title은 그 문자열로 시작한다", () => {
@@ -112,11 +134,14 @@ describe("SoundEditor 레이아웃", () => {
     expect(screen.getByLabelText(en.sound)).toHaveProperty("value", "Meow");
   });
 
-  it("행은 3개이고 두 번째 행에 파형 SVG가 있다", () => {
+  it("작업 영역은 왼쪽(파형, 재생 줄)과 오른쪽(효과 패널)으로 나뉜다", () => {
     const { container } = setup();
-    const rows = container.querySelectorAll('[class*="row"]');
-    expect(rows.length).toBe(3);
-    expect(rows[1]?.querySelector("svg")).not.toBeNull();
+    const work = container.querySelector('[class*="workArea"]') as HTMLElement;
+    const [left, panel] = Array.from(work.children) as HTMLElement[];
+    expect(left?.querySelector("svg[data-waveform]")).not.toBeNull();
+    expect(left?.contains(screen.getByRole("button", { name: en.play }))).toBe(true);
+    expect(panel?.contains(screen.getByRole("button", { name: en.louder }))).toBe(true);
+    expect(left?.contains(panel as HTMLElement)).toBe(false);
   });
 
   it("locale ko이면 한국어 문자열을 쓴다", () => {
