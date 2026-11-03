@@ -3,6 +3,7 @@ import { applyEffect } from "@cp949/audr-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SoundEditor } from "../src/components/SoundEditor";
 import { getMessages } from "../src/i18n";
+import { VISIBLE_EFFECTS } from "./effectButtons";
 import { fakeAudioBuffer, FakeAudioBufferPlayer, ramp } from "./helpers/fakePlayer";
 
 vi.mock("@cp949/audr-core", async (importOriginal) => {
@@ -13,6 +14,8 @@ vi.mock("@cp949/audr-core", async (importOriginal) => {
 
 const mockedApplyEffect = vi.mocked(applyEffect);
 const en = getMessages("en");
+/** 화면에 보이는 효과 버튼 18개의 영어 이름(화면 순서) */
+const effectLabels = VISIBLE_EFFECTS.map(({ label }) => en[label]);
 
 function setup(overrides: Partial<React.ComponentProps<typeof SoundEditor>> = {}) {
   const onChange = vi.fn();
@@ -59,7 +62,7 @@ beforeEach(() => {
 });
 
 describe("SoundEditor 레이아웃", () => {
-  it("버튼이 3행 순서(undo·redo / copy·paste·copy to new·delete / 재생 + 효과 9개)에 이어 시간 표시줄의 단축키 버튼으로 나온다", () => {
+  it("버튼이 3행 순서(undo·redo / copy·paste·copy to new·delete / 재생 + 효과 18개)에 이어 시간 표시줄의 단축키 버튼으로 나온다", () => {
     setup();
     const names = screen
       .getAllByRole("button")
@@ -72,17 +75,27 @@ describe("SoundEditor 레이아웃", () => {
       en.copyToNew,
       en.delete,
       en.play,
-      en.faster,
-      en.slower,
-      en.louder,
-      en.softer,
-      en.mute,
-      en.fadeIn,
-      en.fadeOut,
-      en.reverse,
-      en.robot,
+      ...effectLabels,
       en.shortcutsToggle,
     ]);
+  });
+
+  it("음소거 버튼은 보이지 않는다", () => {
+    const { unmount } = setup();
+    expect(screen.queryByRole("button", { name: en.mute })).toBeNull();
+    unmount();
+    setup({ locale: "ko" });
+    expect(screen.queryByRole("button", { name: getMessages("ko").mute })).toBeNull();
+  });
+
+  it("효과 버튼은 9칸 × 2줄 영역에 DOM 순서대로 들어 있다", () => {
+    setup();
+    const buttons = effectLabels.map((name) => screen.getByRole("button", { name }));
+    const grid = buttons[0]?.parentElement as HTMLElement;
+    expect(buttons.every((b) => b.parentElement === grid)).toBe(true);
+    expect(grid.className).toContain("effectGrid");
+    expect(Array.from(grid.children)).toEqual(buttons);
+    expect(buttons).toHaveLength(18);
   });
 
   it("undo, redo, 재생 버튼의 aria-label은 i18n 영어 문자열이고 title은 그 문자열로 시작한다", () => {
@@ -155,6 +168,22 @@ describe("SoundEditor 버튼 상태", () => {
     setup({ samples: new Float32Array(3072).fill(1) });
     expect(screen.getByRole("button", { name: en.louder })).toHaveProperty("disabled", true);
     expect(screen.getByRole("button", { name: en.softer })).toHaveProperty("disabled", false);
+  });
+
+  it("풀스케일 입력에서 Louder만 비활성이고 나머지 효과 17개는 활성이다", () => {
+    setup({ samples: new Float32Array(3072).fill(1) });
+    for (const { label } of VISIBLE_EFFECTS) {
+      const disabled = screen.getByRole<HTMLButtonElement>("button", { name: en[label] }).disabled;
+      expect(disabled, label).toBe(label === "louder");
+    }
+  });
+
+  it("한국어 로케일이면 효과 버튼 18개의 이름이 한국어 문구다", () => {
+    setup({ locale: "ko" });
+    const ko = getMessages("ko");
+    for (const { label } of VISIBLE_EFFECTS) {
+      expect(screen.getByRole("button", { name: ko[label] }), label).toBeTruthy();
+    }
   });
 
   it("조용한 소리이면 Louder가 활성이다", () => {
@@ -263,21 +292,10 @@ describe("SoundEditor 시간 표시줄", () => {
 });
 
 /**
- * 효과 적용 범위 표시. 효과(Faster~Robot)는 확정된 선택이 있으면 그 구간에, 없으면 소리 전체에 적용된다.
- * 문구는 효과 버튼 9개의 aria-describedby가 가리킨다. 접근 가능한 이름은 바뀌지 않는다.
+ * 효과 적용 범위 표시. 효과(Faster~Reverse)는 확정된 선택이 있으면 그 구간에, 없으면 소리 전체에 적용된다.
+ * 문구는 효과 버튼 18개의 aria-describedby가 가리킨다. 접근 가능한 이름은 바뀌지 않는다.
  */
 describe("SoundEditor 효과 적용 범위", () => {
-  const effectLabels = [
-    en.faster,
-    en.slower,
-    en.louder,
-    en.softer,
-    en.mute,
-    en.fadeIn,
-    en.fadeOut,
-    en.reverse,
-    en.robot,
-  ];
   const scopeOf = (label: string) => {
     const ids = (screen.getByRole("button", { name: label }).getAttribute("aria-describedby") ?? "")
       .split(" ")
@@ -323,7 +341,7 @@ describe("SoundEditor 효과 적용 범위", () => {
     await waitFor(() => expect(screen.getByText(en.effectScopeWhole)).toBeTruthy());
   });
 
-  it("효과 버튼 9개가 같은 범위 문구를 설명으로 읽고, 선택이 바뀌면 같은 요소의 문구가 따라 바뀐다", async () => {
+  it("효과 버튼 18개가 같은 범위 문구를 설명으로 읽고, 선택이 바뀌면 같은 요소의 문구가 따라 바뀐다", async () => {
     // 진폭이 작은 소리를 써서 Louder가 막히지 않게 한다
     const quiet = Float32Array.from({ length: 3000 }, (_, i) => 0.1 * Math.sin(i / 10));
     const { container } = setup({ samples: quiet });
@@ -406,24 +424,11 @@ describe("SoundEditor 상호작용", () => {
       trimStart: s,
       trimEnd: e,
     }));
-    const expected: Array<[string, string]> = [
-      [en.faster, "faster"],
-      [en.slower, "slower"],
-      [en.louder, "higher"],
-      [en.softer, "lower"],
-      [en.mute, "mute"],
-      [en.fadeIn, "fade in"],
-      [en.fadeOut, "fade out"],
-      [en.reverse, "reverse"],
-      [en.robot, "robot"],
-    ];
-    for (const [label, name] of expected) {
-      await act(async () => fireEvent.click(screen.getByRole("button", { name: label })));
-      expect(mockedApplyEffect.mock.calls.at(-1)?.[1]).toBe(name);
+    for (const { label, effect } of VISIBLE_EFFECTS) {
+      await act(async () => fireEvent.click(screen.getByRole("button", { name: en[label] })));
+      expect(mockedApplyEffect.mock.calls.at(-1)?.[1]).toBe(effect);
     }
-    expect(mockedApplyEffect).toHaveBeenCalledTimes(9);
-    // 화면에는 echo 버튼이 없다
-    expect(screen.queryByRole("button", { name: en.echo })).toBeNull();
+    expect(mockedApplyEffect).toHaveBeenCalledTimes(18);
   });
 
   it("효과가 끝나면 onChange로 새 샘플을 알린다", async () => {
@@ -755,24 +760,11 @@ describe("SoundEditor busy 표시", () => {
     await dragSelect(container, 100, 200);
   }
 
-  it("효과가 오래 걸리면 aria-busy를 켜고 편집 버튼 13개를 비활성하며 끝나면 푼다", async () => {
+  it("효과가 오래 걸리면 aria-busy를 켜고 편집 버튼 22개를 비활성하며 끝나면 푼다", async () => {
     const { container } = setup({ samples: quiet });
     await prepareAllEnabled(container);
-    const editLabels = [
-      en.undo,
-      en.redo,
-      en.paste,
-      en.delete,
-      en.faster,
-      en.slower,
-      en.louder,
-      en.softer,
-      en.mute,
-      en.fadeIn,
-      en.fadeOut,
-      en.reverse,
-      en.robot,
-    ];
+    const editLabels = [en.undo, en.redo, en.paste, en.delete, ...effectLabels];
+    expect(editLabels).toHaveLength(22);
     for (const label of editLabels) expect(button(label).disabled, label).toBe(false);
     expect(root(container).getAttribute("aria-busy")).not.toBe("true");
 

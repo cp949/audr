@@ -42,11 +42,13 @@
 - 대기 수가 0이 되면 아직 울리지 않은 타이머를 취소하고 `busy`를 바로 내린다.
 - `detach` 뒤에는 타이머를 만들지 않고, `detach`가 남은 타이머를 취소한다.
 
-비활성 대상은 Undo, Redo, Paste, Delete, 효과 버튼(Faster, Slower, Louder, Softer, Mute, Fade in, Fade out, Reverse, Robot)이다. Copy, Copy to New, 재생·정지는 활성으로 둔다.
+비활성 대상은 Undo, Redo, Paste, Delete, 효과 버튼(Faster, Slower, Louder, Softer, Fade in, Fade out, Cyborg, Robot, Alien, Echo, Broadcast, Walkie-talkie, Reverse reverb, Scratch, Roller coaster, Stutter, Vibrato, Reverse)이다. Copy, Copy to New, 재생·정지는 활성으로 둔다.
 
 - 해석: 비활성은 대기 중임을 보이는 표시다. 순서를 지키는 것은 큐다.
 - 근거: 키보드 단축키는 busy 중에도 막지 않고 큐에 쌓는다. 비활성이 정확성을 지키는 장치라면 단축키도 막아야 한다.
 - Copy 계열은 큐에 들어가 순서가 지켜지므로 비활성하지 않는다.
+
+음소거는 `EFFECT_BUTTONS`에 `hidden` 항목으로 남아 있고 화면에는 그리지 않는다. 코어의 효과 구현(`effects/gain.ts`)과 `onEffect("mute")` 경로는 그대로 두고 버튼만 뺐다. 화면 배치만 바꾸는 결정이어서 코어와 훅 계약을 건드리지 않고, 나중에 `hidden`을 지우면 버튼이 다시 보인다.
 
 ### 비활성으로 잃은 포커스 복원
 

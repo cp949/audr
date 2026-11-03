@@ -1,9 +1,14 @@
 // 상태와 동작은 useSoundEditor에 있다.
 import type { EffectName, SoundBuffer } from "@cp949/audr-core";
 import { useId, useState } from "react";
+import alienIcon from "../assets/icons/sound-editor/icon--alien.svg";
+import broadcastIcon from "../assets/icons/sound-editor/icon--broadcast.svg";
+import coasterIcon from "../assets/icons/sound-editor/icon--coaster.svg";
 import copyToNewIcon from "../assets/icons/sound-editor/icon--copy-to-new.svg";
 import copyIcon from "../assets/icons/sound-editor/icon--copy.svg";
+import cyborgIcon from "../assets/icons/sound-editor/icon--cyborg.svg";
 import deleteIcon from "../assets/icons/sound-editor/icon--delete.svg";
+import echoIcon from "../assets/icons/sound-editor/icon--echo.svg";
 import fadeInIcon from "../assets/icons/sound-editor/icon--fade-in.svg";
 import fadeOutIcon from "../assets/icons/sound-editor/icon--fade-out.svg";
 import fasterIcon from "../assets/icons/sound-editor/icon--faster.svg";
@@ -12,12 +17,17 @@ import muteIcon from "../assets/icons/sound-editor/icon--mute.svg";
 import pasteIcon from "../assets/icons/sound-editor/icon--paste.svg";
 import playIcon from "../assets/icons/sound-editor/icon--play.svg";
 import redoIcon from "../assets/icons/sound-editor/icon--redo.svg";
+import reverseReverbIcon from "../assets/icons/sound-editor/icon--reverse-reverb.svg";
 import reverseIcon from "../assets/icons/sound-editor/icon--reverse.svg";
 import robotIcon from "../assets/icons/sound-editor/icon--robot.svg";
+import scratchIcon from "../assets/icons/sound-editor/icon--scratch.svg";
 import slowerIcon from "../assets/icons/sound-editor/icon--slower.svg";
 import softerIcon from "../assets/icons/sound-editor/icon--softer.svg";
 import stopIcon from "../assets/icons/sound-editor/icon--stop.svg";
+import stutterIcon from "../assets/icons/sound-editor/icon--stutter.svg";
 import undoIcon from "../assets/icons/sound-editor/icon--undo.svg";
+import vibratoIcon from "../assets/icons/sound-editor/icon--vibrato.svg";
+import walkieIcon from "../assets/icons/sound-editor/icon--walkie.svg";
 import { useSoundEditor, type SoundEditorError } from "../hooks/useSoundEditor";
 import { getMessages, type Locale, type Messages } from "../i18n";
 import type { AudrTheme } from "../theme";
@@ -32,20 +42,39 @@ import { ShortcutHelp } from "./ShortcutHelp";
 import { Waveform } from "./Waveform";
 
 /**
- * 효과 버튼. 배열 순서가 화면 순서다.
+ * 효과 버튼. 배열 순서가 화면 순서다(9칸 × 2줄, 위→아래, 왼쪽→오른쪽).
  * 화면의 Louder는 `higher`, Softer는 `lower` 효과다.
+ * 음소거는 소스를 유지하고 화면에는 보이지 않는다(`hidden`).
  */
 const EFFECT_BUTTONS = [
   { effect: "faster", icon: fasterIcon, label: "faster" },
   { effect: "slower", icon: slowerIcon, label: "slower" },
   { effect: "higher", icon: louderIcon, label: "louder" },
   { effect: "lower", icon: softerIcon, label: "softer" },
-  { effect: "mute", icon: muteIcon, label: "mute" },
   { effect: "fade in", icon: fadeInIcon, label: "fadeIn" },
   { effect: "fade out", icon: fadeOutIcon, label: "fadeOut" },
-  { effect: "reverse", icon: reverseIcon, label: "reverse" },
+  { effect: "cyborg", icon: cyborgIcon, label: "cyborg" },
   { effect: "robot", icon: robotIcon, label: "robot" },
-] as const satisfies ReadonlyArray<{ effect: EffectName; icon: string; label: keyof Messages }>;
+  { effect: "alien", icon: alienIcon, label: "alien" },
+  { effect: "echo", icon: echoIcon, label: "echo" },
+  { effect: "broadcast", icon: broadcastIcon, label: "broadcast" },
+  { effect: "walkie", icon: walkieIcon, label: "walkie" },
+  { effect: "reverse reverb", icon: reverseReverbIcon, label: "reverseReverb" },
+  { effect: "scratch", icon: scratchIcon, label: "scratch" },
+  { effect: "coaster", icon: coasterIcon, label: "coaster" },
+  { effect: "stutter", icon: stutterIcon, label: "stutter" },
+  { effect: "vibrato", icon: vibratoIcon, label: "vibrato" },
+  { effect: "reverse", icon: reverseIcon, label: "reverse" },
+  { effect: "mute", icon: muteIcon, label: "mute", hidden: true },
+] as const satisfies ReadonlyArray<{
+  effect: EffectName;
+  icon: string;
+  label: keyof Messages;
+  hidden?: boolean;
+}>;
+
+/** 화면에 그리는 효과 버튼. `hidden`인 항목은 거른다 */
+const VISIBLE_EFFECT_BUTTONS = EFFECT_BUTTONS.filter((b) => !("hidden" in b && b.hidden));
 
 /**
  * SoundEditor props.
@@ -240,7 +269,7 @@ export function SoundEditor({
         </div>
       </div>
       <div className={styles.row}>
-        <div className={styles.inputGroup}>
+        <div className={`${styles.inputGroup} ${styles.playGroup}`}>
           {playhead !== null ? (
             <button
               type="button"
@@ -265,28 +294,31 @@ export function SoundEditor({
             </button>
           )}
         </div>
-        {EFFECT_BUTTONS.map(({ effect, icon, label }) => {
-          // Louder는 너무 큰 구간에서 막고 이유를 알린다
-          const blocked = effect === "higher" && tooLoud;
-          return (
-            <IconButton
-              key={effect}
-              className={styles.effectButton}
-              describedBy={scopeId}
-              disabled={blocked || busy}
-              disabledReason={blocked ? m.tooLoudHint : undefined}
-              img={icon}
-              title={m[label]}
-              onClick={() => onEffect(effect)}
-            />
-          );
-        })}
+        {/* 9칸 × 2줄. DOM 순서가 Tab 순서이자 화면 순서다 */}
+        <div className={styles.effectGrid}>
+          {VISIBLE_EFFECT_BUTTONS.map(({ effect, icon, label }) => {
+            // Louder는 너무 큰 구간에서 막고 이유를 알린다
+            const blocked = effect === "higher" && tooLoud;
+            return (
+              <IconButton
+                key={effect}
+                className={styles.effectButton}
+                describedBy={scopeId}
+                disabled={blocked || busy}
+                disabledReason={blocked ? m.tooLoudHint : undefined}
+                img={icon}
+                title={m[label]}
+                onClick={() => onEffect(effect)}
+              />
+            );
+          })}
+        </div>
       </div>
       {/* 화면용 정보다. 재생 위치가 프레임마다 바뀌므로 aria-live를 달지 않는다(스크린 리더는 핸들의 aria-valuetext를 쓴다) */}
       <div className={styles.timeReadout}>
         <span>{m.timeLength.replace("{seconds}", durationSeconds.toFixed(2))}</span>
         {/*
-          효과 버튼 9개가 aria-describedby로 가리킨다. 선택을 끌 때마다 낭독되지 않도록 aria-live는 달지 않는다.
+          효과 버튼이 aria-describedby로 가리킨다. 선택을 끌 때마다 낭독되지 않도록 aria-live는 달지 않는다.
           Length 바로 뒤에 둬서 항상 있는 항목이 앞에 오고, 뒤의 선택·재생 항목만 늘고 준다
         */}
         <span id={scopeId}>{effectScopeText}</span>

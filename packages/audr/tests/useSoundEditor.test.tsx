@@ -820,6 +820,22 @@ describe("useSoundEditor 효과", () => {
     );
   });
 
+  it('화면에 버튼이 없어도 onEffect("mute")는 mute 효과로 applyEffect를 호출한다', async () => {
+    const { result } = setup();
+    mockedApplyEffect.mockResolvedValue({
+      buffer: fakeAudioBuffer(ramp(500), 44100),
+      trimStart: 0,
+      trimEnd: 1,
+    });
+    await act(async () => result.current.onEffect("mute"));
+    expect(mockedApplyEffect).toHaveBeenCalledWith(
+      FakeAudioBufferPlayer.instances[0]?.buffer,
+      "mute",
+      0,
+      1,
+    );
+  });
+
   it("선택이 있으면 선택 구간으로 호출하고, 결과 samples와 조정된 선택으로 갱신하고 재생한다", async () => {
     const { result, onChange } = setup();
     await select(result, 0.5, 1);

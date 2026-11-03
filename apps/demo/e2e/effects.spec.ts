@@ -213,11 +213,20 @@ test.describe("UI 경유 (데모 화면)", () => {
     ["Slower", 58800, [0.05, Infinity]],
     ["Louder", 44100, [0.7, 0.8]], // 0.5 × 1.5
     ["Softer", 44100, [0.25, 0.35]], // 0.5 × 0.6
-    ["Mute", 44100, [0, 0.001]],
     ["Fade in", 44100, [0.05, Infinity]],
     ["Fade out", 44100, [0.05, Infinity]],
-    ["Reverse", 44100, [0.05, Infinity]],
+    ["Cyborg", 52920, [0.05, Infinity]],
     ["Robot", 52920, [0.05, Infinity]],
+    ["Alien", 44100, [0.05, Infinity]],
+    ["Echo", 97020, [0.05, Infinity]],
+    ["Broadcast", 61740, [0.05, Infinity]],
+    ["Walkie-talkie", 54243, [0.05, Infinity]],
+    ["Reverse reverb", 110250, [0.05, Infinity]],
+    ["Scratch", 44100, [0.05, Infinity]],
+    ["Roller coaster", 44100, [0.05, Infinity]],
+    ["Stutter", 44100, [0.05, Infinity]],
+    ["Vibrato", 44100, [0.05, Infinity]],
+    ["Reverse", 44100, [0.05, Infinity]],
   ];
   for (const [title, expected, [minPeak, maxPeak]] of uiCases) {
     test(`${title} 버튼: 편집이 적용되고 샘플 수가 ${expected}이 된다`, async ({ page }) => {
@@ -231,6 +240,76 @@ test.describe("UI 경유 (데모 화면)", () => {
       expect(peak).toBeLessThanOrEqual(maxPeak);
     });
   }
+
+  test("음소거 버튼은 화면에 없다", async ({ page }) => {
+    await expect(editorButton(page, "Mute")).toHaveCount(0);
+  });
+
+  test("효과 버튼 18개는 9칸 × 2줄이고 서로 겹치지 않는다", async ({ page }) => {
+    const titles = [
+      "Faster",
+      "Slower",
+      "Louder",
+      "Softer",
+      "Fade in",
+      "Fade out",
+      "Cyborg",
+      "Robot",
+      "Alien",
+      "Echo",
+      "Broadcast",
+      "Walkie-talkie",
+      "Reverse reverb",
+      "Scratch",
+      "Roller coaster",
+      "Stutter",
+      "Vibrato",
+      "Reverse",
+    ];
+    const boxes = [];
+    for (const title of titles) {
+      const box = await editorButton(page, title).boundingBox();
+      if (!box) throw new Error(`${title} 버튼의 위치를 구하지 못했다`);
+      boxes.push(box);
+    }
+    const rows = [boxes.slice(0, 9), boxes.slice(9)];
+    for (const row of rows) {
+      // 한 줄의 위 가장자리가 모두 같다
+      for (const box of row) expect(box.y).toBeCloseTo(row[0]!.y, 1);
+      // 왼쪽에서 오른쪽으로 놓이고 이웃과 가로로 겹치지 않는다
+      for (let i = 0; i < row.length - 1; i++) {
+        expect(row[i]!.x + row[i]!.width).toBeLessThanOrEqual(row[i + 1]!.x + 0.5);
+      }
+    }
+    // 2줄째는 1줄째의 가장 낮은 아래 가장자리 이후에서 시작한다
+    const firstRowBottom = Math.max(...rows[0]!.map((b) => b.y + b.height));
+    expect(rows[1]![0]!.y).toBeGreaterThanOrEqual(firstRowBottom - 0.5);
+  });
+
+  test("효과 격자의 오른쪽 끝은 파형의 오른쪽 끝을 넘지 않는다", async ({ page }) => {
+    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+    const last = await editorButton(page, "Reverse").boundingBox();
+    if (!wave || !last) throw new Error("파형이나 버튼의 위치를 구하지 못했다");
+    expect(last.x + last.width).toBeLessThanOrEqual(wave.x + wave.width + 0.5);
+  });
+
+  test("기본 글꼴 크기를 150%로 키워도 이웃한 효과 라벨이 겹치지 않는다", async ({ page }) => {
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = "24px";
+    });
+    for (const [left, right] of [
+      ["Broadcast", "Walkie-talkie"],
+      ["Walkie-talkie", "Reverse reverb"],
+      ["Reverse reverb", "Scratch"],
+      ["Scratch", "Roller coaster"],
+      ["Roller coaster", "Stutter"],
+    ]) {
+      const a = await editorButton(page, left!).locator("div").boundingBox();
+      const b = await editorButton(page, right!).locator("div").boundingBox();
+      if (!a || !b) throw new Error(`${left}, ${right} 라벨의 위치를 구하지 못했다`);
+      expect(a.x + a.width, `${left}와 ${right}`).toBeLessThanOrEqual(b.x + 0.5);
+    }
+  });
 
   test("선택 후 Delete 버튼: 25%~75% 선택이면 22050샘플이 남는다", async ({ page }) => {
     await dragSelect(page, 0.25, 0.75);

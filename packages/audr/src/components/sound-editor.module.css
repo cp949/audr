@@ -116,12 +116,36 @@
   max-height: 100%;
 }
 
+/* 재생 버튼 옆 점선 구분선이 효과 2줄 높이만큼 이어지게 줄 높이로 늘리고, 재생 버튼은 가운데에 둔다. */
+.playGroup {
+  align-self: stretch;
+  align-items: center;
+}
+
+/*
+  9칸 × 2줄. Chrome 75에서도 되도록 flex gap 대신 grid를 쓰고 줄 간격만 row-gap으로 둔다.
+  격자는 540px(칸당 60px)까지 늘고, 호스트가 좁으면 줄어들어 에디터 오른쪽 끝을 넘지 않는다.
+*/
+.effectGrid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  flex: 0 1 540px;
+  min-width: 0;
+  grid-row-gap: 0.5rem;
+  row-gap: 0.5rem;
+  align-items: start;
+}
+
 .effectButton {
-  flex-basis: 60px;
   color: var(--audr-text-primary);
   font-size: 0.625rem;
   user-select: none;
   padding: 0.25rem 0;
+}
+
+/* 라벨 폭을 칸 폭에 묶는다. 글꼴이 커져 라벨이 넘칠 때 줄을 바꿔 이웃 칸과 겹치지 않게 한다 */
+.effectButton > div {
+  max-width: 100%;
 }
 
 .effectButton + .effectButton {
