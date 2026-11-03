@@ -1,0 +1,31 @@
+/* reduced-motion 규칙이 필요해서 sound-editor.module.css와 따로 둔다. 그 파일은 정보를 전달하는 움직임만 있어 이 규칙을 두지 않는다 */
+/*
+  복사·붙여 넣기 알림. 눈금자 아래 파형 자리에 해당 구간만 반투명 분홍으로 칠했다가 1초 동안 지운다.
+  처음 0.25초는 그대로 두어 눈에 들어오게 하고 나머지로 옅어진다. 입력을 막지 않는다.
+  움직임을 줄이도록 설정한 사용자에게는 서서히 옅어지는 대신 1초 뒤 한 번에 지운다.
+*/
+.flash {
+  position: absolute;
+  top: 22px;
+  bottom: 0;
+  background: var(--audr-flash);
+  opacity: 0;
+  pointer-events: none;
+  animation: flashFade 1s ease-out;
+}
+
+@keyframes flashFade {
+  0%,
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash {
+    animation-timing-function: steps(1, end);
+  }
+}

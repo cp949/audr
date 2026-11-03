@@ -61,6 +61,12 @@ export type EditSessionProps = {
 /** 선택 구간. 0~1 비율이고, 선택이 없으면 둘 다 null이다. */
 export type EditTrim = { start: number | null; end: number | null };
 
+/**
+ * 복사하거나 붙여 넣은 구간. 화면이 잠깐 칠해 보이는 데 쓴다. 0~1 비율이다.
+ * id는 동작마다 늘려, 같은 구간을 다시 복사해도 화면이 효과를 처음부터 다시 그리게 한다.
+ */
+export type EditFlash = { id: number; start: number; end: number };
+
 /** 세션이 쓰는 재생기가 갖춰야 하는 최소 interface. */
 export type EditPlayer = Pick<AudioBufferPlayer, "buffer" | "play" | "stop">;
 
@@ -91,6 +97,9 @@ export type EditSnapshot = {
   playhead: number | null;
 
   trim: EditTrim;
+
+  /** 마지막으로 복사하거나 붙여 넣은 구간. 소리가 바뀌면 null이다 */
+  flash: EditFlash | null;
 
   canUndo: boolean;
 
@@ -164,6 +173,7 @@ export class EditSession {
   /** 재생기를 만든 samples가 길이 0이었는지. 재생기 버퍼는 이때 무음 1샘플이라 편집에서 가린다 */
   private emptySound = false;
   private copyBuffer: SoundBuffer | null = null;
+  private flashSeq = 0;
   // 편집 직렬화, 세대 번호, 붙임 여부, busy 지연을 가진다
   private readonly queue = new EditQueue((busy) => this.update({ busy }));
   // 마지막으로 onChange로 내보낸 buffer. 호스트가 그 배열을 그대로 내려 주면 내용 비교를 건너뛴다
@@ -181,6 +191,7 @@ export class EditSession {
       durationSeconds: props.samples.length / props.sampleRate,
       playhead: null,
       trim: { start: null, end: null },
+      flash: null,
       canUndo: false,
       canRedo: false,
       canPaste: false,
@@ -288,7 +299,7 @@ export class EditSession {
     this.update({ editError: null });
     this.resetState(samples, sampleRate);
     // resetState는 편집 결과 반영도 쓰므로 소리 전환 경로인 여기서 올린다
-    this.update({ switchCount: this.snapshot.switchCount + 1 });
+    this.update({ switchCount: this.snapshot.switchCount + 1, flash: null });
   }
 
   // ---- 재생과 선택 ----
@@ -455,6 +466,12 @@ export class EditSession {
     this.update({ trim: { start, end } });
   }
 
+  /** 복사하거나 붙여 넣은 구간을 화면에 알린다. 비율은 0~1로 자른다 */
+  private flashRange(start: number, end: number): void {
+    const clamp = (v: number) => Math.min(1, Math.max(0, v));
+    this.update({ flash: { id: ++this.flashSeq, start: clamp(start), end: clamp(end) } });
+  }
+
   private setCopyBuffer(buffer: SoundBuffer | null): void {
     this.copyBuffer = buffer;
     this.update({ canPaste: buffer !== null });
@@ -577,6 +594,7 @@ export class EditSession {
     const clip = { samples: sliceRange(samples, start, end), sampleRate };
     if (clip.samples.length === 0) return null;
     this.setCopyBuffer(clip);
+    this.flashRange(start, end);
     return clip;
   }
 
@@ -595,6 +613,9 @@ export class EditSession {
       if (!ok) return;
       // 선택이 있었다면 붙여 넣은 구간이 새 선택이 된다
       if (pasted.trimStart !== null) this.setTrim(pasted.trimStart, pasted.trimEnd);
+      // 선택이 없으면 끝에 붙으므로 새로 늘어난 뒤쪽이 붙여 넣은 구간이다
+      if (pasted.trimStart !== null) this.flashRange(pasted.trimStart, pasted.trimEnd ?? 1);
+      else this.flashRange(target.samples.length / pasted.samples.length, 1);
       this.play();
     });
   }

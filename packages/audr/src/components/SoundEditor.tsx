@@ -43,6 +43,7 @@ import { NameInput } from "./NameInput";
 import styles from "./sound-editor.module.css";
 import { SelectionLabel } from "./SelectionLabel";
 import { SelectionToolbar } from "./SelectionToolbar";
+import flashStyles from "./copy-flash.module.css";
 import toolbarStyles from "./selection-toolbar.module.css";
 import { ShortcutHelp } from "./ShortcutHelp";
 import { Waveform } from "./Waveform";
@@ -158,6 +159,7 @@ export function SoundEditor({
     canUndo,
     canRedo,
     canPaste,
+    flash,
     tooLoud,
     busy,
     editError,
@@ -335,6 +337,24 @@ export function SoundEditor({
                   aria-hidden="true"
                 />
               ))}
+              {/*
+                복사하거나 붙여 넣은 구간을 1초 동안 칠했다가 지운다. 화면용 표시라 보조기기에는 알리지 않는다.
+                key가 동작마다 바뀌어 같은 구간을 다시 복사해도 처음부터 다시 그린다
+              */}
+              {flash ? (
+                <div
+                  key={flash.id}
+                  className={flashStyles.flash}
+                  aria-hidden="true"
+                  style={{
+                    left: `${flash.start * 100}%`,
+                    width: `${(flash.end - flash.start) * 100}%`,
+                    // 파형 상자의 둥근 아래 모서리에 닿는 쪽만 같은 반지름으로 둥글게 한다
+                    borderBottomLeftRadius: flash.start === 0 ? "8px" : undefined,
+                    borderBottomRightRadius: flash.end === 1 ? "8px" : undefined,
+                  }}
+                />
+              ) : null}
               {/* 끄는 중 소리가 전환되면 드래그를 버린다. 끝날 때 이전 소리에서 잡은 구간이 새 소리의 선택이 되지 않게 한다 */}
               <AudioSelector
                 key={switchCount}

@@ -231,6 +231,30 @@ describe("SoundEditor 버튼 상태", () => {
  * 시간 표기(전체 길이, 선택 구간). 샘플레이트 1000Hz에 1000샘플이라 전체가 1.00초다.
  * 표시는 화면용이라 aria-live가 없다. 문구와 갱신 시점만 고정한다.
  */
+describe("SoundEditor 복사·붙여 넣기 구간 알림", () => {
+  const flashOf = (container: HTMLElement) =>
+    container.querySelector<HTMLElement>('[class*="flash"]');
+
+  it("복사하면 복사한 구간에 알림이 뜨고 보조기기에는 숨긴다", async () => {
+    const { container } = setup({ samples: ramp(1000), sampleRate: 1000 });
+    expect(flashOf(container)).toBeNull();
+    await dragSelect(container, 250, 750);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: en.copy })));
+    const flash = flashOf(container);
+    expect(flash?.getAttribute("aria-hidden")).toBe("true");
+    expect(flash?.style.left).toBe("25%");
+    expect(flash?.style.width).toBe("50%");
+  });
+
+  it("같은 구간을 다시 복사하면 알림 요소를 새로 만들어 처음부터 다시 그린다", async () => {
+    const { container } = setup({ samples: ramp(1000), sampleRate: 1000 });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: en.copy })));
+    const first = flashOf(container);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: en.copy })));
+    expect(flashOf(container)).not.toBe(first);
+  });
+});
+
 describe("SoundEditor 시간 표기", () => {
   const setupOneSecond = (overrides: Partial<React.ComponentProps<typeof SoundEditor>> = {}) =>
     setup({ samples: ramp(1000), sampleRate: 1000, ...overrides });

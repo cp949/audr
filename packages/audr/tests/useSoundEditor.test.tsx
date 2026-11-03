@@ -383,6 +383,47 @@ describe("useSoundEditor 재생", () => {
   });
 });
 
+describe("useSoundEditor 복사·붙여 넣기 구간 알림", () => {
+  it("복사하면 복사한 구간을 알리고, 같은 구간을 다시 복사해도 id가 바뀐다", async () => {
+    const { result } = setup({ samples: ramp(100) });
+    expect(result.current.flash).toBeNull();
+    await press("c", { ctrlKey: true });
+    expect(result.current.flash).toMatchObject({ start: 0, end: 1 });
+    const firstId = result.current.flash?.id;
+    await select(result, 0.25, 0.75);
+    await press("c", { ctrlKey: true });
+    expect(result.current.flash).toMatchObject({ start: 0.25, end: 0.75 });
+    await press("c", { ctrlKey: true });
+    expect(result.current.flash?.id).toBeGreaterThan((firstId ?? 0) + 1);
+  });
+
+  it("선택 없이 붙이면 끝에 늘어난 구간을, 선택이 있으면 교체된 구간을 알린다", async () => {
+    const { result, onChange } = setup({ samples: ramp(100) });
+    await press("c", { ctrlKey: true });
+    await press("v", { ctrlKey: true });
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
+    // 100샘플 뒤에 100샘플이 붙어 뒤쪽 절반이다
+    expect(result.current.flash).toMatchObject({ start: 0.5, end: 1 });
+
+    await select(result, 0, 0.2);
+    await press("c", { ctrlKey: true }); // 앞 40개(200샘플의 20%)
+    await select(result, 0.5, 1);
+    await press("v", { ctrlKey: true });
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(2));
+    // 100샘플 + 40샘플 = 140샘플 중 뒤 40샘플
+    await waitFor(() => expect(result.current.flash?.start).toBeCloseTo(100 / 140, 9));
+    expect(result.current.flash?.end).toBeCloseTo(1, 9);
+  });
+
+  it("다른 소리로 바뀌면 알림을 지운다", async () => {
+    const { result, rerender, initial } = setup({ samples: ramp(100), soundId: "a" });
+    await press("c", { ctrlKey: true });
+    expect(result.current.flash).not.toBeNull();
+    rerender({ ...initial, samples: ramp(50), soundId: "b" });
+    await waitFor(() => expect(result.current.flash).toBeNull());
+  });
+});
+
 describe("useSoundEditor copy/paste", () => {
   it("canPaste는 copy 전에 false, copy 후 true다", async () => {
     const { result } = setup();

@@ -221,6 +221,8 @@ export function useSoundEditor(props: SoundEditorHookProps) {
     canUndo: snapshot.canUndo,
     canRedo: snapshot.canRedo,
     canPaste: snapshot.canPaste,
+    /** 마지막으로 복사하거나 붙여 넣은 구간(0~1 비율). 동작마다 id가 늘고, 소리가 바뀌면 null이다 */
+    flash: snapshot.flash,
     tooLoud: isTooLoud(snapshot.chunkLevels, trim.start, trim.end),
     /** 편집이 BUSY_DELAY_MS를 넘게 대기하거나 실행 중이면 true. 끝나면 바로 false가 된다 */
     busy: snapshot.busy,

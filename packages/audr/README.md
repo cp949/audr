@@ -76,6 +76,7 @@ import { SoundEditor } from "@cp949/audr";
 - `Effects apply to: whole sound`와 `Effects apply to: selection`은 화면에 보이지 않고 스크린 리더만 읽는다. 한국어는 `효과 적용 범위: 소리 전체`, `효과 적용 범위: 선택 구간`이다. 선택 구간은 파형 위 범위 문구와 핸들로 보인다.
 - 효과(Faster, Slower, Louder, Softer, Fade in, Fade out, Cyborg, Robot, Alien, Echo, Broadcast, Walkie-talkie, Reverse reverb, Scratch, Roller coaster, Stutter, Vibrato, Reverse)는 확정된 선택이 있으면 그 구간에, 없으면 소리 전체에 적용된다. 문구는 이 기준을 따른다.
 - Copy와 Copy to New도 선택이 있으면 그 구간을, 없으면 전체를 복사한다. 이 두 버튼에는 문구를 연결하지 않았다.
+- Copy, Copy to New, Paste를 실행하면 복사하거나 붙여 넣은 구간을 파형 위에 반투명 분홍(`--audr-flash`)으로 1초 동안 칠했다가 지운다. 선택 없이 Paste하면 끝에 늘어난 구간이 칠해진다. 화면 표시만 있고 스크린 리더에는 알리지 않는다. 움직임 줄이기를 켠 환경에서는 서서히 옅어지지 않고 1초 뒤에 한 번에 지운다. 다른 소리로 바뀌면 지운다.
 - Delete와 Keep only selection(선택 구간만 남기기)은 선택이 있을 때만 파형 위에 뜨는 작업 막대(`role="group"`, 이름은 `messages`의 `selectionActions`)에 나타난다. 끄는 동안에는 숨고 놓으면 나타나며, 막대는 선택 가운데에 맞추되 파형 상자 안에 머문다. 단축키는 각각 Delete, Shift+Delete다. Paste는 선택이 있으면 그 구간을 교체하고, 없으면 끝에 붙인다.
 - 문구는 효과가 실제로 쓰는 선택 값을 따른다. 파형을 끄는 동안 파형 위 선택 구간에 보이는 임시 범위는 쓰지 않는다.
 - 파형을 누르는 순간 그 지점에 길이 0 선택이 잡혀 문구가 선택 구간으로 바뀐다. 0.5초 안에 1% 미만만 움직이고 떼면 선택이 풀려 소리 전체로 돌아간다.

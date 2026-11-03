@@ -32,6 +32,8 @@
   --audr-stage-bar: #5fe0c8;
   --audr-stage-line: #5fe0c8;
   --audr-stage-guide: hsla(0, 0%, 100%, 0.12);
+  /* 복사·붙여 넣은 구간을 잠깐 칠하는 색. 테마와 무관하다 */
+  --audr-flash: hsla(330, 100%, 70%, 0.5);
   --audr-stage-ruler-text: #9fb4bf;
   /* 편집기에서 선택 구간 밖 막대의 불투명도. 0.7이면 70%만 보인다 */
   --audr-wave-idle-opacity: 0.7;
