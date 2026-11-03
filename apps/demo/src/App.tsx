@@ -120,7 +120,7 @@ export function App() {
   const theme = themeValue || undefined;
   const [language, setLanguage] = useState<(typeof LANGUAGES)[number]>(LANGUAGES[0]);
   // 호스트가 에디터에 주는 가로 폭. 에디터는 이 폭을 따라가고, 그 범위는 demo.css의 .editor-frame이 정한다
-  const [effectsLayout, setEffectsLayout] = useState<EffectsLayout>("expanded");
+  const [effectsLayout, setEffectsLayout] = useState<EffectsLayout>("auto");
   const [hostWidth, setHostWidth] = useState(HOST_WIDTH_DEFAULT);
 
   /**

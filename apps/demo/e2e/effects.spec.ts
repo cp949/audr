@@ -351,7 +351,9 @@ test.describe("UI 경유 (데모 화면)", () => {
   });
 
   test("폭이 좁아도 효과 칩이 에디터 오른쪽 끝을 넘지 않는다", async ({ page }) => {
-    // 데모는 에디터 폭을 629px로 고정한다. 좁은 호스트를 흉내 내려 폭만 줄인다
+    // 데모의 기본 배치는 auto라 420px에서는 overflow가 된다. 펼친 배치의 줄바꿈을 보려고 expanded로 둔다
+    await page.getByLabel("Effects layout").selectOption("expanded");
+    // 좁은 호스트를 흉내 내려 폭만 줄인다
     await page.evaluate(() => {
       const frame = document.querySelector<HTMLElement>(".editor-frame");
       if (frame) frame.style.width = "420px";
