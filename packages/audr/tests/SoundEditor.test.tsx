@@ -137,32 +137,38 @@ describe("SoundEditor 레이아웃", () => {
     expect(screen.getByLabelText(en.sound)).toHaveProperty("value", "Meow");
   });
 
-  it("작업 영역은 왼쪽(파형, 재생 줄, 소리 크기 묶음)과 오른쪽(나머지 효과 패널)으로 나뉜다", () => {
+  it("작업 영역은 왼쪽(파형, 재생 줄, 소리 크기·속도 묶음)과 오른쪽(나머지 효과 패널)으로 나뉜다", () => {
     const { container } = setup();
     const work = container.querySelector('[class*="workArea"]') as HTMLElement;
     const [left, panel] = Array.from(work.children) as HTMLElement[];
     expect(left?.querySelector("svg[data-waveform]")).not.toBeNull();
     expect(left?.contains(screen.getByRole("button", { name: en.play }))).toBe(true);
-    expect(left?.contains(screen.getByRole("group", { name: en.effectGroupVolume }))).toBe(true);
-    expect(panel?.contains(screen.getByRole("button", { name: en.louder }))).toBe(false);
-    for (const name of [
-      en.effectGroupSpeed,
-      en.effectGroupVoice,
-      en.effectGroupSpace,
-      en.effectGroupWobble,
-    ]) {
+    for (const name of [en.effectGroupVolume, en.effectGroupSpeed]) {
+      expect(left?.contains(screen.getByRole("group", { name }))).toBe(true);
+      expect(panel?.contains(screen.getByRole("group", { name }))).toBe(false);
+    }
+    for (const name of [en.effectGroupVoice, en.effectGroupSpace, en.effectGroupWobble]) {
       expect(panel?.contains(screen.getByRole("group", { name }))).toBe(true);
     }
     expect(left?.contains(panel as HTMLElement)).toBe(false);
   });
 
-  it("소리 크기 묶음은 재생 버튼 바로 아래에 이어진다", () => {
+  it("소리 크기 묶음은 재생 줄 바로 아래, 속도·방향 묶음은 그 아래에 이어진다", () => {
     setup();
-    const play = screen.getByRole("button", { name: en.play });
+    const transport = screen.getByRole("button", { name: en.play }).parentElement;
     const volume = screen.getByRole("group", { name: en.effectGroupVolume });
-    expect(play.compareDocumentPosition(volume) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // 재생 줄과 소리 크기 묶음은 같은 왼쪽 열의 형제다
-    expect(volume.previousElementSibling).toBe(play.parentElement);
+    const speed = screen.getByRole("group", { name: en.effectGroupSpeed });
+    expect(volume.previousElementSibling).toBe(transport);
+    expect(speed.previousElementSibling).toBe(volume);
+  });
+
+  it("소리 크기 묶음 이름은 화면에서 숨기고 보조기기만 읽으며, 다른 묶음 이름은 보인다", () => {
+    setup();
+    const volumeName = screen.getByText(en.effectGroupVolume);
+    expect(volumeName.className).toMatch(/visuallyHidden/);
+    // 묶음 이름으로 계속 읽힌다
+    expect(screen.getByRole("group", { name: en.effectGroupVolume })).toBeTruthy();
+    expect(screen.getByText(en.effectGroupSpeed).className).not.toMatch(/visuallyHidden/);
   });
 
   it("locale ko이면 한국어 문자열을 쓴다", () => {

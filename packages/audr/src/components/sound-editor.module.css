@@ -249,7 +249,7 @@
   outline: none;
 }
 
-/* 왼쪽 열의 소리 크기 묶음. 재생 줄 아래에 떨어뜨려 놓는다 */
+/* 왼쪽 열의 효과 묶음. 재생 줄 아래에 떨어뜨려 놓는다 */
 .workMain > .effectGroup {
   margin-top: 0.75rem;
 }
