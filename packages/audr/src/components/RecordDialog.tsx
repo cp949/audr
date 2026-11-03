@@ -1,6 +1,6 @@
 // 녹음 단계(RecordingStep)와 재생·trim 단계(PlaybackStep)를 번갈아 보여 준다.
 import type { MicrophoneError, RecordingResult } from "@cp949/audr-core";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import {
   useRecordDialog,
   type AutoStopReason,
@@ -8,7 +8,8 @@ import {
 } from "../hooks/useRecordDialog";
 import { useDiscardConfirm } from "../hooks/useDiscardConfirm";
 import { useRecordingStep } from "../hooks/useRecordingStep";
-import { getMessages, type Locale, type Messages } from "../i18n";
+import { getMessages, type Locale, type MessageOverrides, type Messages } from "../i18n";
+import { createSecondsFormat, type SecondsFormat } from "../lib/secondsFormat";
 import type { AudrTheme } from "../theme";
 import { DiscardConfirm } from "./DiscardConfirm";
 import { Modal } from "./Modal";
@@ -25,6 +26,8 @@ export type RecordDialogProps = RecordDialogOptions & {
    */
   onCancel: () => void;
   locale?: Locale;
+  /** 문구를 덮어쓴다. 넘긴 키만 바뀌고 나머지는 `locale` 문구를 쓴다 */
+  messages?: MessageOverrides;
   /** 색 테마. 생략하면 보라. 모달은 body에 그려지므로 호스트의 래퍼 속성이 닿지 않아 여기서 받는다 */
   theme?: AudrTheme;
 };
@@ -78,11 +81,17 @@ function RecordingStepContainer({
  */
 function RecordDialogBody({
   messages,
+  formatSeconds,
   theme,
   onCancel,
   onSave,
   onError,
-}: { messages: Messages; theme?: AudrTheme; onCancel: () => void } & RecordDialogOptions) {
+}: {
+  messages: Messages;
+  formatSeconds: SecondsFormat;
+  theme?: AudrTheme;
+  onCancel: () => void;
+} & RecordDialogOptions) {
   const {
     samples,
     sampleRate,
@@ -144,6 +153,7 @@ function RecordDialogBody({
         {samples ? (
           <PlaybackStep
             messages={messages}
+            formatSeconds={formatSeconds}
             samples={samples}
             sampleRate={sampleRate}
             levels={levels ?? []}
@@ -192,12 +202,16 @@ export function RecordDialog({
   onSave,
   onError,
   locale = "en",
+  messages: overrides,
   theme,
 }: RecordDialogProps) {
+  const messages = useMemo(() => getMessages(locale, overrides), [locale, overrides]);
+  const formatSeconds = useMemo(() => createSecondsFormat(locale), [locale]);
   if (!open) return null;
   return (
     <RecordDialogBody
-      messages={getMessages(locale)}
+      messages={messages}
+      formatSeconds={formatSeconds}
       theme={theme}
       onCancel={onCancel}
       onSave={onSave}

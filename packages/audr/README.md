@@ -60,7 +60,8 @@ import { SoundEditor } from "@cp949/audr";
 | `onRename`    | `(name: string) => void`            | 이름 입력란에서 Enter 또는 blur 했을 때 호출한다.                                                                                                                                                                                 |
 | `onError`     | `(error: SoundEditorError) => void` | 편집을 반영하지 못했을 때 호출한다. `error.kind`는 `"apply"`(용량 초과 등으로 반영 실패), `"paste"`, `"effect"`이고 `error.cause`에 원인이 있다. 화면 알림은 `errorNotice`가 따로 보인다.                                         |
 | `errorNotice` | `boolean`                           | 편집 실패를 에디터 안에 보이는 기본 알림. 기본값은 `true`. 호스트가 자체 알림을 쓰면 `false`로 끈다. `onError`는 켜고 꺼도 호출한다. 자세한 내용은 아래 "편집 실패 알림".                                                         |
-| `locale`      | `"en" \| "ko"`                      | 문구 언어. 기본값은 `"en"`.                                                                                                                                                                                                       |
+| `locale`      | `string`                            | BCP 47 언어 태그. 기본값은 `"en"`. 자세한 내용은 "다국어".                                                                                                                                                                        |
+| `messages`    | `MessageOverrides`                  | 문구를 덮어쓴다. 자세한 내용은 "다국어".                                                                                                                                                                                          |
 | `theme`       | `"blue" \| "teal"`                  | 색 테마. 생략하면 보라. 자세한 내용은 "테마".                                                                                                                                                                                     |
 
 호스트는 `onChange`로 받은 `samples`를 그대로 다시 내려 주면 된다.
@@ -131,7 +132,8 @@ import { RecordDialog } from "@cp949/audr";
 | `onCancel` | `() => void`                                         | 닫기를 확정하면 호출한다. 닫는 일은 호스트가 `open`으로 한다. 녹음 중이거나 녹음이 있으면 확인창에서 버리기를 골라야 호출한다. |
 | `onSave`   | `(recorded: RecordedSound) => void \| Promise<void>` | Save를 누르면 trim 구간의 `samples`, `sampleRate`, 16비트 PCM `wav`(Blob)로 호출한다.                                          |
 | `onError`  | `(error: RecordDialogError) => void`                 | 저장이나 마이크 사용에 실패하면 호출한다. 없으면 대화상자 문구와 `console.error`만 남는다.                                     |
-| `locale`   | `"en" \| "ko"`                                       | 문구 언어. 기본값은 `"en"`.                                                                                                    |
+| `locale`   | `string`                                             | BCP 47 언어 태그. 기본값은 `"en"`. 자세한 내용은 "다국어".                                                                     |
+| `messages` | `MessageOverrides`                                   | 문구를 덮어쓴다. 자세한 내용은 "다국어".                                                                                       |
 | `theme`    | `"blue" \| "teal"`                                   | 색 테마. 생략하면 보라. 자세한 내용은 "테마".                                                                                  |
 
 - `onSave`가 Promise를 돌려주면 끝날 때까지 Save 버튼이 `Loading...`으로 비활성이다.
@@ -196,6 +198,24 @@ import { RecordDialog } from "@cp949/audr";
   - 두 요소는 `position: absolute`라 다른 요소의 위치와 모달 높이를 바꾸지 않는다. 확인창이 뜨면 함께 숨는다.
   - 저장할 길이의 가로 위치는 모달 오버레이(뷰포트)의 가운데다. 모달이 뷰포트 가운데에 있어서 버튼 줄 가운데와 같다. 뷰포트가 모달 폭 600px보다 좁으면 어긋난다.
   - 두 표시 모두 화면용 정보라 `aria-live`를 달지 않는다.
+
+## 다국어
+
+- 내장 문구는 영어(`en`)와 한국어(`ko`)다. `locale`의 지역 태그는 언어 부분으로 찾는다(`"ko-KR"`은 `ko`). 내장 문구가 없는 언어는 영어 문구를 쓴다.
+- `messages`에 넘긴 키만 바뀌고 나머지는 `locale` 문구를 쓴다. `shortcutActions`, `microphoneErrors`는 키 단위로 합친다. `Messages`, `MessageOverrides` 타입을 내보낸다.
+- 시간 숫자의 소수점 기호는 `locale`을 따른다. 예: `locale="de"`이면 `Length 1,00 s`. 잘못된 태그는 영어 표기를 쓴다.
+- 언어를 바꿔도 단어 순서와 복수형은 바뀌지 않는다. 문구의 `{seconds}` 같은 자리표시자만 치환한다.
+
+```tsx
+<SoundEditor
+  locale="de"
+  messages={{ play: "Abspielen", stop: "Stopp", timeLength: "Dauer {seconds} s" }}
+  soundId={sound.id}
+  samples={sound.samples}
+  sampleRate={sound.sampleRate}
+  onChange={({ samples, sampleRate }) => update({ samples, sampleRate })}
+/>
+```
 
 ## 테마
 
@@ -279,5 +299,5 @@ export default defineConfig({
 - iframe 안에서 쓰면 호스트 페이지가 `allow="microphone"`을 주어야 한다. 아니면 `code: "policy-blocked"`다. Permissions Policy 검사 API가 없는 브라우저는 검사 없이 `getUserMedia`를 부르고, 거부되면 `permission-denied`로 나온다.
 - 마이크 끊김은 오디오 트랙의 `ended` 이벤트로 감지한다. 실제 장치 분리로는 확인하지 않았다(`apps/demo/e2e/microphone.spec.ts`는 이벤트를 직접 낸다).
 - 마이크 오류 뒤 재시도 버튼과 장치 선택(`devicechange`)은 없다.
-- 다채널 편집, RTL은 지원하지 않는다.
+- 다채널 편집, RTL(오른쪽에서 왼쪽으로 쓰는 언어)은 지원하지 않는다.
 - 터치 입력과 실제 소리 청취는 확인하지 않았다.

@@ -1,8 +1,13 @@
-// 1단계 문자열: 한국어와 영어 단순 객체. react-intl은 쓰지 않는다.
+// 문자열: 한국어와 영어 단순 객체를 내장하고, 호스트가 `messages`로 문구를 덮어쓴다. react-intl은 쓰지 않는다.
 
 import type { MicrophoneErrorCode } from "@cp949/audr-core";
 
-export type Locale = "en" | "ko";
+/**
+ * BCP 47 언어 태그(`"ko"`, `"en-US"`, `"de"` 등).
+ * 내장 문구는 `en`, `ko`이고, 지역 태그는 언어 부분으로 찾는다. 그 밖의 언어는 영어 문구를 쓴다.
+ * 숫자 표기(소수점 기호)는 이 태그를 그대로 따른다. 다른 언어 문구는 `messages`로 넘긴다.
+ */
+export type Locale = string;
 
 const en = {
   sound: "Sound",
@@ -204,9 +209,42 @@ const ko: Messages = {
     "효과를 적용하지 못했습니다. 브라우저가 소리를 처리하지 못했습니다. 다시 해 보세요.",
 };
 
-const catalogs: Record<Locale, Messages> = { en, ko };
+const catalogs: Record<string, Messages> = { en, ko };
 
-/** 로케일에 맞는 문자열 객체를 돌려준다. 알 수 없는 로케일은 영어다. */
-export function getMessages(locale: Locale = "en"): Messages {
-  return catalogs[locale] ?? en;
+/**
+ * 호스트가 덮어쓸 문구. 넘긴 키만 바꾸고 나머지는 로케일 문구를 쓴다.
+ * 중첩 객체(`shortcutActions`, `microphoneErrors`)도 키 단위로 합친다.
+ */
+export type MessageOverrides = {
+  [K in keyof Messages]?: Messages[K] extends string ? string : Partial<Messages[K]>;
+};
+
+/** 로케일 태그의 언어 부분("ko-KR" → "ko")으로 내장 문구를 찾는다. 없으면 영어다. */
+function findCatalog(locale: Locale): Messages {
+  const language = locale.toLowerCase().split(/[-_]/)[0] ?? "";
+  // 객체 프로토타입의 이름("constructor" 등)이 로케일로 들어와도 카탈로그로 읽지 않는다
+  return Object.prototype.hasOwnProperty.call(catalogs, language) ? catalogs[language]! : en;
+}
+
+/**
+ * 로케일에 맞는 문자열 객체를 돌려준다. 내장 카탈로그는 바꾸지 않는다.
+ * `overrides`가 있으면 그 키만 덮어쓰고, `undefined` 값은 무시한다.
+ */
+export function getMessages(locale: Locale = "en", overrides?: MessageOverrides): Messages {
+  const base = findCatalog(locale);
+  if (!overrides) return base;
+  const merged: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(overrides)) {
+    if (value === undefined) continue;
+    const original = merged[key];
+    merged[key] =
+      typeof original === "object" && original !== null && typeof value === "object"
+        ? { ...original, ...dropUndefined(value) }
+        : value;
+  }
+  return merged as Messages;
+}
+
+function dropUndefined(value: object): object {
+  return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined));
 }

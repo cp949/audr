@@ -1107,6 +1107,16 @@ describe("RecordDialog 시간 표시", () => {
     expect(screen.getByText("Length 0.40 s")).toBeTruthy();
   });
 
+  it("저장할 길이의 소수점 기호는 locale을 따르고 messages로 문구를 바꿀 수 있다", async () => {
+    FakeAudioRecorder.nextResult = {
+      ...FakeAudioRecorder.nextResult,
+      samples: new Float32Array(44100).fill(0.1),
+    };
+    setup({ locale: "de", messages: { recordSavedLength: "Dauer {seconds} s" } });
+    await recordAndStop();
+    expect(screen.getByText("Dauer 0,50 s")).toBeTruthy();
+  });
+
   it("저장하는 샘플 수와 화면에 보이는 길이가 같다", async () => {
     FakeAudioRecorder.nextResult = {
       ...FakeAudioRecorder.nextResult,

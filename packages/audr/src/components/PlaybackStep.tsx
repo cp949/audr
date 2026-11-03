@@ -7,6 +7,7 @@ import { usePlaybackStep } from "../hooks/usePlaybackStep";
 import type { AutoStopReason } from "../hooks/useRecordDialog";
 import type { Messages } from "../i18n";
 import { trimmedSampleCount } from "../lib/trimRange";
+import type { SecondsFormat } from "../lib/secondsFormat";
 import { secondsValueText } from "../lib/valueText";
 import { AudioTrimmer } from "./AudioTrimmer";
 import { Meter } from "./Meter";
@@ -15,6 +16,7 @@ import { Waveform } from "./Waveform";
 
 export type PlaybackStepProps = {
   messages: Messages;
+  formatSeconds: SecondsFormat;
   samples: Float32Array;
   sampleRate: number;
   levels: number[];
@@ -45,6 +47,7 @@ export type PlaybackStepProps = {
 
 export function PlaybackStep({
   messages: m,
+  formatSeconds,
   samples,
   sampleRate,
   levels,
@@ -111,7 +114,7 @@ export function PlaybackStep({
             onSetTrimEnd={onSetTrimEnd}
             startLabel={m.trimStart}
             endLabel={m.trimEnd}
-            valueText={secondsValueText(m, samples.length / sampleRate)}
+            valueText={secondsValueText(m, formatSeconds, samples.length / sampleRate)}
           />
         </div>
       </div>
@@ -159,7 +162,7 @@ export function PlaybackStep({
         <span className={styles.savedLength}>
           {m.recordSavedLength.replace(
             "{seconds}",
-            (trimmedSampleCount(samples.length, trimStart, trimEnd) / sampleRate).toFixed(2),
+            formatSeconds(trimmedSampleCount(samples.length, trimStart, trimEnd) / sampleRate),
           )}
         </span>
       </div>

@@ -1,6 +1,6 @@
 // 상태와 동작은 useSoundEditor에 있다.
 import type { EffectName, SoundBuffer } from "@cp949/audr-core";
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import alienIcon from "../assets/icons/sound-editor/icon--alien.svg";
 import broadcastIcon from "../assets/icons/sound-editor/icon--broadcast.svg";
 import coasterIcon from "../assets/icons/sound-editor/icon--coaster.svg";
@@ -29,7 +29,8 @@ import undoIcon from "../assets/icons/sound-editor/icon--undo.svg";
 import vibratoIcon from "../assets/icons/sound-editor/icon--vibrato.svg";
 import walkieIcon from "../assets/icons/sound-editor/icon--walkie.svg";
 import { useSoundEditor, type SoundEditorError } from "../hooks/useSoundEditor";
-import { getMessages, type Locale, type Messages } from "../i18n";
+import { getMessages, type Locale, type MessageOverrides, type Messages } from "../i18n";
+import { createSecondsFormat } from "../lib/secondsFormat";
 import type { AudrTheme } from "../theme";
 import { ariaKeyShortcuts, SHORTCUTS, useIsApplePlatform, withShortcut } from "../lib/shortcuts";
 import { secondsValueText } from "../lib/valueText";
@@ -110,17 +111,21 @@ export type SoundEditorProps = {
    */
   errorNotice?: boolean;
   locale?: Locale;
+  /** 문구를 덮어쓴다. 넘긴 키만 바뀌고 나머지는 `locale` 문구를 쓴다 */
+  messages?: MessageOverrides;
   /** 색 테마. 생략하면 보라. 에디터 루트에 걸리므로 에디터 안쪽만 바뀐다 */
   theme?: AudrTheme;
 };
 
 export function SoundEditor({
   locale = "en",
+  messages: overrides,
   theme,
   errorNotice = true,
   ...props
 }: SoundEditorProps) {
-  const m = getMessages(locale);
+  const m = useMemo(() => getMessages(locale, overrides), [locale, overrides]);
+  const formatSeconds = useMemo(() => createSecondsFormat(locale), [locale]);
   const apple = useIsApplePlatform();
   // 접근 가능한 이름(aria-label, 버튼 텍스트)은 그대로 두고 단축키는 title과 aria-keyshortcuts로 알린다
   const tip = (label: string, key: keyof typeof SHORTCUTS) =>
@@ -166,7 +171,7 @@ export function SoundEditor({
     paste: m.editErrorPaste,
     effect: m.editErrorEffect,
   };
-  const sec = (position: number) => (position * durationSeconds).toFixed(2);
+  const sec = (position: number) => formatSeconds(position * durationSeconds);
   // 효과는 훅의 선택(trim)을 기준으로 적용된다. 드래그 중 임시 선택(preview)은 쓰지 않는다.
   // 새 선택은 누르는 순간 길이 0으로 trim에 들어가므로 길이 0 선택도 선택 구간으로 표시한다(효과도 그 지점에 적용된다)
   const scopeId = useId();
@@ -265,7 +270,7 @@ export function SoundEditor({
             onSetTrim={onSetTrim}
             startLabel={m.selectionStart}
             endLabel={m.selectionEnd}
-            valueText={secondsValueText(m, durationSeconds)}
+            valueText={secondsValueText(m, formatSeconds, durationSeconds)}
             onPreviewChange={setPreview}
           />
         </div>
@@ -318,7 +323,7 @@ export function SoundEditor({
       </div>
       {/* 화면용 정보다. 재생 위치가 프레임마다 바뀌므로 aria-live를 달지 않는다(스크린 리더는 핸들의 aria-valuetext를 쓴다) */}
       <div className={styles.timeReadout}>
-        <span>{m.timeLength.replace("{seconds}", durationSeconds.toFixed(2))}</span>
+        <span>{m.timeLength.replace("{seconds}", formatSeconds(durationSeconds))}</span>
         {/*
           효과 버튼이 aria-describedby로 가리킨다. 선택을 끌 때마다 낭독되지 않도록 aria-live는 달지 않는다.
           Length 바로 뒤에 둬서 항상 있는 항목이 앞에 오고, 뒤의 선택·재생 항목만 늘고 준다

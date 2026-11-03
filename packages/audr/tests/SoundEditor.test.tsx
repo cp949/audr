@@ -230,6 +230,23 @@ describe("SoundEditor 시간 표시줄", () => {
     expect(screen.getByText("선택 0.25–0.75초 (0.50초)")).toBeTruthy();
   });
 
+  it("소수점 기호는 locale을 따른다", async () => {
+    const { container } = setupOneSecond({ locale: "de" });
+    expect(screen.getByText("Length 1,00 s")).toBeTruthy();
+    await dragSelect(container, 250, 750);
+    expect(screen.getByText("Selection 0,25–0,75 s (0,50 s)")).toBeTruthy();
+  });
+
+  it("messages로 넘긴 문구가 locale 문구보다 우선하고 나머지는 locale 문구를 쓴다", () => {
+    setupOneSecond({
+      locale: "ko",
+      messages: { timeLength: "Dauer {seconds} s", play: "Abspielen" },
+    });
+    expect(screen.getByText("Dauer 1.00 s")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Abspielen" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "복사" })).toBeTruthy();
+  });
+
   it("드래그하는 동안 확정 전 선택도 보이고, 선택이 해제되면 사라진다", async () => {
     const { container } = setupOneSecond();
     const selector = container.querySelector('[class*="selector"]') as HTMLElement;
