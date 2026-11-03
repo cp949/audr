@@ -61,6 +61,15 @@ export type EditSessionProps = {
 /** 선택 구간. 0~1 비율이고, 선택이 없으면 둘 다 null이다. */
 export type EditTrim = { start: number | null; end: number | null };
 
+type PendingCopyToNew = { clip: SoundBuffer; timer: ReturnType<typeof setTimeout> };
+
+/**
+ * Copy to New에서 복사한 구간을 화면에 보인 뒤 `onCopyToNew`를 부르기까지 기다리는 시간(ms).
+ * 호스트가 `onCopyToNew`에서 새 소리로 바로 전환하면 복사한 구간을 칠한 알림도 함께 지워져 보이지 않는다.
+ * 알림이 눈에 들어오는 만큼(처음 0.25초 선명, 이후 옅어짐)만 늦춘다.
+ */
+export const COPY_TO_NEW_DELAY_MS = 600;
+
 /**
  * 복사하거나 붙여 넣은 구간. 화면이 잠깐 칠해 보이는 데 쓴다. 0~1 비율이다.
  * id는 동작마다 늘려, 같은 구간을 다시 복사해도 화면이 효과를 처음부터 다시 그리게 한다.
@@ -174,6 +183,8 @@ export class EditSession {
   private emptySound = false;
   private copyBuffer: SoundBuffer | null = null;
   private flashSeq = 0;
+  // 복사는 끝났고 `onCopyToNew` 호출만 기다리는 항목. 화면을 떼면 기다리지 않고 바로 보낸다
+  private readonly pendingCopyToNew = new Set<PendingCopyToNew>();
   // 편집 직렬화, 세대 번호, 붙임 여부, busy 지연을 가진다
   private readonly queue = new EditQueue((busy) => this.update({ busy }));
   // 마지막으로 onChange로 내보낸 buffer. 호스트가 그 배열을 그대로 내려 주면 내용 비교를 건너뛴다
@@ -242,6 +253,8 @@ export class EditSession {
   detach(): void {
     this.queue.detach();
     this.player?.stop();
+    // 사용자가 이미 누른 Copy to New는 버리지 않고 바로 알린다
+    for (const pending of Array.from(this.pendingCopyToNew)) this.deliverCopyToNew(pending);
   }
 
   // ---- 입력 반영 ----
@@ -353,12 +366,31 @@ export class EditSession {
    */
   copy = (): void => this.queue.enqueue(() => void this.copyNow());
 
-  /** 선택 구간(없으면 전체)을 복사본으로 저장하고 `onCopyToNew`로 알린다. */
+  /**
+   * 선택 구간(없으면 전체)을 복사본으로 저장하고, 구간을 칠해 보인 뒤 `COPY_TO_NEW_DELAY_MS` 뒤에 `onCopyToNew`로 알린다.
+   * 넘기는 내용은 누른 순간의 구간이다. 기다리는 동안 소리가 바뀌어도 그대로 넘긴다.
+   */
   copyToNew = (): void =>
     this.queue.enqueue(() => {
       const clip = this.copyNow();
-      if (clip) this.props.onCopyToNew(clip);
+      if (!clip) return;
+      const pending: PendingCopyToNew = {
+        clip,
+        timer: setTimeout(() => this.deliverCopyToNew(pending), COPY_TO_NEW_DELAY_MS),
+      };
+      this.pendingCopyToNew.add(pending);
     });
+
+  /** 기다리던 Copy to New를 호스트에 넘긴다. 호스트 콜백이 던져도 편집 흐름을 깨지 않는다. */
+  private deliverCopyToNew(pending: PendingCopyToNew): void {
+    if (!this.pendingCopyToNew.delete(pending)) return;
+    clearTimeout(pending.timer);
+    try {
+      this.props.onCopyToNew(pending.clip);
+    } catch (e) {
+      console.error("onCopyToNew가 예외를 던졌다", e);
+    }
+  }
 
   /** 복사본을 선택 자리에 붙인다. 복사본이 없으면 아무 일도 하지 않는다. */
   paste = (): void =>

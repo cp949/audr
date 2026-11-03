@@ -7,7 +7,7 @@ import type { MouseEvent as ReactMouseEvent } from "react";
 import { EditSession, type SoundEditorError } from "../lib/editSession";
 import { isIgnoredRepeat, resolveShortcutCommand } from "../lib/keyCommand";
 
-export { BUSY_DELAY_MS } from "../lib/editSession";
+export { BUSY_DELAY_MS, COPY_TO_NEW_DELAY_MS } from "../lib/editSession";
 export type { SoundEditorError } from "../lib/editSession";
 
 /** 이 값을 넘는 구간에서는 Louder를 막는다 */

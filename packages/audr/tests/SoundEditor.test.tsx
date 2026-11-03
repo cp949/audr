@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { applyEffect } from "@cp949/audr-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SoundEditor } from "../src/components/SoundEditor";
+import { COPY_TO_NEW_DELAY_MS } from "../src/hooks/useSoundEditor";
 import { getMessages } from "../src/i18n";
 import { EFFECTS } from "./effectButtons";
 import { fakeAudioBuffer, FakeAudioBufferPlayer, ramp } from "./helpers/fakePlayer";
@@ -568,7 +569,15 @@ describe("SoundEditor 상호작용", () => {
   it("Copy to New는 선택 구간을 onCopyToNew로 넘긴다", async () => {
     const { container, onCopyToNew } = setup();
     await dragSelect(container, 250, 750);
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: en.copyToNew })));
+    vi.useFakeTimers();
+    try {
+      await act(async () => fireEvent.click(screen.getByRole("button", { name: en.copyToNew })));
+      // 복사한 구간을 칠해 보인 뒤에 넘긴다
+      expect(onCopyToNew).not.toHaveBeenCalled();
+      await act(async () => vi.advanceTimersByTimeAsync(COPY_TO_NEW_DELAY_MS));
+    } finally {
+      vi.useRealTimers();
+    }
     expect(onCopyToNew).toHaveBeenCalledTimes(1);
     expect(onCopyToNew.mock.calls[0]?.[0].samples.length).toBe(500);
   });

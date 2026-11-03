@@ -10,6 +10,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BUSY_DELAY_MS,
+  COPY_TO_NEW_DELAY_MS,
   useSoundEditor,
   type SoundEditorHookProps,
 } from "../src/hooks/useSoundEditor";
@@ -57,6 +58,23 @@ function setup(
   });
   return { ...utils, initial, onChange, onCopyToNew, onRename, onError };
 }
+
+/**
+ * Copy to New를 누르고 호출이 늦춰지는 시간(COPY_TO_NEW_DELAY_MS)만큼 가짜 타이머를 흘린다.
+ * 가짜 타이머는 이 헬퍼 안에서만 켜서, 뒤이은 waitFor가 멈추지 않게 한다.
+ */
+async function copyToNew(result: { current: ReturnType<typeof useSoundEditor> }) {
+  vi.useFakeTimers();
+  await act(async () => {
+    result.current.onCopyToNew();
+    await vi.advanceTimersByTimeAsync(COPY_TO_NEW_DELAY_MS);
+  });
+  vi.useRealTimers();
+}
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 /** 문서에 keydown을 보낸다. 비동기 편집이 끝나도록 act로 감싼다. */
 async function press(
@@ -415,6 +433,32 @@ describe("useSoundEditor 복사·붙여 넣기 구간 알림", () => {
     expect(result.current.flash?.end).toBeCloseTo(1, 9);
   });
 
+  it("Copy to New는 복사한 구간을 알린 뒤 COPY_TO_NEW_DELAY_MS가 지나서 호스트에 넘긴다", async () => {
+    vi.useFakeTimers();
+    const { result, onCopyToNew } = setup({ samples: ramp(100) });
+    await select(result, 0.25, 0.75);
+    await act(async () => result.current.onCopyToNew());
+    // 구간은 바로 알리지만 호스트 호출은 기다린다
+    expect(result.current.flash).toMatchObject({ start: 0.25, end: 0.75 });
+    expect(onCopyToNew).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTimeAsync(COPY_TO_NEW_DELAY_MS - 1));
+    expect(onCopyToNew).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTimeAsync(1));
+    expect(onCopyToNew).toHaveBeenCalledTimes(1);
+  });
+
+  it("기다리는 중에 화면이 사라져도 이미 누른 Copy to New는 버리지 않고 바로 넘긴다", async () => {
+    vi.useFakeTimers();
+    const { result, unmount, onCopyToNew } = setup({ samples: ramp(100) });
+    await act(async () => result.current.onCopyToNew());
+    expect(onCopyToNew).not.toHaveBeenCalled();
+    unmount();
+    expect(onCopyToNew).toHaveBeenCalledTimes(1);
+    // 타이머가 남아 있어도 두 번 넘기지 않는다
+    await vi.advanceTimersByTimeAsync(COPY_TO_NEW_DELAY_MS);
+    expect(onCopyToNew).toHaveBeenCalledTimes(1);
+  });
+
   it("다른 소리로 바뀌면 알림을 지운다", async () => {
     const { result, rerender, initial } = setup({ samples: ramp(100), soundId: "a" });
     await press("c", { ctrlKey: true });
@@ -502,7 +546,7 @@ describe("useSoundEditor copy/paste", () => {
   it("onCopyToNew는 선택 구간을 복사해 바깥에 넘기고 paste도 가능해진다", async () => {
     const { result, onCopyToNew } = setup({ samples: ramp(100) });
     await select(result, 0.25, 0.75);
-    await act(async () => result.current.onCopyToNew());
+    await copyToNew(result);
     expect(onCopyToNew).toHaveBeenCalledTimes(1);
     const clip = onCopyToNew.mock.calls[0]?.[0] as { samples: Float32Array; sampleRate: number };
     expect(Array.from(clip.samples)).toEqual(Array.from(ramp(100).slice(25, 75)));
@@ -570,7 +614,7 @@ describe("useSoundEditor 빈 소리 편집", () => {
 
   it("빈 소리에서 Copy to New는 새 소리를 만들지 않고 기존 복사본을 유지한다", async () => {
     const { result, onCopyToNew, onChange } = await copyThenSwitchToEmpty();
-    await act(async () => result.current.onCopyToNew());
+    await copyToNew(result);
     expect(onCopyToNew).not.toHaveBeenCalled();
     // 기존 복사본이 그대로라 붙이면 처음 복사한 내용이 붙는다
     await press("v", { ctrlKey: true });
@@ -595,7 +639,7 @@ describe("useSoundEditor 빈 소리 편집", () => {
 
   it("무음 1샘플짜리 실제 소리는 빈 소리가 아니므로 Copy to New가 1샘플을 넘긴다", async () => {
     const { result, onCopyToNew } = setup({ samples: new Float32Array(1) });
-    await act(async () => result.current.onCopyToNew());
+    await copyToNew(result);
     expect(onCopyToNew).toHaveBeenCalledTimes(1);
     const clip = onCopyToNew.mock.calls[0]?.[0] as { samples: Float32Array };
     expect(clip.samples.length).toBe(1);
@@ -605,7 +649,7 @@ describe("useSoundEditor 빈 소리 편집", () => {
     const { result, rerender, initial, onCopyToNew } = setup({ samples: new Float32Array(0) });
     rerender({ ...initial, samples: new Float32Array(1) });
     await act(async () => {});
-    await act(async () => result.current.onCopyToNew());
+    await copyToNew(result);
     expect(onCopyToNew).toHaveBeenCalledTimes(1);
     const clip = onCopyToNew.mock.calls[0]?.[0] as { samples: Float32Array };
     expect(clip.samples.length).toBe(1);
@@ -629,7 +673,7 @@ describe("useSoundEditor 빈 소리 편집", () => {
     // 100샘플의 [0.25, 0.255)는 slice(25, 25.5)라 샘플이 0개다
     await select(result, 0.25, 0.255);
     await press("c", { ctrlKey: true });
-    await act(async () => result.current.onCopyToNew());
+    await copyToNew(result);
     expect(onCopyToNew).not.toHaveBeenCalled();
     await select(result, null, null);
     await press("v", { ctrlKey: true });
@@ -811,13 +855,14 @@ describe("useSoundEditor 복사와 편집 큐 순서", () => {
   it("효과 처리 중 Copy to New는 효과가 끝난 뒤 그 결과로 onCopyToNew를 부른다", async () => {
     const { result, onCopyToNew } = setup({ samples: ramp(100) });
     const finish = holdEffectPlusOne();
+    vi.useFakeTimers();
     await act(async () => {
       result.current.onEffect("reverse");
       result.current.onCopyToNew();
     });
     expect(onCopyToNew).not.toHaveBeenCalled();
     await finish();
-    await act(async () => {});
+    await act(async () => vi.advanceTimersByTimeAsync(COPY_TO_NEW_DELAY_MS));
     expect(onCopyToNew).toHaveBeenCalledTimes(1);
     const clip = onCopyToNew.mock.calls[0]?.[0] as { samples: Float32Array };
     expect(clip.samples[0]).toBe(1);

@@ -67,7 +67,7 @@ describe("데모 App", () => {
 
   it("copy to new 후 목록이 2개가 되고 새 소리가 선택된다", async () => {
     render(<App />);
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Copy to New" })));
+    await copyToNew();
     expect(items().length).toBe(2);
     expect((screen.getByLabelText("Sound") as HTMLInputElement).value).toBe("Sine 440Hz2");
   });
@@ -77,7 +77,7 @@ describe("데모 App", () => {
     const paste = screen.getByRole("button", { name: "Paste" }) as HTMLButtonElement;
     expect(paste.disabled).toBe(true);
     // Copy to New는 복사본을 만들고 새 소리(다른 soundId)를 선택한다
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Copy to New" })));
+    await copyToNew();
     expect((screen.getByLabelText("Sound") as HTMLInputElement).value).toBe("Sine 440Hz2");
     expect((screen.getByRole("button", { name: "Paste" }) as HTMLButtonElement).disabled).toBe(
       false,
@@ -140,11 +140,25 @@ const fileOf = (name: string, size = 100) =>
 
 const nameInput = () => screen.getByLabelText("Sound") as HTMLInputElement;
 
+/** 에디터는 복사한 구간을 칠해 보이려고 `onCopyToNew` 호출을 이만큼 늦춘다. 값은 packages/audr/README.md와 같다 */
+const COPY_TO_NEW_DELAY_MS = 600;
+
+/** `Copy to New`를 누르고, 늦춰진 호출이 끝나 새 소리가 목록에 들어올 때까지 가짜 타이머를 흘린다. */
+async function copyToNew() {
+  vi.useFakeTimers();
+  try {
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Copy to New" }));
+      await vi.advanceTimersByTimeAsync(COPY_TO_NEW_DELAY_MS);
+    });
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
 /** 목록의 소리를 `Copy to New`로 늘려 총 count개로 만든다. 마지막으로 만든 소리가 선택된다. */
 async function growTo(count: number) {
-  while (items().length < count) {
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Copy to New" })));
-  }
+  while (items().length < count) await copyToNew();
 }
 
 describe("데모 App 소리 내려받기", () => {
