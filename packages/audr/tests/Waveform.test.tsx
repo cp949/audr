@@ -72,7 +72,7 @@ describe("tokens.css", () => {
     ["--audr-red-primary", "#FF661A"],
     ["--audr-ui-primary", "hsla(215, 100%, 95%, 1)"],
     ["--audr-stage-bg", "#12202B"],
-    ["--audr-wave-idle-opacity", "0.3"],
+    ["--audr-wave-idle-opacity", "0.7"],
   ])("%s 변수가 %s 값으로 있다", (name, value) => {
     // oxfmt가 hex를 소문자로 정규화하므로 대소문자는 구분하지 않는다
     expect(css.toLowerCase()).toContain(`${name}: ${value.toLowerCase()};`);
