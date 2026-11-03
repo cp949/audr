@@ -466,7 +466,8 @@
   border-radius: 2rem;
   background: white;
   color: var(--audr-text-primary);
-  font-size: 0.75rem;
+  /* 효과 버튼(.effectButton)과 같은 글자 크기 */
+  font-size: 0.6875rem;
   white-space: nowrap;
   user-select: none;
 }
