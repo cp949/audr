@@ -282,6 +282,14 @@ describe("SoundEditor 시간 표시줄", () => {
     },
   );
 
+  it("세로 기준선은 가로 폭의 25%, 50%, 75% 지점에 있다", () => {
+    const { container } = setupOneSecond();
+    const lefts = Array.from(
+      container.querySelectorAll<HTMLElement>('[class*="guideVertical"]'),
+    ).map((el) => el.style.left);
+    expect(lefts).toEqual(["25%", "50%", "75%"]);
+  });
+
   it("소수점 기호는 locale을 따른다", async () => {
     const { container } = setupOneSecond({ locale: "de" });
     expect(screen.getByText("1,00 s")).toBeTruthy();

@@ -338,14 +338,21 @@ test.describe("UI 경유 (데모 화면)", () => {
     expect(guide.width).toBeGreaterThanOrEqual(wave.width - 2);
   });
 
-  test("세로 기준선은 파형 상자의 가로 가운데에 파형 높이만큼 놓인다", async ({ page }) => {
-    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
-    const guide = await page.locator('[class*="guideVertical"]').boundingBox();
-    if (!wave || !guide) throw new Error("파형이나 기준선의 위치를 구하지 못했다");
-    expect(Math.abs(guide.x + guide.width / 2 - (wave.x + wave.width / 2))).toBeLessThanOrEqual(1);
-    expect(guide.width).toBeLessThanOrEqual(1.5);
-    expect(guide.height).toBeGreaterThanOrEqual(wave.height - 2);
-  });
+  for (const ratio of [0.25, 0.5, 0.75]) {
+    test(`세로 기준선은 파형 안쪽 폭의 ${ratio * 100}% 지점에 파형 높이만큼 놓인다`, async ({
+      page,
+    }) => {
+      const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+      const guides = page.locator('[class*="guideVertical"]');
+      const guide = await guides.nth([0.25, 0.5, 0.75].indexOf(ratio)).boundingBox();
+      if (!wave || !guide) throw new Error("파형이나 기준선의 위치를 구하지 못했다");
+      // 좌표는 테두리(1px) 안쪽 기준이다
+      const expected = wave.x + 1 + (wave.width - 2) * ratio;
+      expect(Math.abs(guide.x + guide.width / 2 - expected)).toBeLessThanOrEqual(1.5);
+      expect(guide.width).toBeLessThanOrEqual(1.5);
+      expect(guide.height).toBeGreaterThanOrEqual(wave.height - 2);
+    });
+  }
 
   test("선택이 넓으면 범위 문구가 선택의 가운데에 온다", async ({ page }) => {
     await dragSelect(page, 0.2, 0.8);
