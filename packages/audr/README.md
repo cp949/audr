@@ -67,18 +67,18 @@ import { SoundEditor } from "@cp949/audr";
 
 에디터 맨 아래 줄에 전체 길이, 선택 구간(시작–끝과 길이), 재생 중이면 재생 위치를 소수 둘째 자리 초로 보인다. 예: `Length 1.00 s`, `Selection 0.25–0.75 s (0.50 s)`, `Playing 0.37 s`. 선택은 드래그하는 동안에도 갱신한다. 에디터 폭이 좁으면 항목 단위로 다음 줄로 넘기므로, 재생을 시작할 때 표시줄 높이가 한 줄(1rem) 늘 수 있다. 화면용 정보라 `aria-live`를 달지 않는다.
 
-효과 버튼 18개는 재생 버튼 오른쪽에 9칸 × 2줄로 놓인다. 음소거 버튼은 없다.
+효과 버튼은 재생 버튼 오른쪽에 9칸 × 2줄로 놓인다. 음소거 버튼은 없다.
 
 효과 적용 범위 표시:
 
 - 전체 길이 옆에 `Effects apply to: whole sound` 또는 `Effects apply to: selection`을 보인다. 한국어는 `효과 적용 범위: 소리 전체`, `효과 적용 범위: 선택 구간`이다.
-- 효과 18개(Faster, Slower, Louder, Softer, Fade in, Fade out, Cyborg, Robot, Alien, Echo, Broadcast, Walkie-talkie, Reverse reverb, Scratch, Roller coaster, Stutter, Vibrato, Reverse)는 확정된 선택이 있으면 그 구간에, 없으면 소리 전체에 적용된다. 문구는 이 기준을 따른다.
+- 효과(Faster, Slower, Louder, Softer, Fade in, Fade out, Cyborg, Robot, Alien, Echo, Broadcast, Walkie-talkie, Reverse reverb, Scratch, Roller coaster, Stutter, Vibrato, Reverse)는 확정된 선택이 있으면 그 구간에, 없으면 소리 전체에 적용된다. 문구는 이 기준을 따른다.
 - Copy와 Copy to New도 선택이 있으면 그 구간을, 없으면 전체를 복사한다. 이 두 버튼에는 문구를 연결하지 않았다.
 - Delete는 선택이 있을 때만 켜진다. Paste는 선택이 있으면 그 구간을 교체하고, 없으면 끝에 붙인다.
 - 문구는 효과가 실제로 쓰는 선택 값을 따른다. 파형을 끄는 동안 시간 표시줄의 선택 구간에 보이는 임시 범위는 쓰지 않는다.
 - 파형을 누르는 순간 그 지점에 길이 0 선택이 잡혀 문구가 선택 구간으로 바뀐다. 0.5초 안에 1% 미만만 움직이고 떼면 선택이 풀려 소리 전체로 돌아간다.
 - 누른 채 0.5초 넘게 있다가 움직이지 않고 떼면 길이 0 선택이 남는다. 문구는 선택 구간이고, 효과는 소리 전체가 아닌 그 지점에 적용되어 소리가 거의 바뀌지 않는다. 시간 표시줄의 선택 길이(`0.00 s`)로 구분한다.
-- 효과 버튼 18개가 `aria-describedby`로 이 문구를 가리킨다. 버튼의 접근 가능한 이름은 그대로다. 문구가 바뀔 때 낭독하지 않는다.
+- 효과 버튼이 `aria-describedby`로 이 문구를 가리킨다. 버튼의 접근 가능한 이름은 그대로다. 문구가 바뀔 때 낭독하지 않는다.
 
 편집 실패 알림(`errorNotice`):
 
@@ -99,7 +99,7 @@ import { SoundEditor } from "@cp949/audr";
 - 버튼에 포커스가 있을 때 Space는 재생이 아니라 버튼을 누른다. 이 버튼에서 올라오는 Space만 문서까지 전달하지 않는다. 다른 버튼에 포커스가 있을 때의 Space는 기존처럼 재생·정지다.
 - `?` 키로 여는 기능과 Esc로 접는 기능은 없다. Esc는 선택 해제에 쓰이므로 목록을 펼친 채 Esc를 누르면 선택만 해제된다.
 
-효과 적용처럼 오래 걸리는 편집이 200ms를 넘게 이어지면 에디터 루트에 `aria-busy="true"`를 두고, 끝날 때까지 편집 버튼 22개(Undo, Redo, Paste, Delete, 효과 18개)를 비활성한다. Copy, Copy to New는 누를 수 있고 앞 편집이 끝난 뒤 그 결과를 복사한다. 재생은 그대로 쓸 수 있다. 단축키 편집은 막지 않고 차례로 처리한다.
+효과 적용처럼 오래 걸리는 편집이 200ms를 넘게 이어지면 에디터 루트에 `aria-busy="true"`를 두고, 끝날 때까지 편집 버튼(Undo, Redo, Paste, Delete와 효과 버튼 전체)을 비활성한다. Copy, Copy to New는 누를 수 있고 앞 편집이 끝난 뒤 그 결과를 복사한다. 재생은 그대로 쓸 수 있다. 단축키 편집은 막지 않고 차례로 처리한다.
 
 ## RecordDialog
 

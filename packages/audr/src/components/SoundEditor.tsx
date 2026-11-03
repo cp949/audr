@@ -74,7 +74,9 @@ const EFFECT_BUTTONS = [
 }>;
 
 /** 화면에 그리는 효과 버튼. `hidden`인 항목은 거른다 */
-const VISIBLE_EFFECT_BUTTONS = EFFECT_BUTTONS.filter((b) => !("hidden" in b && b.hidden));
+const VISIBLE_EFFECT_BUTTONS = EFFECT_BUTTONS.filter(
+  (b): b is Exclude<(typeof EFFECT_BUTTONS)[number], { hidden: true }> => !("hidden" in b),
+);
 
 /**
  * SoundEditor props.
