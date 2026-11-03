@@ -224,6 +224,30 @@ undo와 redo는 소리를 재생하지 않는다. 효과, 붙이기는 결과를
 - 비용: `original`은 이력에서 밀려난 뒤에도 소리 하나(최대 약 40MB)를 더 잡는다. 이 크기는 이력 크기 상한(`UNDO_BYTE_LIMIT`)에 들어가지 않는다.
 - 큰 소리를 받았다면 `revert` 결과도 편집과 같이 `downsampleIfNeeded`를 거친다. 첫 편집을 undo할 때와 같다.
 
+## 효과 시험 모드
+
+`tryEffects`(스냅샷 필드, `setTryEffects`)가 켜져 있으면 효과가 직전 효과를 대체한다. 사용자 동작은 `packages/audr/README.md`의 "SoundEditor"가 소유한다.
+
+이유:
+
+- 효과를 바꿔 가며 들을 때 쌓는 동작은 누를 때마다 undo를 요구한다. 편집 시점에는 쌓기가 필요해서 동작을 바꾸지 않고 토글로 둔다.
+- `원래대로`는 소리를 받은 직후로만 돌아가서, 앞선 편집이 있으면 그 편집까지 버린다.
+
+구조:
+
+- `tryBase`는 마지막 효과가 이력에 쌓은 항목(효과 적용 전 소리)과 그 효과가 만든 선택이다. 이력 항목을 참조하므로 메모리를 더 쓰지 않는다.
+- 다음 효과는 `tryBase.item`의 소리에서 시작하고, 이력의 가장 최근 항목을 `History.replaceLast`로 같은 `item`으로 대체한다. 이력 단계가 늘지 않는다.
+- 효과 전 소리를 `applyEffect`에 넘기려면 `AudioBuffer`가 필요하다. 재생기를 바꾸지 않고 읽기용으로 `AudioBufferPlayer`를 하나 더 만들어 그 `buffer`를 쓴다.
+- 구간은 `tryBase.item`의 선택(`trimStart`, `trimEnd`)을 쓴다. 현재 선택은 효과가 길이를 바꾼 뒤의 값이라(Faster, Slower) 효과 전 소리에는 맞지 않는다.
+
+`tryBase`를 비우는 지점:
+
+- `submitNewSamples`가 성공할 때마다 비운다. 삭제, 붙이기, undo, redo, `revert`가 모두 여기를 지난다. 효과는 성공한 뒤 다시 기억한다.
+- 효과 시작 시점의 선택이 효과가 만든 선택과 다르면 대체하지 않고 쌓는다. 선택을 바꾼 것은 다른 구간을 시험하려는 뜻으로 본다. 이때 현재 선택은 효과 후 소리의 비율이라 효과 전 소리에 쓸 수 없다.
+- `applyInput`이 이력을 지울 때와 토글을 끌 때 비운다.
+
+비용: 대체해도 `downsampleIfNeeded`를 다시 거친다. 효과마다 효과 전 소리를 다시 렌더링한다.
+
 ## undo 이력 상한
 
 `History<UndoItem>`에 두 가지 상한을 건다.

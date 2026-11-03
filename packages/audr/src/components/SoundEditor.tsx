@@ -160,6 +160,7 @@ export function SoundEditor({
     canUndo,
     canRedo,
     canRevert,
+    tryEffects,
     canPaste,
     flash,
     tooLoud,
@@ -174,6 +175,7 @@ export function SoundEditor({
     onUndo,
     onRedo,
     onRevert,
+    onSetTryEffects,
     onCopy,
     onPaste,
     onCopyToNew,
@@ -473,6 +475,15 @@ export function SoundEditor({
               );
             })}
           </EffectPanel>
+          {/* 켜면 효과가 직전 효과를 대체한다. 효과를 바꿔 가며 들어 볼 때 쓰고, 편집할 때는 꺼서 효과를 쌓는다 */}
+          <label className={styles.replaceEffect}>
+            <input
+              type="checkbox"
+              checked={tryEffects}
+              onChange={(e) => onSetTryEffects(e.target.checked)}
+            />
+            {m.replaceEffect}
+          </label>
         </div>
       </div>
       <div className={styles.status}>

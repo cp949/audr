@@ -39,6 +39,16 @@ export class History<T> {
     this.enforceBudget();
   }
 
+  /**
+   * 가장 최근 undo 항목을 `item`으로 바꾼다. 단계가 늘지 않는다. redo 스택은 비운다.
+   * undo 항목이 없으면 `push`와 같다.
+   */
+  replaceLast(item: T): void {
+    this.redoStack = [];
+    this.undoStack.pop();
+    this.push(item);
+  }
+
   /** 이전 상태를 돌려주고 current를 redo 스택에 넣는다. 이력이 없으면 undefined이며 아무것도 바꾸지 않는다. */
   undo(current: T): T | undefined {
     if (this.undoStack.length === 0) return undefined;

@@ -564,3 +564,124 @@ describe("EditSession 원래대로", () => {
     expect(session.getSnapshot().canRevert).toBe(false);
   });
 });
+
+describe("EditSession 효과 시험 모드", () => {
+  /** 효과 렌더링이 바로 끝나는 세션. 효과 한 번이 첫 샘플에 1을 더한다 */
+  function trySession() {
+    const held = heldEffect();
+    held.release();
+    const { props, onChange } = createProps();
+    const session = new EditSession(props, createDeps(held.applyEffect));
+    mount(session, props);
+    return { session, onChange, applyEffect: held.applyEffect };
+  }
+
+  const firstSample = (fn: ReturnType<typeof vi.fn>) => lastCall(fn).samples[0];
+
+  it("기본값은 꺼져 있고 효과가 앞 효과 위에 쌓인다", async () => {
+    const { session, onChange } = trySession();
+    expect(session.getSnapshot().tryEffects).toBe(false);
+
+    session.effect("higher");
+    await flush();
+    session.effect("lower");
+    await flush();
+
+    expect(firstSample(onChange)).toBe(2);
+  });
+
+  it("켜면 새 효과가 직전 효과를 대체하고 undo 한 번이 시험 전으로 돌린다", async () => {
+    const { session, onChange } = trySession();
+    session.setTryEffects(true);
+
+    session.effect("higher");
+    await flush();
+    session.effect("lower");
+    await flush();
+    expect(firstSample(onChange)).toBe(1);
+
+    session.undo();
+    await flush();
+    expect(firstSample(onChange)).toBe(0);
+    expect(session.getSnapshot()).toMatchObject({ canUndo: false, canRevert: false });
+  });
+
+  it("효과 사이에 다른 편집이 있으면 대체하지 않고 쌓는다", async () => {
+    const { session, onChange } = trySession();
+    session.setTryEffects(true);
+
+    session.effect("higher");
+    await flush();
+    session.updateTrim(0.5, 1);
+    session.deleteSelection();
+    await flush();
+    session.effect("lower");
+    await flush();
+
+    expect(firstSample(onChange)).toBe(2);
+    session.undo();
+    await flush();
+    session.undo();
+    await flush();
+    expect(firstSample(onChange)).toBe(1);
+  });
+
+  it("효과 뒤 선택을 바꾸면 대체하지 않고 쌓는다", async () => {
+    const { session, onChange } = trySession();
+    session.setTryEffects(true);
+
+    session.effect("higher");
+    await flush();
+    session.updateTrim(0, 0.5);
+    session.effect("lower");
+    await flush();
+
+    expect(firstSample(onChange)).toBe(2);
+  });
+
+  it("효과를 undo한 뒤 다시 누르면 undo 전 효과를 대체하지 않는다", async () => {
+    const { session, onChange } = trySession();
+    session.setTryEffects(true);
+
+    session.effect("higher");
+    await flush();
+    session.undo();
+    await flush();
+    session.effect("lower");
+    await flush();
+
+    expect(firstSample(onChange)).toBe(1);
+    session.undo();
+    await flush();
+    expect(firstSample(onChange)).toBe(0);
+  });
+
+  it("끄면 이어서 누른 효과가 쌓인다", async () => {
+    const { session, onChange } = trySession();
+    session.setTryEffects(true);
+
+    session.effect("higher");
+    await flush();
+    session.setTryEffects(false);
+    session.effect("lower");
+    await flush();
+
+    expect(firstSample(onChange)).toBe(2);
+  });
+
+  it("선택을 건 채 시험하면 선택을 대체한 효과의 결과 선택으로 바꾼다", async () => {
+    const { session } = trySession();
+    session.setTryEffects(true);
+    session.updateTrim(0.25, 0.5);
+
+    session.effect("higher");
+    await flush();
+    session.effect("lower");
+    await flush();
+
+    expect(session.getSnapshot().trim).toEqual({ start: 0.25, end: 0.5 });
+    session.undo();
+    await flush();
+    expect(session.getSnapshot().trim).toEqual({ start: 0.25, end: 0.5 });
+  });
+});

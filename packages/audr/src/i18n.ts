@@ -46,6 +46,8 @@ const en = {
   selectionActions: "Selection actions",
   /** 효과 패널의 묶음 이름. `effectsLayout="minimized"`에서는 효과 목록을 여는 버튼의 글자도 된다 */
   effects: "Effects",
+  /** 켜면 효과가 직전 효과 위에 쌓이지 않고 대체하는 체크박스. 효과를 바꿔 가며 들어 볼 때 쓴다 */
+  replaceEffect: "Replace previous effect",
   /** `effectsLayout="overflow"`에서 한 줄에 들어가지 못한 효과를 여는 버튼의 이름 */
   moreEffects: "More effects",
   selectionStart: "Selection start",
@@ -163,6 +165,7 @@ const ko: Messages = {
   mute: "음소거",
   selectionActions: "선택 구간 작업",
   effects: "효과",
+  replaceEffect: "직전 효과 대체",
   moreEffects: "효과 더보기",
   selectionStart: "선택 시작",
   selectionEnd: "선택 끝",

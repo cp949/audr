@@ -223,6 +223,8 @@ export function useSoundEditor(props: SoundEditorHookProps) {
     /** 소리를 받은 직후의 상태와 달라졌으면 true */
     canRevert: snapshot.canRevert,
     canPaste: snapshot.canPaste,
+    /** 효과 시험 모드. true이면 효과가 직전 효과를 대체한다 */
+    tryEffects: snapshot.tryEffects,
     /** 마지막으로 복사하거나 붙여 넣은 구간(0~1 비율). 동작마다 id가 늘고, 소리가 바뀌면 null이다 */
     flash: snapshot.flash,
     tooLoud: isTooLoud(snapshot.chunkLevels, trim.start, trim.end),
@@ -246,5 +248,6 @@ export function useSoundEditor(props: SoundEditorHookProps) {
     onDelete: session.deleteSelection,
     onKeepSelection: session.keepSelection,
     onEffect: session.effect,
+    onSetTryEffects: session.setTryEffects,
   };
 }

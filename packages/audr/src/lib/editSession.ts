@@ -61,7 +61,10 @@ export type EditSessionProps = {
 /** 선택 구간. 0~1 비율이고, 선택이 없으면 둘 다 null이다. */
 export type EditTrim = { start: number | null; end: number | null };
 
-type PendingCopyToNew = { clip: SoundBuffer; timer: ReturnType<typeof setTimeout> };
+type PendingCopyToNew = {
+  clip: SoundBuffer;
+  timer: ReturnType<typeof setTimeout>;
+};
 
 /**
  * Copy to New에서 복사한 구간을 화면에 보인 뒤 `onCopyToNew`를 부르기까지 기다리는 시간(ms).
@@ -119,6 +122,12 @@ export type EditSnapshot = {
 
   /** 복사본이 있는지 */
   canPaste: boolean;
+
+  /**
+   * 효과 시험 모드. true이면 효과가 직전 효과를 대체한다(앞 효과 위에 쌓이지 않는다).
+   * 효과를 바꿔 가며 들어 볼 때 켠다. 기본값은 false다.
+   */
+  tryEffects: boolean;
 
   /** 편집이 BUSY_DELAY_MS를 넘게 대기하거나 실행 중이면 true다 */
   busy: boolean;
@@ -193,6 +202,9 @@ export class EditSession {
   // 소리를 받은 직후의 내용. `revert`가 이 내용으로 돌아간다. 재생기 버퍼를 참조하므로 제자리에서 고치지 않는다
   private original: SoundBuffer | null = null;
   private atOriginal = true;
+  // 효과 시험 모드에서 마지막 효과가 쌓은 이력 항목(효과 적용 전 소리)과 그 효과가 만든 선택.
+  // 다음 효과가 이 항목의 소리에 적용되어 같은 자리를 대체한다. 다른 편집, undo, redo, 선택 변경, 소리 전환은 비운다
+  private tryBase: { item: UndoItem; trim: EditTrim } | null = null;
   private flashSeq = 0;
   // 복사는 끝났고 `onCopyToNew` 호출만 기다리는 항목. 화면을 떼면 기다리지 않고 바로 보낸다
   private readonly pendingCopyToNew = new Set<PendingCopyToNew>();
@@ -207,7 +219,12 @@ export class EditSession {
   constructor(props: EditSessionProps, deps?: EditSessionDeps) {
     this.props = props;
     this.soundId = props.soundId;
-    this.deps = deps ?? { AudioBufferPlayer, applyEffect, resample, downsampleIfNeeded };
+    this.deps = deps ?? {
+      AudioBufferPlayer,
+      applyEffect,
+      resample,
+      downsampleIfNeeded,
+    };
     this.snapshot = {
       chunkLevels: computeChunkedRMS(props.samples),
       durationSeconds: props.samples.length / props.sampleRate,
@@ -218,6 +235,7 @@ export class EditSession {
       canRedo: false,
       canRevert: false,
       canPaste: false,
+      tryEffects: false,
       busy: false,
       editError: null,
       switchCount: 0,
@@ -320,6 +338,7 @@ export class EditSession {
     // syncProps보다 늦은 시점이라, 이 단계 전에 끝난 편집은 막지 못한다
     if (!soundSwitched) this.queue.invalidate();
     this.history.clear();
+    this.tryBase = null;
     this.syncHistory();
     this.setTrim(null, null);
     this.update({ editError: null });
@@ -450,15 +469,44 @@ export class EditSession {
         );
     });
 
+  /**
+   * 효과 시험 모드를 켜거나 끈다. 켜면 효과가 직전 효과를 대체하고, 끄면 앞 효과 위에 쌓인다.
+   * 끄면 대체할 대상도 잊는다. 다시 켜도 그 전에 쌓은 효과는 대체하지 않는다.
+   */
+  setTryEffects = (on: boolean): void => {
+    if (!on) this.tryBase = null;
+    this.update({ tryEffects: on });
+  };
+
+  /**
+   * 선택 구간(없으면 전체)에 효과를 적용하고 결과를 재생한다.
+   * 시험 모드이고 직전 편집이 효과였으면(`tryBase`), 그 효과를 적용하기 전 소리에 적용하고
+   * 이력의 같은 항목을 대체한다. 그렇지 않으면 현재 소리에 적용하고 이력에 쌓는다.
+   */
   effect = (name: EffectName): void =>
     this.queue.enqueue((generation) => {
       const player = this.player;
       if (!player) return;
-      const buffer = player.buffer;
+      // 큐 차례가 된 뒤의 선택을 읽는다. 효과가 만든 선택에서 바뀌었으면 시험을 이어 가지 않는다
+      const current = this.snapshot.trim;
+      const base =
+        this.snapshot.tryEffects &&
+        this.tryBase &&
+        current.start === this.tryBase.trim.start &&
+        current.end === this.tryBase.trim.end
+          ? this.tryBase.item
+          : null;
       // 렌더링 중에 선택이 바뀌어도 효과가 쓴 선택을 기준으로 이력과 결과 선택을 정한다
-      const trim = this.snapshot.trim;
-      const start = trim.start ?? 0;
-      const end = trim.end ?? 1;
+      const trim = current;
+      // 대체할 때는 효과 전 소리에서 시작한다. 재생기를 바꾸지 않고 읽기용 버퍼만 만든다
+      const buffer = base
+        ? new this.deps.AudioBufferPlayer(playableSamples(base.samples), base.sampleRate).buffer
+        : player.buffer;
+      const start = (base ? base.trimStart : trim.start) ?? 0;
+      const end = (base ? base.trimEnd : trim.end) ?? 1;
+      const hasSelection = base ? base.trimStart !== null : trim.start !== null;
+      // 이력에 남길 효과 전 상태. 대체하면 기존 항목을 그대로 쓴다
+      const before = base ?? this.undoItem(trim);
       return this.deps
         .applyEffect(buffer, name, start, end)
         .then((result) => {
@@ -470,9 +518,14 @@ export class EditSession {
             result.buffer.sampleRate,
             trim,
             generation,
+            { item: before, replace: base !== null },
           ).then((ok) => {
             if (!ok) return;
-            if (trim.start !== null) this.setTrim(result.trimStart, result.trimEnd);
+            if (hasSelection) this.setTrim(result.trimStart, result.trimEnd);
+            // 시험 모드이면 다음 효과가 이 항목의 소리에 적용된다. 결과 선택을 함께 기억해 선택이 바뀌면 이어 가지 않는다
+            this.tryBase = this.snapshot.tryEffects
+              ? { item: before, trim: this.snapshot.trim }
+              : null;
             this.play();
           });
         })
@@ -536,7 +589,9 @@ export class EditSession {
   /** 복사하거나 붙여 넣은 구간을 화면에 알린다. 비율은 0~1로 자른다 */
   private flashRange(start: number, end: number): void {
     const clamp = (v: number) => Math.min(1, Math.max(0, v));
-    this.update({ flash: { id: ++this.flashSeq, start: clamp(start), end: clamp(end) } });
+    this.update({
+      flash: { id: ++this.flashSeq, start: clamp(start), end: clamp(end) },
+    });
   }
 
   private setCopyBuffer(buffer: SoundBuffer | null): void {
@@ -550,7 +605,9 @@ export class EditSession {
    */
   private reportError(kind: SoundEditorError["kind"], cause: unknown): void {
     if (!this.queue.attached) return;
-    this.update({ editError: { kind, id: (this.snapshot.editError?.id ?? 0) + 1 } });
+    this.update({
+      editError: { kind, id: (this.snapshot.editError?.id ?? 0) + 1 },
+    });
     try {
       this.props.onError?.({ kind, cause });
     } catch (callbackError) {
@@ -617,18 +674,26 @@ export class EditSession {
    * undoTrim은 편집을 시작할 때 잡아 둔 선택이다. 처리 중에 사용자가 선택을 바꿔도
    * undo가 편집에 쓰인 선택을 복원하도록 끝난 시점의 선택을 읽지 않는다.
    * null이면 이력에 쌓지 않는다(undo/redo 적용).
+   * undoOverride를 주면 undoTrim 대신 그 항목을 이력에 쌓는다. replace이면 가장 최근 항목을 대체한다(효과 시험 모드).
+   * 어떤 반영이든 성공하면 효과 시험의 대체 대상을 비운다. 효과가 끝난 뒤 다시 기억한다.
    */
   private submitNewSamples(
     samples: Float32Array,
     sampleRate: number,
     undoTrim: EditTrim | null,
     generation: number,
+    undoOverride?: { item: UndoItem; replace: boolean },
   ): Promise<boolean> {
     return this.deps
       .downsampleIfNeeded({ samples, sampleRate }, this.deps.resample)
       .then(({ samples: newSamples, sampleRate: newSampleRate }) => {
         if (!this.queue.isLive(generation)) return false;
-        if (undoTrim) {
+        this.tryBase = null;
+        if (undoOverride) {
+          if (undoOverride.replace) this.history.replaceLast(undoOverride.item);
+          else this.history.push(undoOverride.item);
+          this.atOriginal = false;
+        } else if (undoTrim) {
           this.history.push(this.undoItem(undoTrim));
           this.atOriginal = false;
         }

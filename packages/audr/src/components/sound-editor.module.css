@@ -206,6 +206,20 @@
   margin-top: 0.625rem;
 }
 
+/* 효과 시험 모드 체크박스. 효과 버튼 아래 별도 줄에 둔다. 재생 버튼은 가로 가운데에 있어야 한다 */
+.replaceEffect {
+  display: flex;
+  align-items: center;
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+/* flex gap은 Chrome 75에 없어서 마진으로 띄운다 */
+.replaceEffect > input {
+  margin: 0 0.375rem 0 0;
+}
+
 .playButton {
   display: inline-flex;
   align-items: center;

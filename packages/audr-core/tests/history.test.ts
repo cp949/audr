@@ -119,4 +119,24 @@ describe("History", () => {
     expect(h.canUndo).toBe(false);
     expect(h.canRedo).toBe(false);
   });
+
+  it("replaceLast는 단계를 늘리지 않고 가장 최근 항목만 바꾼다", () => {
+    const h = new History<string>();
+    h.push("a");
+    h.push("b");
+    h.replaceLast("c");
+    expect(h.undo("now")).toBe("c");
+    expect(h.undo("c")).toBe("a");
+    expect(h.canUndo).toBe(false);
+  });
+
+  it("replaceLast는 redo 스택을 비우고 undo 항목이 없으면 push와 같다", () => {
+    const h = new History<string>();
+    h.push("a");
+    h.undo("b");
+    expect(h.canRedo).toBe(true);
+    h.replaceLast("c");
+    expect(h.canRedo).toBe(false);
+    expect(h.undo("now")).toBe("c");
+  });
 });
