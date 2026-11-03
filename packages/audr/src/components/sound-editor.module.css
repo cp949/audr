@@ -86,15 +86,28 @@
   margin-bottom: 20px;
 }
 
-/* 파형 상자의 세로 가운데를 가로지르는 연한 선. 상자 안쪽 폭 전체를 쓰고 입력은 받지 않는다 */
-.centerGuide {
+/* 파형 상자의 가운데를 가로지르는 연한 선. 상자 안쪽 전체를 쓰고 입력은 받지 않는다 */
+.guideHorizontal,
+.guideVertical {
   position: absolute;
+  background: var(--audr-ui-black-transparent);
+  pointer-events: none;
+}
+
+/* 진폭 0. 세로 가운데에서 폭 전체를 가로지른다 */
+.guideHorizontal {
   top: 50%;
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--audr-ui-black-transparent);
-  pointer-events: none;
+}
+
+/* 시간 가운데(50%). 가로 가운데에서 높이 전체를 가로지른다 */
+.guideVertical {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
 }
 
 .button {

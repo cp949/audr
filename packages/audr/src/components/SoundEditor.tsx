@@ -271,8 +271,9 @@ export function SoundEditor({
         <div className={styles.waveformArea}>
           <div className={styles.waveformContainer}>
             <Waveform data={chunkLevels} height={160} width={600} />
-            {/* 진폭 0을 가리키는 연한 기준선. 선택 영역 아래에 두어 입력을 막지 않는다 */}
-            <div className={styles.centerGuide} aria-hidden="true" />
+            {/* 진폭 0(가로선)과 시간 가운데(세로선)를 가리키는 연한 기준선. 선택 영역 아래에 두어 입력을 막지 않는다 */}
+            <div className={styles.guideHorizontal} aria-hidden="true" />
+            <div className={styles.guideVertical} aria-hidden="true" />
             {/* 끄는 중 소리가 전환되면 드래그를 버린다. 끝날 때 이전 소리에서 잡은 구간이 새 소리의 선택이 되지 않게 한다 */}
             <AudioSelector
               key={switchCount}
