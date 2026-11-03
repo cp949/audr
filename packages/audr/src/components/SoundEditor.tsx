@@ -16,6 +16,7 @@ import muteIcon from "../assets/icons/sound-editor/icon--mute.svg";
 import pasteIcon from "../assets/icons/sound-editor/icon--paste.svg";
 import playIcon from "../assets/icons/sound-editor/icon--play.svg";
 import redoIcon from "../assets/icons/sound-editor/icon--redo.svg";
+import revertIcon from "../assets/icons/sound-editor/icon--revert.svg";
 import reverseReverbIcon from "../assets/icons/sound-editor/icon--reverse-reverb.svg";
 import reverseIcon from "../assets/icons/sound-editor/icon--reverse.svg";
 import robotIcon from "../assets/icons/sound-editor/icon--robot.svg";
@@ -158,6 +159,7 @@ export function SoundEditor({
     trimEnd,
     canUndo,
     canRedo,
+    canRevert,
     canPaste,
     flash,
     tooLoud,
@@ -171,6 +173,7 @@ export function SoundEditor({
     onSetTrim,
     onUndo,
     onRedo,
+    onRevert,
     onCopy,
     onPaste,
     onCopyToNew,
@@ -263,6 +266,16 @@ export function SoundEditor({
             onClick={onRedo}
           >
             <img draggable={false} src={redoIcon} alt="" />
+          </button>
+          <button
+            type="button"
+            className={styles.button}
+            disabled={!canRevert || busy}
+            aria-label={m.revert}
+            title={m.revert}
+            onClick={onRevert}
+          >
+            <img draggable={false} src={revertIcon} alt="" />
           </button>
         </div>
         {/* 목록은 팝오버로 떠서 줄 높이를 바꾸지 않는다 */}

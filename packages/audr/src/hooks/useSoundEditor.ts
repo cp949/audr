@@ -220,6 +220,8 @@ export function useSoundEditor(props: SoundEditorHookProps) {
     trimEnd: trim.end,
     canUndo: snapshot.canUndo,
     canRedo: snapshot.canRedo,
+    /** 소리를 받은 직후의 상태와 달라졌으면 true */
+    canRevert: snapshot.canRevert,
     canPaste: snapshot.canPaste,
     /** 마지막으로 복사하거나 붙여 넣은 구간(0~1 비율). 동작마다 id가 늘고, 소리가 바뀌면 null이다 */
     flash: snapshot.flash,
@@ -237,6 +239,7 @@ export function useSoundEditor(props: SoundEditorHookProps) {
     onSetTrim: session.updateTrim,
     onUndo: session.undo,
     onRedo: session.redo,
+    onRevert: session.revert,
     onCopy: session.copy,
     onPaste: session.paste,
     onCopyToNew: session.copyToNew,

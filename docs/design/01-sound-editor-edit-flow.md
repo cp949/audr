@@ -46,7 +46,7 @@
 - 대기 수가 0이 되면 아직 울리지 않은 타이머를 취소하고 `busy`를 바로 내린다.
 - `detach` 뒤에는 타이머를 만들지 않고, `detach`가 남은 타이머를 취소한다.
 
-비활성 대상은 Undo, Redo, Paste, 선택 작업 막대의 Delete·Keep only selection, 효과 버튼(Faster, Slower, Louder, Softer, Fade in, Fade out, Mute, Cyborg, Robot, Alien, Echo, Broadcast, Walkie-talkie, Reverse reverb, Scratch, Roller coaster, Stutter, Vibrato, Reverse)이다. Copy, Copy to New, 재생·정지는 활성으로 둔다.
+비활성 대상은 Undo, Redo, Revert to original, Paste, 선택 작업 막대의 Delete·Keep only selection, 효과 버튼(Faster, Slower, Louder, Softer, Fade in, Fade out, Mute, Cyborg, Robot, Alien, Echo, Broadcast, Walkie-talkie, Reverse reverb, Scratch, Roller coaster, Stutter, Vibrato, Reverse)이다. Copy, Copy to New, 재생·정지는 활성으로 둔다.
 
 - 해석: 비활성은 대기 중임을 보이는 표시다. 순서를 지키는 것은 큐다.
 - 근거: 키보드 단축키는 busy 중에도 막지 않고 큐에 쌓는다. 비활성이 정확성을 지키는 장치라면 단축키도 막아야 한다.
@@ -205,6 +205,24 @@
 - 그 사본으로 복사본을 덮어쓰지 않는다.
 - 덮어쓰면 22050Hz 소리에 붙인 뒤 44100Hz 소리에 붙일 때 줄였다 늘린 샘플이 붙는다. 샘플레이트가 다른 소리를 오갈 때마다 품질이 떨어진다.
 - 비용: 샘플레이트가 다른 소리에 붙일 때마다 리샘플한다.
+
+## undo와 원래대로
+
+undo와 redo는 소리를 재생하지 않는다. 효과, 붙이기는 결과를 재생한다.
+
+- 이유: 효과는 현재 소리 위에 쌓인다. 여러 효과를 시험하는 사용자는 Louder 뒤 Softer가 마음에 안 들어 undo를 누른다. 이때 undo가 Louder 소리를 내면 원치 않는 소리를 듣게 된다.
+- 되돌린 소리를 듣고 싶으면 사용자가 Play를 누른다.
+
+`revert`는 소리를 받은 직후의 내용으로 한 번에 돌아간다.
+
+- 기준 내용(`original`)은 첫 `applyInput`과 소리 전환 때 `markOriginal`이 재생기 버퍼에서 잡는다. 편집 결과 반영에서는 갱신하지 않는다.
+- `revert`는 편집과 같은 경로(`submitNewSamples`)로 이력에 쌓는다. undo 한 번이 되돌리기 전 소리를 복원한다.
+- 선택은 지운다. 길이가 다른 소리의 비율 선택은 의미를 잃는다.
+- `canRevert`는 지금 소리가 받은 직후의 소리와 다른지를 나타낸다. 이력 항목의 `atOriginal`이 undo와 redo 뒤에 이 값을 복원한다.
+  - 내용을 비교하지 않는다. 긴 소리의 전체 비교를 스냅샷마다 하지 않으려는 것이다.
+  - 이력 상한으로 첫 상태가 밀려나도 `original`이 따로 들고 있어 돌아갈 수 있다.
+- 비용: `original`은 이력에서 밀려난 뒤에도 소리 하나(최대 약 40MB)를 더 잡는다. 이 크기는 이력 크기 상한(`UNDO_BYTE_LIMIT`)에 들어가지 않는다.
+- 큰 소리를 받았다면 `revert` 결과도 편집과 같이 `downsampleIfNeeded`를 거친다. 첫 편집을 undo할 때와 같다.
 
 ## undo 이력 상한
 

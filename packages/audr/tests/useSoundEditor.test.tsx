@@ -208,10 +208,10 @@ describe("useSoundEditor undo/redo", () => {
     expect(Array.from(lastOnChange(onChange).samples)).toEqual(Array.from(ramp(1000)));
     expect(result.current.canRedo).toBe(true);
     expect(result.current.canUndo).toBe(false);
-    // undo 뒤에 선택이 복원되고 재생된다
+    // undo 뒤에 선택이 복원되고 재생하지 않는다
     await waitFor(() => expect(result.current.trimStart).toBe(0.25));
     expect(result.current.trimEnd).toBe(0.75);
-    expect(FakeAudioBufferPlayer.last.play).toHaveBeenCalled();
+    expect(FakeAudioBufferPlayer.last.play).not.toHaveBeenCalled();
   });
 
   it("Ctrl+Shift+Z는 되돌린 편집을 다시 적용한다", async () => {

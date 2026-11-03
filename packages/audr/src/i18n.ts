@@ -19,6 +19,8 @@ const en = {
   delete: "Delete",
   undo: "Undo",
   redo: "Redo",
+  /** 소리를 받은 직후의 상태로 한 번에 돌아가는 버튼 */
+  revert: "Revert to original",
   faster: "Faster",
   slower: "Slower",
   echo: "Echo",
@@ -138,6 +140,7 @@ const ko: Messages = {
   delete: "삭제",
   undo: "되돌리기",
   redo: "다시 실행",
+  revert: "원래대로",
   faster: "빠르게",
   slower: "느리게",
   echo: "메아리",

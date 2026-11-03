@@ -446,7 +446,7 @@ describe("EditSession 호스트 onChange 예외", () => {
     expect(consoleError).toHaveBeenCalledWith("onChange 콜백이 예외를 던졌다", thrown);
   });
 
-  it("undo 뒤 onChange가 던져도 선택을 복원하고 재생을 이어간다", async () => {
+  it("undo 뒤 onChange가 던져도 선택을 복원한다", async () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const { session, onChange, onError } = await afterDelete();
     onChange.mockImplementation(() => {
@@ -463,7 +463,104 @@ describe("EditSession 호스트 onChange 예외", () => {
       trim: { start: 0.5, end: 1 },
     });
     expect(FakeAudioBufferPlayer.last.buffer.length).toBe(100);
-    expect(FakeAudioBufferPlayer.last.play).toHaveBeenCalled();
     expect(consoleError).toHaveBeenCalledWith("onChange 콜백이 예외를 던졌다", thrown);
+  });
+});
+
+describe("EditSession undo와 redo의 재생", () => {
+  it("undo와 redo는 소리를 재생하지 않는다", async () => {
+    const { props } = createProps();
+    const session = new EditSession(props, createDeps(heldEffect().applyEffect));
+    mount(session, props);
+    session.updateTrim(0.5, 1);
+    session.deleteSelection();
+    await flush();
+
+    session.undo();
+    await flush();
+    session.redo();
+    await flush();
+
+    expect(FakeAudioBufferPlayer.last.play).not.toHaveBeenCalled();
+  });
+});
+
+describe("EditSession 원래대로", () => {
+  /** 두 번 지워 100 → 50 → 25샘플로 만든 세션 */
+  async function afterTwoDeletes() {
+    const { props, onChange } = createProps();
+    const session = new EditSession(props, createDeps(heldEffect().applyEffect));
+    mount(session, props);
+    for (let i = 0; i < 2; i++) {
+      session.updateTrim(0.5, 1);
+      session.deleteSelection();
+      await flush();
+    }
+    return { session, props, onChange };
+  }
+
+  it("소리를 받은 직후에는 돌아갈 수 없고 편집하면 돌아갈 수 있다", async () => {
+    const { props } = createProps();
+    const session = new EditSession(props, createDeps(heldEffect().applyEffect));
+    mount(session, props);
+    expect(session.getSnapshot().canRevert).toBe(false);
+
+    session.updateTrim(0.5, 1);
+    session.deleteSelection();
+    await flush();
+
+    expect(session.getSnapshot().canRevert).toBe(true);
+  });
+
+  it("여러 번 편집한 소리를 한 번에 받은 직후의 내용으로 되돌리고 선택을 지우며 재생하지 않는다", async () => {
+    const { session, onChange } = await afterTwoDeletes();
+    session.updateTrim(0.1, 0.2);
+
+    session.revert();
+    await flush();
+
+    expect(Array.from(lastCall(onChange).samples)).toEqual(Array.from(ramp(100)));
+    expect(session.getSnapshot()).toMatchObject({
+      canRevert: false,
+      trim: { start: null, end: null },
+    });
+    expect(FakeAudioBufferPlayer.last.play).not.toHaveBeenCalled();
+  });
+
+  it("원래대로 뒤 undo는 되돌리기 전 소리를 복원하고 다시 돌아갈 수 있다", async () => {
+    const { session, onChange } = await afterTwoDeletes();
+    session.revert();
+    await flush();
+
+    session.undo();
+    await flush();
+
+    expect(lastCall(onChange).samples.length).toBe(25);
+    expect(session.getSnapshot().canRevert).toBe(true);
+  });
+
+  it("편집을 모두 undo해 받은 직후의 소리로 오면 돌아갈 수 없고, redo하면 다시 돌아갈 수 있다", async () => {
+    const { session } = await afterTwoDeletes();
+
+    session.undo();
+    await flush();
+    expect(session.getSnapshot().canRevert).toBe(true);
+    session.undo();
+    await flush();
+    expect(session.getSnapshot().canRevert).toBe(false);
+    session.redo();
+    await flush();
+
+    expect(session.getSnapshot().canRevert).toBe(true);
+  });
+
+  it("다른 소리로 바뀌면 새 소리를 기준으로 삼는다", async () => {
+    const { session, props } = await afterTwoDeletes();
+    const next = { ...props, samples: ramp(40), soundId: "b" };
+
+    session.syncProps(next);
+    session.applyInput(next.samples, next.sampleRate);
+
+    expect(session.getSnapshot().canRevert).toBe(false);
   });
 });

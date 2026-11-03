@@ -114,6 +114,9 @@ export type EditSnapshot = {
 
   canRedo: boolean;
 
+  /** 소리를 받은 직후의 상태와 달라졌는지. true일 때만 `revert`가 동작한다 */
+  canRevert: boolean;
+
   /** 복사본이 있는지 */
   canPaste: boolean;
 
@@ -135,7 +138,12 @@ export type EditSnapshot = {
   switchCount: number;
 };
 
-type UndoItem = SoundBuffer & { trimStart: number | null; trimEnd: number | null };
+type UndoItem = SoundBuffer & {
+  trimStart: number | null;
+  trimEnd: number | null;
+  /** 이 항목의 소리가 소리를 받은 직후의 상태인지. undo와 redo가 `canRevert`를 되살리는 데 쓴다 */
+  atOriginal: boolean;
+};
 
 /**
  * AudioBuffer는 길이 0을 만들 수 없다(createBuffer가 NotSupportedError를 던진다).
@@ -182,6 +190,9 @@ export class EditSession {
   /** 재생기를 만든 samples가 길이 0이었는지. 재생기 버퍼는 이때 무음 1샘플이라 편집에서 가린다 */
   private emptySound = false;
   private copyBuffer: SoundBuffer | null = null;
+  // 소리를 받은 직후의 내용. `revert`가 이 내용으로 돌아간다. 재생기 버퍼를 참조하므로 제자리에서 고치지 않는다
+  private original: SoundBuffer | null = null;
+  private atOriginal = true;
   private flashSeq = 0;
   // 복사는 끝났고 `onCopyToNew` 호출만 기다리는 항목. 화면을 떼면 기다리지 않고 바로 보낸다
   private readonly pendingCopyToNew = new Set<PendingCopyToNew>();
@@ -205,6 +216,7 @@ export class EditSession {
       flash: null,
       canUndo: false,
       canRedo: false,
+      canRevert: false,
       canPaste: false,
       busy: false,
       editError: null,
@@ -283,6 +295,7 @@ export class EditSession {
     const player = this.player;
     if (!player) {
       this.createPlayer(samples, sampleRate);
+      this.markOriginal();
       return;
     }
     const soundSwitched = this.soundSwitched;
@@ -311,6 +324,7 @@ export class EditSession {
     this.setTrim(null, null);
     this.update({ editError: null });
     this.resetState(samples, sampleRate);
+    this.markOriginal();
     // resetState는 편집 결과 반영도 쓰므로 소리 전환 경로인 여기서 올린다
     this.update({ switchCount: this.snapshot.switchCount + 1, flash: null });
   }
@@ -358,6 +372,27 @@ export class EditSession {
     this.queue.enqueue((generation) =>
       this.applyUndoItem(this.history.redo(this.undoItem(this.snapshot.trim)), generation),
     );
+
+  /**
+   * 소리를 받은 직후의 내용으로 한 번에 돌아간다. 선택은 지우고 재생하지 않는다.
+   * 편집과 같이 이력에 쌓으므로 undo로 되돌리기 전 상태에 돌아올 수 있다. 바뀐 것이 없으면 아무 일도 하지 않는다.
+   * 이력에서 밀려난 첫 상태도 `original`이 따로 들고 있어 돌아갈 수 있다.
+   */
+  revert = (): void =>
+    this.queue.enqueue((generation) => {
+      const original = this.original;
+      if (!original || this.atOriginal) return;
+      // 시작할 때의 선택을 undo가 복원한다
+      const trim = this.snapshot.trim;
+      return this.submitNewSamples(original.samples, original.sampleRate, trim, generation).then(
+        (ok) => {
+          if (!ok) return;
+          this.atOriginal = true;
+          this.syncHistory();
+          this.setTrim(null, null);
+        },
+      );
+    });
 
   /**
    * 선택 구간(없으면 전체)을 복사한다. 편집 큐 순서로 처리하므로 앞 편집이 끝난 버퍼를 복사한다.
@@ -524,13 +559,24 @@ export class EditSession {
   }
 
   private syncHistory(): void {
-    this.update({ canUndo: this.history.canUndo, canRedo: this.history.canRedo });
+    this.update({
+      canUndo: this.history.canUndo,
+      canRedo: this.history.canRedo,
+      canRevert: !this.atOriginal,
+    });
   }
 
   /** 재생기를 만들고 빈 소리 여부를 함께 기록한다. 둘이 어긋나면 편집이 무음 1샘플을 읽는다. */
   private createPlayer(samples: Float32Array, sampleRate: number): void {
     this.player = new this.deps.AudioBufferPlayer(playableSamples(samples), sampleRate);
     this.emptySound = samples.length === 0;
+  }
+
+  /** 지금 재생기 버퍼를 소리를 받은 직후의 내용으로 기록한다. 소리를 받을 때만 부른다. */
+  private markOriginal(): void {
+    this.original = this.currentBuffer();
+    this.atOriginal = true;
+    this.syncHistory();
   }
 
   private resetState(samples: Float32Array, sampleRate: number): void {
@@ -556,7 +602,12 @@ export class EditSession {
 
   /** 현재 버퍼와 주어진 선택으로 이력 항목을 만든다. */
   private undoItem(trim: EditTrim): UndoItem {
-    return { ...this.currentBuffer(), trimStart: trim.start, trimEnd: trim.end };
+    return {
+      ...this.currentBuffer(),
+      trimStart: trim.start,
+      trimEnd: trim.end,
+      atOriginal: this.atOriginal,
+    };
   }
 
   /**
@@ -577,7 +628,10 @@ export class EditSession {
       .downsampleIfNeeded({ samples, sampleRate }, this.deps.resample)
       .then(({ samples: newSamples, sampleRate: newSampleRate }) => {
         if (!this.queue.isLive(generation)) return false;
-        if (undoTrim) this.history.push(this.undoItem(undoTrim));
+        if (undoTrim) {
+          this.history.push(this.undoItem(undoTrim));
+          this.atOriginal = false;
+        }
         this.resetState(newSamples, newSampleRate);
         this.syncHistory();
         this.update({ editError: null });
@@ -609,8 +663,11 @@ export class EditSession {
     if (!item) return;
     return this.submitNewSamples(item.samples, item.sampleRate, null, generation).then((ok) => {
       if (!ok) return;
+      this.atOriginal = item.atOriginal;
+      this.syncHistory();
+      // 되돌린 소리는 재생하지 않는다. 효과를 바꿔 가며 시험할 때 undo가 원치 않는 소리를 내지 않게 한다.
+      // 들으려면 Play를 누른다
       this.setTrim(item.trimStart, item.trimEnd);
-      this.play();
     });
   }
 
