@@ -154,15 +154,12 @@ describe("SoundEditor 레이아웃", () => {
     }
   });
 
-  it("앞 두 묶음(소리 크기, 속도·방향)의 이름은 화면에서 숨기고 보조기기만 읽으며, 나머지 묶음 이름은 보인다", () => {
+  it("효과 묶음 이름은 모두 화면에서 숨기고 보조기기만 읽는다", () => {
     setup();
-    for (const name of [en.effectGroupVolume, en.effectGroupSpeed]) {
-      expect(screen.getByText(name).className, name).toMatch(/visuallyHidden/);
+    for (const { name } of EFFECT_GROUPS) {
+      expect(screen.getByText(en[name]).className, name).toMatch(/visuallyHidden/);
       // 묶음 이름으로 계속 읽힌다
-      expect(screen.getByRole("group", { name }), name).toBeTruthy();
-    }
-    for (const name of [en.effectGroupVoice, en.effectGroupSpace, en.effectGroupWobble]) {
-      expect(screen.getByText(name).className, name).not.toMatch(/visuallyHidden/);
+      expect(screen.getByRole("group", { name: en[name] }), name).toBeTruthy();
     }
   });
 
@@ -1072,6 +1069,52 @@ describe("SoundEditor 소리 전환(soundId)", () => {
     expect(screen.queryByText(/^Selection/)).toBeNull();
     expect(screen.queryAllByRole("slider")).toHaveLength(0);
     expect(screen.getByText(en.effectScopeWhole)).toBeTruthy();
+  });
+});
+
+describe("SoundEditor 파형 폭", () => {
+  /** 파형 상자의 clientWidth를 스텁한다. jsdom은 레이아웃이 없어 항상 0이다 */
+  function stubWaveWidth(width: number) {
+    return vi.spyOn(Element.prototype, "clientWidth", "get").mockImplementation(function (
+      this: Element,
+    ) {
+      return this.className.toString().includes("waveformContainer") ? width : 0;
+    });
+  }
+  const viewBox = (container: HTMLElement) =>
+    container.querySelector("svg[data-waveform]")?.getAttribute("viewBox");
+
+  it("폭을 잴 수 없으면 380으로 그린다", () => {
+    const { container } = setup();
+    expect(viewBox(container)).toBe("0 0 380 160");
+  });
+
+  it("파형 상자 폭을 가득 채우도록 그리고 높이는 160으로 둔다", () => {
+    stubWaveWidth(600);
+    const { container } = setup();
+    expect(viewBox(container)).toBe("0 0 600 160");
+    // 막대는 폭 5px마다 하나다
+    expect(container.querySelectorAll("svg[data-waveform] rect")).toHaveLength(120);
+  });
+
+  it("파형 상자 폭이 바뀌면 다시 그린다", async () => {
+    let notify: () => void = () => {};
+    class FakeResizeObserver {
+      constructor(callback: () => void) {
+        notify = callback;
+      }
+      observe() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+    const spy = stubWaveWidth(600);
+    const { container } = setup();
+    expect(viewBox(container)).toBe("0 0 600 160");
+    spy.mockRestore();
+    stubWaveWidth(420);
+    await act(async () => notify());
+    expect(viewBox(container)).toBe("0 0 420 160");
+    vi.unstubAllGlobals();
   });
 });
 

@@ -300,33 +300,39 @@ test.describe("UI 경유 (데모 화면)", () => {
       expect(box.x, box.title).toBeGreaterThanOrEqual(wave.x - 0.5);
       expect(box.x + box.width, box.title).toBeLessThanOrEqual(wave.x + wave.width + 0.5);
     }
-    // 앞 두 묶음(Volume, Speed & direction)의 이름은 화면에서 숨기고(보조기기만 읽는다)
-    // 나머지 묶음의 이름은 같은 묶음의 첫 칩 위에 있다
-    for (const [name] of GROUPS.slice(0, 2)) {
+    // 묶음 이름은 모두 화면에서 숨긴다(보조기기만 읽는다)
+    for (const [name] of GROUPS) {
       const hidden = await page.getByText(name, { exact: true }).boundingBox();
       expect(hidden?.width ?? 0, name).toBeLessThanOrEqual(1);
       expect(hidden?.height ?? 0, name).toBeLessThanOrEqual(1);
     }
     // 묶음이 위에서 아래로 이어진다
     let previousBottom = -Infinity;
-    for (const [index, [name, titles]] of GROUPS.entries()) {
+    for (const [name, titles] of GROUPS) {
       const group = boxes.filter((b) => titles.includes(b.title));
-      const top = Math.min(...group.map((b) => b.y));
-      if (index >= 2) {
-        const label = await page.getByText(name, { exact: true }).boundingBox();
-        if (!label) throw new Error(`${name} 묶음 이름의 위치를 구하지 못했다`);
-        expect(label.y, name).toBeGreaterThanOrEqual(previousBottom - 0.5);
-        expect(top, name).toBeGreaterThanOrEqual(label.y + label.height - 0.5);
-      } else {
-        expect(top, name).toBeGreaterThanOrEqual(previousBottom - 0.5);
-      }
+      expect(Math.min(...group.map((b) => b.y)), name).toBeGreaterThanOrEqual(previousBottom - 0.5);
       previousBottom = Math.max(...group.map((b) => b.y + b.height));
     }
   });
 
-  test("효과를 아래로 옮겨도 파형 폭은 380px로 유지된다", async ({ page }) => {
-    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
-    expect(wave?.width).toBeCloseTo(380, 0);
+  test("파형 영역은 부모 div의 너비를 가득 채우고 막대 그림도 같은 폭이다", async ({ page }) => {
+    for (const frameWidth of [629, 420]) {
+      await page.evaluate((w) => {
+        const frame = document.querySelector<HTMLElement>(".editor-frame");
+        if (frame) frame.style.width = `${w}px`;
+      }, frameWidth);
+      const wave = page.locator('[class*="waveformContainer"]').first();
+      // 폭이 바뀐 뒤 ResizeObserver가 막대 그림을 다시 그릴 때까지 기다린다
+      await expect(async () => {
+        const parent = await wave.evaluate((el) => el.parentElement?.getBoundingClientRect().width);
+        const box = await wave.boundingBox();
+        expect(box?.width, `${frameWidth}px`).toBeCloseTo(parent ?? -1, 0);
+        // 막대 그림(svg)도 상자 폭을 채우고 높이는 160px이다
+        const svg = await page.locator("svg[data-waveform]").boundingBox();
+        expect(svg?.width, `${frameWidth}px svg`).toBeCloseTo(box?.width ?? -1, 0);
+        expect(svg?.height, `${frameWidth}px svg`).toBeCloseTo(160, 0);
+      }).toPass();
+    }
   });
 
   test("폭이 좁아도 효과 칩이 에디터 오른쪽 끝을 넘지 않는다", async ({ page }) => {

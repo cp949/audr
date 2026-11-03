@@ -194,11 +194,9 @@
   margin: 0 var(--audr-space) calc(2 * var(--audr-space));
 }
 
-/* 열 폭은 Waveform의 width(380)에 맞춘다. 효과 묶음이 오른쪽에서 내려와도 파형이 늘어나지 않게 한다 */
 .workMain {
   flex: 1 1 340px;
   min-width: 0;
-  max-width: 380px;
 }
 
 /* 재생 줄. 파형 아래 가로 가운데에 둔다 */
@@ -251,27 +249,9 @@
   margin-top: 0.75rem;
 }
 
-/* 효과 묶음. 묶음마다 이름과 색 점이 있고, 그 아래 효과 칩이 줄바꿈하며 이어진다 */
+/* 효과 묶음. 칩이 줄바꿈하며 이어지고, 묶음 사이를 띄운다. 묶음 이름은 보조기기만 읽는다 */
 .effectGroup + .effectGroup {
   margin-top: 0.75rem;
-}
-
-.effectGroupName {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.25rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: var(--audr-text-primary);
-}
-
-.effectGroupName::before {
-  content: "";
-  width: 0.5rem;
-  height: 0.5rem;
-  margin-right: 0.375rem;
-  border-radius: 2px;
-  background: var(--group-color);
 }
 
 /* 칩 사이 간격 2px은 칩 margin이 만들고, 바깥 여백은 음수 margin으로 상쇄한다 */
@@ -316,21 +296,6 @@
   각도는 원본 색에 같은 행렬을 적용했을 때 색조가 목표(청록 181, 파랑 207, 주황 28, 연두 85, 분홍 345)에 가장 가까운 값이다.
   묶음 색은 테마와 무관하다.
 */
-[data-group="volume"] {
-  --group-color: #199ea0;
-}
-[data-group="speed"] {
-  --group-color: #3a8fd4;
-}
-[data-group="voice"] {
-  --group-color: #c8752e;
-}
-[data-group="space"] {
-  --group-color: #629619;
-}
-[data-group="wobble"] {
-  --group-color: #ef6184;
-}
 
 [data-group="volume"] .effectButton img {
   filter: hue-rotate(-119deg);

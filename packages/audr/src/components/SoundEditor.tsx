@@ -27,6 +27,7 @@ import stutterIcon from "../assets/icons/sound-editor/icon--stutter.svg";
 import undoIcon from "../assets/icons/sound-editor/icon--undo.svg";
 import vibratoIcon from "../assets/icons/sound-editor/icon--vibrato.svg";
 import walkieIcon from "../assets/icons/sound-editor/icon--walkie.svg";
+import { useElementWidth } from "../hooks/useElementWidth";
 import { useSoundEditor, type SoundEditorError } from "../hooks/useSoundEditor";
 import { getMessages, type Locale, type MessageOverrides, type Messages } from "../i18n";
 import { createSecondsFormat } from "../lib/secondsFormat";
@@ -55,11 +56,8 @@ const EFFECT_GROUPS = [
 
 type EffectGroupId = (typeof EFFECT_GROUPS)[number]["id"];
 
-/**
- * 이름을 화면에 보이지 않고 보조기기만 읽게 하는 묶음.
- * 칩의 아이콘과 이름만으로 뜻이 분명한 앞 두 묶음이다
- */
-const HIDDEN_NAME_GROUP_IDS: ReadonlyArray<EffectGroupId> = ["volume", "speed"];
+/** 잴 수 없을 때 쓰는 파형 폭(px) */
+const DEFAULT_WAVE_WIDTH = 380;
 
 /**
  * 효과 버튼. 배열 순서가 묶음 안의 화면 순서이자 Tab 순서다.
@@ -176,6 +174,8 @@ export function SoundEditor({
     onKeepSelection,
     onEffect,
   } = useSoundEditor(props);
+  // 파형은 상자 폭을 가득 채운다. 막대 개수는 이 폭으로 정한다(잴 수 없으면 380)
+  const [waveWidth, setWaveContainer] = useElementWidth(DEFAULT_WAVE_WIDTH);
   // 드래그 중 임시 선택. 확정 전이라 훅의 trim에는 없고, 시간 표시줄의 선택 구간에만 쓴다
   const [preview, setPreview] = useState<{ start: number; end: number } | null>(null);
   // 끄는 중 소리가 전환되면 AudioSelector는 다시 만들어지며 null을 알리지 않는다. 여기서 임시 선택을 지운다
@@ -217,15 +217,10 @@ export function SoundEditor({
       className={styles.effectGroup}
       data-group={id}
     >
-      {HIDDEN_NAME_GROUP_IDS.includes(id) ? (
-        <span id={`${scopeId}-${id}`} className={styles.visuallyHidden}>
-          {m[name]}
-        </span>
-      ) : (
-        <div id={`${scopeId}-${id}`} className={styles.effectGroupName}>
-          {m[name]}
-        </div>
-      )}
+      {/* 묶음 이름은 화면에 보이지 않고 보조기기만 읽는다. 칩의 아이콘과 이름만으로 뜻이 분명하다 */}
+      <span id={`${scopeId}-${id}`} className={styles.visuallyHidden}>
+        {m[name]}
+      </span>
       <div className={styles.effectChips}>
         {EFFECT_BUTTONS.filter((b) => b.group === id).map(({ effect, icon, label }) => {
           // Louder는 너무 큰 구간에서 막고 이유를 알린다
@@ -324,7 +319,7 @@ export function SoundEditor({
       <div className={styles.workArea}>
         <div className={styles.workMain}>
           <div className={styles.waveformArea}>
-            <div className={styles.waveformContainer}>
+            <div className={styles.waveformContainer} ref={setWaveContainer}>
               {/*
                 눈금자. 시간 0, 25%, 50%, 75%와 전체 길이를 화면에만 보인다. 보조기기는 아래의 읽기 문구와 핸들을 쓴다.
                 세로 기준선이 25%·50%·75% 눈금선을 겸한다
@@ -344,7 +339,13 @@ export function SoundEditor({
                   {m.timeLengthValue.replace("{seconds}", formatSeconds(durationSeconds))}
                 </span>
               </div>
-              <Waveform data={chunkLevels} dimmed highlight={selection} height={160} width={380} />
+              <Waveform
+                data={chunkLevels}
+                dimmed
+                highlight={selection}
+                height={160}
+                width={waveWidth}
+              />
               {/* 진폭 0(가로선)과 시간 25%·50%·75%(세로선)를 가리키는 연한 기준선. 선택 영역 아래에 두어 입력을 막지 않는다 */}
               <div className={styles.guideHorizontal} aria-hidden="true" />
               {GUIDE_POSITIONS.map((percent) => (
