@@ -2,6 +2,8 @@ import type { ComponentType } from "react";
 import { App } from "../App";
 import { EditorBasicExample } from "./EditorBasic";
 import editorBasicSource from "./EditorBasic.tsx?raw";
+import { SoundListExample } from "./SoundList";
+import soundListSource from "./SoundList.tsx?raw";
 import { ThemeAndLocaleExample } from "./ThemeAndLocale";
 import themeAndLocaleSource from "./ThemeAndLocale.tsx?raw";
 import { RecordOnlyExample } from "./RecordOnly";
@@ -39,6 +41,13 @@ export const EXAMPLES: Example[] = [
     summary: "SoundEditor 하나로 파일을 열고, 편집하고, WAV로 내려받는다.",
     Component: EditorBasicExample,
     source: { code: editorBasicSource, fileName: "EditorBasic.tsx" },
+  },
+  {
+    id: "sound-list",
+    title: "소리 목록과 삭제",
+    summary: "호스트가 소리 목록을 가지고, 소리를 지우면 다음 소리를 자동으로 선택한다.",
+    Component: SoundListExample,
+    source: { code: soundListSource, fileName: "SoundList.tsx" },
   },
   {
     id: "theme-locale",
