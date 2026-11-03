@@ -227,72 +227,72 @@ export function SoundEditor({
       onMouseDown={onContainerMouseDown}
       aria-busy={busy || undefined}
     >
-      <div className={styles.row}>
-        <div className={styles.inputGroup}>
-          {/*
-            key로 soundId가 바뀌면 다시 만든다. 입력 중이던 이전 소리의 이름을
-            새 소리에 보이거나 새 소리의 onRename으로 제출하지 않게 한다
-          */}
-          <NameInput
-            key={props.soundId}
-            label={m.sound}
-            value={props.name}
-            onSubmit={props.onRename}
-          />
-          <div className={styles.buttonGroup}>
-            <button
-              type="button"
-              aria-label={m.undo}
-              title={tip(m.undo, "undo")}
-              aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.undo)}
-              className={styles.button}
-              disabled={!canUndo || busy}
-              onClick={onUndo}
-            >
-              <img draggable={false} src={undoIcon} alt="" />
-            </button>
-            <button
-              type="button"
-              className={styles.button}
-              disabled={!canRedo || busy}
-              aria-label={m.redo}
-              title={tip(m.redo, "redo")}
-              aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.redo)}
-              onClick={onRedo}
-            >
-              <img draggable={false} src={redoIcon} alt="" />
-            </button>
-          </div>
+      {/* 1줄: 이름 입력이 남는 폭을 채우고 되돌리기와 도움말은 오른쪽 끝에 둔다. 폭과 무관하게 줄을 나누지 않는다 */}
+      <div className={styles.header}>
+        {/*
+          key로 soundId가 바뀌면 다시 만든다. 입력 중이던 이전 소리의 이름을
+          새 소리에 보이거나 새 소리의 onRename으로 제출하지 않게 한다
+        */}
+        <NameInput
+          key={props.soundId}
+          label={m.sound}
+          value={props.name}
+          onSubmit={props.onRename}
+        />
+        <div className={styles.buttonGroup}>
+          <button
+            type="button"
+            aria-label={m.undo}
+            title={tip(m.undo, "undo")}
+            aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.undo)}
+            className={styles.button}
+            disabled={!canUndo || busy}
+            onClick={onUndo}
+          >
+            <img draggable={false} src={undoIcon} alt="" />
+          </button>
+          <button
+            type="button"
+            className={styles.button}
+            disabled={!canRedo || busy}
+            aria-label={m.redo}
+            title={tip(m.redo, "redo")}
+            aria-keyshortcuts={ariaKeyShortcuts(SHORTCUTS.redo)}
+            onClick={onRedo}
+          >
+            <img draggable={false} src={redoIcon} alt="" />
+          </button>
         </div>
-        <div className={styles.inputGroup}>
-          <IconButton
-            className={styles.toolButton}
-            disabled={isEmpty}
-            img={copyIcon}
-            title={m.copy}
-            tooltip={tip(m.copy, "copy")}
-            keyShortcuts={ariaKeyShortcuts(SHORTCUTS.copy)}
-            onClick={onCopy}
-          />
-          <IconButton
-            className={styles.toolButton}
-            disabled={!canPaste || busy}
-            img={pasteIcon}
-            title={m.paste}
-            tooltip={tip(m.paste, "paste")}
-            keyShortcuts={ariaKeyShortcuts(SHORTCUTS.paste)}
-            onClick={onPaste}
-          />
-          <IconButton
-            className={styles.toolButton}
-            disabled={isEmpty}
-            img={copyToNewIcon}
-            title={m.copyToNew}
-            onClick={onCopyToNew}
-          />
-        </div>
-        {/* 줄 오른쪽 끝에 붙는 작은 버튼이다. 목록은 팝오버로 떠서 줄 높이를 바꾸지 않는다 */}
+        {/* 목록은 팝오버로 떠서 줄 높이를 바꾸지 않는다 */}
         <ShortcutHelp messages={m} apple={apple} />
+      </div>
+      {/* 2줄: 편집 동작. 파형 왼쪽 선에 맞춘다. 좁으면 버튼 단위로 다음 줄로 넘어간다 */}
+      <div className={styles.actions}>
+        <IconButton
+          className={styles.toolButton}
+          disabled={isEmpty}
+          img={copyIcon}
+          title={m.copy}
+          tooltip={tip(m.copy, "copy")}
+          keyShortcuts={ariaKeyShortcuts(SHORTCUTS.copy)}
+          onClick={onCopy}
+        />
+        <IconButton
+          className={styles.toolButton}
+          disabled={!canPaste || busy}
+          img={pasteIcon}
+          title={m.paste}
+          tooltip={tip(m.paste, "paste")}
+          keyShortcuts={ariaKeyShortcuts(SHORTCUTS.paste)}
+          onClick={onPaste}
+        />
+        <IconButton
+          className={styles.toolButton}
+          disabled={isEmpty}
+          img={copyToNewIcon}
+          title={m.copyToNew}
+          onClick={onCopyToNew}
+        />
       </div>
       {/* 왼쪽은 파형과 재생 줄, 오른쪽은 효과 패널이다. 폭이 모자라면 패널이 아래로 내려간다 */}
       <div className={styles.workArea}>

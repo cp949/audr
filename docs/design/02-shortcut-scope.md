@@ -126,7 +126,7 @@ Space, Delete, Backspace, Escape는 `event.key`로 직접 판정한다. Space는
 
 ## ShortcutHelp 팝오버의 Space와 Esc
 
-`ShortcutHelp`는 도구 줄 오른쪽 끝의 `?` 버튼과 팝오버 목록이다. 팝오버는 네이티브 Popover API 없이 직접 만든다(Chrome 75 floor).
+`ShortcutHelp`는 상단 첫 줄 오른쪽 끝의 `?` 버튼과 팝오버 목록이다. 팝오버는 네이티브 Popover API 없이 직접 만든다(Chrome 75 floor).
 
 Space:
 

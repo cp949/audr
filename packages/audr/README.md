@@ -94,7 +94,7 @@ import { SoundEditor } from "@cp949/audr";
 
 단축키 도움말:
 
-- 도구 줄(Undo·Redo·Copy·Paste 줄) 오른쪽 끝의 작은 `?` 버튼(이름은 `Shortcuts`, 한국어 `단축키`)을 누르면 목록이 팝오버로 뜬다. 기본은 닫힌 상태다. 레이아웃은 밀지 않는다. 버튼을 다시 누르거나 Esc를 누르거나 바깥을 누르면 닫힌다. 팝오버가 열려 있을 때 Esc는 팝오버만 닫고 선택은 해제하지 않는다. 버튼은 `aria-expanded`로 상태를 알리고, 열리면 `aria-controls`가 목록(`dl`)을 가리킨다. 터치 기기에서도 숨기지 않는다(외장 키보드를 연결한 태블릿을 구분할 수 없다).
+- 상단 첫 줄(이름·Undo·Redo 줄) 오른쪽 끝의 작은 `?` 버튼(이름은 `Shortcuts`, 한국어 `단축키`)을 누르면 목록이 팝오버로 뜬다. 기본은 닫힌 상태다. 레이아웃은 밀지 않는다. 버튼을 다시 누르거나 Esc를 누르거나 바깥을 누르면 닫힌다. 팝오버가 열려 있을 때 Esc는 팝오버만 닫고 선택은 해제하지 않는다. 버튼은 `aria-expanded`로 상태를 알리고, 열리면 `aria-controls`가 목록(`dl`)을 가리킨다. 터치 기기에서도 숨기지 않는다(외장 키보드를 연결한 태블릿을 구분할 수 없다).
 - 목록은 `resolveShortcutCommand`(`useSoundEditor`의 `handleKeyDown`이 사용)가 처리하는 키만 적는다: Space(재생·정지), Delete·Backspace(선택 삭제), Shift+Delete·Shift+Backspace(선택만 남기기), Esc(선택 해제), Ctrl/Cmd+A·Z·Shift+Z·C·V. Ctrl+Y는 처리하지 않으므로 적지 않는다.
 - Apple 플랫폼에서는 `⌘`와 `⇧`로 표기한다. `tests/keyCommand.test.ts`가 목록의 모든 키가 그 동작으로 판정되는지, 키와 수정자의 모든 조합 중 명령으로 판정되는 것이 목록에 같은 동작으로 있는지를 대조한다. `tests/SoundEditorShortcutHelp.test.tsx`는 목록의 모든 키를 눌러 훅이 처리하는지 확인한다.
 - 모달이나 포털이 아니라 시간 표시줄 안에서 펼친다. 포커스를 가져가지 않고, 편집 실패 알림(`role="alert"`)은 목록 아래에 그대로 나온다.
@@ -291,9 +291,10 @@ export default defineConfig({
 
 - 에디터 루트는 부모 폭을 채운다. 고정 폭을 가지지 않는다.
 - 호스트는 에디터를 감싼 요소에 `width: 100%`, `min-width`, `max-width`를 준다.
-- 폭이 줄면 도구 줄과 효과 버튼이 줄바꿈하고 높이가 늘어난다. 파형은 부모 폭에 맞춰 다시 그려진다.
-- Chromium에서 에디터 폭 300px까지 가로 넘침이 없고 280px부터 넘친다. 권장 최소 폭은 320px이다.
-- 높이를 고정하는 호스트는 폭이 좁을수록 내용이 길어지므로 `overflow: auto`를 준다. 데모(Chromium, 영어 문구)에서 에디터의 자연 높이는 폭 629px에서 471px, 420px에서 563px, 320px에서 615px이다.
+- 상단은 두 줄로 고정한다. 첫 줄은 이름 입력(남는 폭을 채움), Undo·Redo, `?`이고 둘째 줄은 Copy·Paste·Copy to New다. 폭이 줄면 이름 입력만 줄어든다. 둘째 줄은 320px에서 한 줄에 들어가고 그보다 좁으면 버튼 단위로 넘어간다.
+- 폭이 줄면 효과 버튼이 줄바꿈하고 높이가 늘어난다. 파형은 부모 폭에 맞춰 다시 그려진다.
+- Chromium(영어 문구)에서 에디터 폭 200px까지 가로 넘침이 없다. 권장 최소 폭은 320px이다.
+- 높이를 고정하는 호스트는 폭이 좁을수록 내용이 길어지므로 `overflow: auto`를 준다. 데모(Chromium, 영어 문구)에서 에디터의 자연 높이는 폭 629px에서 498px, 420px에서 550px, 320px에서 602px이다.
 
 ```css
 .editor-host {
@@ -320,7 +321,7 @@ export default defineConfig({
 - 닫을 때 Esc나 효과 적용이면 포커스를 여는 버튼으로 돌려준다.
 - `"overflow"`에서 첫 줄 밖의 버튼은 닫힌 동안 보이지 않고 포커스도 받지 않는다. 한 줄에 모두 들어가면 `⋯` 버튼은 없다.
 - `"minimized"`와 `"overflow"`의 접근 가능한 이름은 `messages.effects`(`Effects` 버튼 글자), `messages.moreEffects`(`⋯` 버튼)다.
-- 데모(Chromium, 영어 문구)에서 에디터의 자연 높이는 폭 320px에서 `expanded` 615px, `minimized` 469px, `overflow` 462px이다. 폭 629px에서는 각각 471px, 429px, 422px이다.
+- 데모(Chromium, 영어 문구)에서 에디터의 자연 높이는 폭 320px에서 `expanded` 602px, `minimized` 456px, `overflow` 449px이다. 폭 629px에서는 각각 498px, 456px, 449px이다.
 
 `apps/demo`의 상단 Host width 슬라이더로 호스트 폭을, Effects layout 선택 상자로 배치를 바꿔 볼 수 있다. 녹음 대화상자(`RecordDialog`)는 이 계약에 들어가지 않는다. 폭이 600px로 고정이다.
 

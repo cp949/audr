@@ -62,7 +62,7 @@ beforeEach(() => {
 });
 
 describe("SoundEditor 레이아웃", () => {
-  it("버튼이 순서(undo·redo / copy·paste·copy to new / 단축키 도움말 / 재생 + 효과 19개)으로 나온다", () => {
+  it("버튼이 화면에 보이는 순서(undo·redo·단축키 도움말 / copy·paste·copy to new / 재생 + 효과 19개)로 나온다", () => {
     setup();
     const names = screen
       .getAllByRole("button")
@@ -70,10 +70,10 @@ describe("SoundEditor 레이아웃", () => {
     expect(names).toEqual([
       en.undo,
       en.redo,
+      en.shortcutsToggle,
       en.copy,
       en.paste,
       en.copyToNew,
-      en.shortcutsToggle,
       en.play,
       ...effectLabels,
     ]);

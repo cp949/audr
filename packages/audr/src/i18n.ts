@@ -65,7 +65,7 @@ const en = {
   /** 효과 버튼이 적용되는 범위. 확정된 선택이 있으면 선택 구간, 없으면 소리 전체다. 시간 표시줄에 보이고 효과 버튼의 설명으로도 읽힌다 */
   effectScopeWhole: "Effects apply to: whole sound",
   effectScopeSelection: "Effects apply to: selection",
-  /** 도구 줄 오른쪽 끝 `?` 버튼의 이름과 팝오버 목록 항목 */
+  /** 상단 첫 줄 오른쪽 끝 `?` 버튼의 이름과 팝오버 목록 항목 */
   shortcutsToggle: "Shortcuts",
   shortcutActions: {
     playStop: "Play / Stop",

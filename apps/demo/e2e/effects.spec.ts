@@ -382,7 +382,7 @@ test.describe("UI 경유 (데모 화면)", () => {
       await expect(async () => {
         const box = await frame.boundingBox();
         expect(box?.width).toBeCloseTo(frameWidth, 0);
-        // 도구 줄이 줄바꿈하므로 에디터 안 어떤 요소도 에디터 오른쪽을 넘지 않는다
+        // 에디터 안 어떤 요소도 에디터 오른쪽을 넘지 않는다
         const overflow = await page
           .locator('[class*="editorContainer"]')
           .first()

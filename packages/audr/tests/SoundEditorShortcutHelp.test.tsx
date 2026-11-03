@@ -118,10 +118,10 @@ describe("SoundEditor 단축키 도움말 팝오버 열기·닫기", () => {
     expect(document.querySelector("dl")).not.toBeNull();
   });
 
-  it("버튼은 시간 표시줄이 아니라 도구 줄에 있다", () => {
+  it("버튼은 시간 표시줄이 아니라 상단 첫 줄에 있다", () => {
     const { container } = setup();
-    const row = container.querySelector('[class*="row"]') as HTMLElement;
-    expect(row.contains(toggle())).toBe(true);
+    const header = container.querySelector('[class*="header"]') as HTMLElement;
+    expect(header.contains(toggle())).toBe(true);
   });
 
   it("바깥을 누르면 닫히고, 목록 안을 누르면 열린 채로 둔다", () => {

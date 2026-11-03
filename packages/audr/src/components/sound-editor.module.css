@@ -17,42 +17,31 @@
 }
 
 /*
-  도구 줄. 폭이 모자라면 묶음 단위로 다음 줄로 넘긴다.
-  flex gap은 Chrome 84부터라 쓰지 않는다. 줄 사이 간격은 자식 아래 margin과 줄의 음수 margin으로 만든다.
+  1줄. 이름 입력이 남는 폭을 채우고 되돌리기와 도움말을 오른쪽 끝에 둔다.
+  줄바꿈하지 않아서 폭이 변해도 구조가 같다. 좁으면 이름 입력만 줄어든다.
 */
-.row {
+.header {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  margin-bottom: calc(-1 * var(--audr-space));
-}
-
-.row > * {
   margin-bottom: var(--audr-space);
 }
 
-.row + .row {
-  margin-top: calc(2 * var(--audr-space));
-}
-
-.inputGroup {
+/*
+  2줄. 편집 동작을 왼쪽부터 놓는다. 아주 좁으면 버튼 단위로 넘어간다.
+  flex gap은 Chrome 84부터라 쓰지 않는다. 줄 사이 간격은 자식 아래 margin과 줄의 음수 margin으로 만든다.
+*/
+.actions {
   display: flex;
-  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  /* 마지막 버튼 오른쪽 margin이 폭을 먹지 않게 상쇄한다. 320px에서 세 버튼이 한 줄에 들어간다 */
+  margin: 0 calc(-1 * var(--audr-space)) calc(-1 * var(--audr-space)) 0;
 }
 
-/* 줄의 마지막 묶음 뒤에는 구분선과 간격을 두지 않는다 */
-.row > .inputGroup:last-of-type {
-  margin-right: 0;
-  padding-right: 0;
-  border-right: 0;
-}
-
-.inputGroup {
-  padding-right: calc(2 * var(--audr-space));
-  /* 묶음 사이 간격은 오른쪽 margin으로 둔다. 줄이 바뀐 묶음이 왼쪽에 빈 칸을 갖지 않게 한다 */
-  margin-right: calc(2 * var(--audr-space));
-  border-right: 1px dashed var(--audr-ui-black-transparent);
+.actions > * {
+  margin-right: var(--audr-space);
+  margin-bottom: var(--audr-space);
 }
 
 /* 파형과 그 아래 전체 길이를 묶는다. 전체 길이를 파형 아래 여백에 띄우는 기준 상자다 */
@@ -468,26 +457,41 @@
   filter: hue-rotate(44deg);
 }
 
+/* 이름 입력, 되돌리기 묶음과 같은 높이(2rem)의 알약형으로 맞춘다. 아이콘과 글자는 한 줄에 둔다 */
 .toolButton {
-  flex-basis: 60px;
+  flex-direction: row;
+  height: 2rem;
+  padding: 0 0.75rem 0 0.5rem;
+  border: 1px solid var(--audr-ui-black-transparent);
+  border-radius: 2rem;
+  background: white;
   color: var(--audr-text-primary);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
   user-select: none;
-  padding: 0.25rem 0;
 }
 
 .toolButton + .toolButton {
-  margin: 0;
+  margin-top: 0;
+}
+
+.toolButton:active {
+  background: var(--audr-accent-transparent);
 }
 
 .toolButton img {
   filter: var(--audr-icon-filter-accent);
-  width: 4rem;
-  height: 1.5rem;
-  margin-bottom: -0.375rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+
+.toolButton > div {
+  margin: 0 0 0 0.25rem;
 }
 
 .buttonGroup {
+  flex: none;
   margin-left: 1rem;
   display: flex;
 }
@@ -534,15 +538,15 @@
 }
 
 /*
-  단축키 도움말. 도구 줄(.row) 오른쪽 끝에 지름 24px(WCAG 2.5.8) 원형 버튼 하나만 둔다.
-  margin-left: auto로 줄 끝에 붙이고, 줄 높이는 2rem 버튼들이 정하므로 늘지 않는다.
+  단축키 도움말. 1줄(.header) 오른쪽 끝에 지름 24px(WCAG 2.5.8) 원형 버튼 하나만 둔다.
+  이름 입력이 남는 폭을 채우므로 따로 밀어 붙이지 않는다. 줄 높이는 2rem 컨트롤들이 정하므로 늘지 않는다.
   터치 기기에서도 숨기지 않는다. 외장 키보드를 연결한 태블릿은 터치 전용 기기와 입력 장치로 구분되지 않고,
   24px 버튼 하나는 키보드가 없는 기기에서도 방해가 작다.
   포커스 표시는 브라우저 기본 윤곽선을 그대로 쓴다.
 */
 .shortcutHelp {
   position: relative;
-  margin-left: auto;
+  flex: none;
   padding-left: calc(2 * var(--audr-space));
 }
 

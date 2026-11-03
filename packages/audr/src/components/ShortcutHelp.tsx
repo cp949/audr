@@ -1,4 +1,4 @@
-// 도구 줄 오른쪽 끝의 단축키 도움말. 작은 `?` 버튼을 누르면 목록이 팝오버로 뜬다. 레이아웃은 밀지 않는다.
+// 상단 첫 줄 오른쪽 끝의 단축키 도움말. 작은 `?` 버튼을 누르면 목록이 팝오버로 뜬다. 레이아웃은 밀지 않는다.
 import { Fragment, useId, useRef, useState } from "react";
 import { keepSpaceForButton, usePopoverDismiss } from "../hooks/usePopoverDismiss";
 import type { Messages } from "../i18n";
