@@ -1,6 +1,7 @@
 import {
   RecordDialog,
   type AudrTheme,
+  type EffectsLayout,
   type MicrophoneErrorCode,
   SoundEditor,
   type RecordDialogError,
@@ -17,6 +18,13 @@ import { useSoundLibrary } from "./useSoundLibrary";
 const HOST_WIDTH_MIN = 200;
 const HOST_WIDTH_MAX = 1000;
 const HOST_WIDTH_DEFAULT = 629;
+
+/** 데모에서 고를 수 있는 효과 버튼 배치 */
+const EFFECTS_LAYOUTS: { value: EffectsLayout; label: string }[] = [
+  { value: "expanded", label: "Expanded" },
+  { value: "minimized", label: "Minimized" },
+  { value: "overflow", label: "Overflow" },
+];
 
 const THEMES: { value: "" | AudrTheme; label: string }[] = [
   { value: "", label: "Teal" },
@@ -111,6 +119,7 @@ export function App() {
   const theme = themeValue || undefined;
   const [language, setLanguage] = useState<(typeof LANGUAGES)[number]>(LANGUAGES[0]);
   // 호스트가 에디터에 주는 가로 폭. 에디터는 이 폭을 따라가고, 그 범위는 demo.css의 .editor-frame이 정한다
+  const [effectsLayout, setEffectsLayout] = useState<EffectsLayout>("expanded");
   const [hostWidth, setHostWidth] = useState(HOST_WIDTH_DEFAULT);
 
   /**
@@ -223,6 +232,19 @@ export function App() {
             ))}
           </select>
         </label>
+        <label className="themePicker">
+          Effects layout
+          <select
+            value={effectsLayout}
+            onChange={(event) => setEffectsLayout(event.target.value as EffectsLayout)}
+          >
+            {EFFECTS_LAYOUTS.map((l) => (
+              <option key={l.value} value={l.value}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="themePicker widthPicker">
           Host width
           <input
@@ -292,6 +314,7 @@ export function App() {
                   onCopyToNew={(buffer) => addSound(buffer, selected.name)}
                   onRename={(name) => updateSelected({ name })}
                   theme={theme}
+                  effectsLayout={effectsLayout}
                   locale={language.value}
                   messages={language.messages}
                 />

@@ -1,6 +1,7 @@
 export { RecordDialog } from "./components/RecordDialog";
 export type { RecordDialogProps } from "./components/RecordDialog";
 export { SoundEditor } from "./components/SoundEditor";
+export type { EffectsLayout } from "./components/EffectPanel";
 export type { SoundEditorProps } from "./components/SoundEditor";
 export type { SoundEditorError } from "./hooks/useSoundEditor";
 export type { RecordDialogError, RecordedSound } from "./hooks/useRecordDialog";

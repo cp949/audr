@@ -42,8 +42,10 @@ const en = {
   mute: "Mute",
   /** 선택 구간 위에 뜨는 작업 막대의 접근 가능한 이름 */
   selectionActions: "Selection actions",
-  /** 효과 패널의 묶음 이름 */
+  /** 효과 패널의 묶음 이름. `effectsLayout="minimized"`에서는 효과 목록을 여는 버튼의 글자도 된다 */
   effects: "Effects",
+  /** `effectsLayout="overflow"`에서 한 줄에 들어가지 못한 효과를 여는 버튼의 이름 */
+  moreEffects: "More effects",
   selectionStart: "Selection start",
   selectionEnd: "Selection end",
   trimStart: "Trim start",
@@ -159,6 +161,7 @@ const ko: Messages = {
   mute: "음소거",
   selectionActions: "선택 구간 작업",
   effects: "효과",
+  moreEffects: "효과 더보기",
   selectionStart: "선택 시작",
   selectionEnd: "선택 끝",
   trimStart: "자르기 시작",

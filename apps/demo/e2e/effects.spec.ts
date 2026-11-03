@@ -394,6 +394,94 @@ test.describe("UI 경유 (데모 화면)", () => {
     });
   }
 
+  // effectsLayout. 데모 상단의 Effects layout 선택 상자로 바꾼다. 호스트 폭 420px에서 효과 칩은 여러 줄로 나뉜다.
+  test.describe("effectsLayout", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.getByRole("slider", { name: "Host width" }).fill("420");
+    });
+
+    /** 칩이 에디터 안쪽에 들어와 있는지 */
+    async function expectInsideEditor(page: Page, title: string) {
+      const editor = await page.locator('[class*="editorContainer"]').first().boundingBox();
+      const box = await editorButton(page, title).boundingBox();
+      if (!editor || !box) throw new Error(`${title}의 위치를 구하지 못했다`);
+      expect(box.x, title).toBeGreaterThanOrEqual(editor.x - 0.5);
+      expect(box.x + box.width, title).toBeLessThanOrEqual(editor.x + editor.width + 0.5);
+    }
+
+    test("minimized: Effects 버튼 하나만 보이고, 열면 칩 19개가 에디터 안에 뜬다. 효과를 적용하면 닫힌다", async ({
+      page,
+    }) => {
+      await page.getByLabel("Effects layout").selectOption("minimized");
+      await expect(editorButton(page, "Louder")).toHaveCount(0);
+      const toggle = page.locator('[class*="editorContainer"]').getByRole("button", {
+        name: /^Effects/,
+      });
+      const before = await page.locator('[class*="editorContainer"]').first().boundingBox();
+      await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      for (const title of CHIPS) await expectInsideEditor(page, title);
+      // 팝오버는 레이아웃을 밀지 않는다
+      const after = await page.locator('[class*="editorContainer"]').first().boundingBox();
+      expect(after?.height).toBeCloseTo(before?.height ?? -1, 0);
+      await editorButton(page, "Slower").click();
+      await expect.poll(() => samplesOf(page)).toBe(58800);
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      await expect(editorButton(page, "Louder")).toHaveCount(0);
+    });
+
+    test("overflow: 첫 줄만 보이고 나머지는 더보기 팝오버에 있다. 효과를 적용하면 닫힌다", async ({
+      page,
+    }) => {
+      await page.getByLabel("Effects layout").selectOption("overflow");
+      const more = page.getByRole("button", { name: "More effects" });
+      await expect(more).toBeVisible();
+      // 첫 줄의 칩은 보이고 둘째 줄 이후의 칩은 보이지 않는다(포커스도 받지 않는다)
+      await expect(editorButton(page, "Louder")).toBeVisible();
+      await expect(editorButton(page, "Roller coaster")).toBeHidden();
+      const visibleCount = (
+        await Promise.all(CHIPS.map((c) => editorButton(page, c).isVisible()))
+      ).filter(Boolean).length;
+      expect(visibleCount).toBeGreaterThan(0);
+      expect(visibleCount).toBeLessThan(CHIPS.length);
+      // 첫 줄의 칩은 모두 같은 높이(한 줄)에 있다
+      const tops = new Set<number>();
+      for (const title of CHIPS.slice(0, visibleCount)) {
+        const box = await editorButton(page, title).boundingBox();
+        tops.add(Math.round(box?.y ?? -1));
+      }
+      expect(tops.size).toBe(1);
+      const before = await page.locator('[class*="editorContainer"]').first().boundingBox();
+
+      await more.click();
+      await expect(more).toHaveAttribute("aria-expanded", "true");
+      for (const title of CHIPS) {
+        await expect(editorButton(page, title)).toBeVisible();
+        await expectInsideEditor(page, title);
+      }
+      // 팝오버는 레이아웃을 밀지 않는다
+      const after = await page.locator('[class*="editorContainer"]').first().boundingBox();
+      expect(after?.height).toBeCloseTo(before?.height ?? -1, 0);
+
+      await editorButton(page, "Slower").click();
+      await expect.poll(() => samplesOf(page)).toBe(58800);
+      await expect(more).toHaveAttribute("aria-expanded", "false");
+      await expect(editorButton(page, "Roller coaster")).toBeHidden();
+    });
+
+    test("overflow: 폭을 줄이면 첫 줄에 보이는 칩 수가 줄어든다", async ({ page }) => {
+      await page.getByLabel("Effects layout").selectOption("overflow");
+      const count = async () =>
+        (await Promise.all(CHIPS.map((c) => editorButton(page, c).isVisible()))).filter(Boolean)
+          .length;
+      await page.getByRole("slider", { name: "Host width" }).fill("629");
+      await expect.poll(count).toBeGreaterThan(5);
+      const wide = await count();
+      await page.getByRole("slider", { name: "Host width" }).fill("320");
+      await expect.poll(count).toBeLessThan(wide);
+    });
+  });
+
   test("재생 버튼은 파형 아래 가로 가운데에 있다", async ({ page }) => {
     const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
     const play = await editorButton(page, "Play").boundingBox();

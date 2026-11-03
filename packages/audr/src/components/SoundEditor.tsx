@@ -37,6 +37,8 @@ import { secondsValueText } from "../lib/valueText";
 import { AudioSelector } from "./AudioSelector";
 // IconButton의 CSS가 sound-module.css보다 먼저 로드되어야 `.effectButton + .effectButton`이 이긴다
 import { IconButton } from "./IconButton";
+// EffectPanel도 sound-editor.module.css를 쓰므로 IconButton보다 뒤에 둔다
+import { EffectPanel, type EffectsLayout } from "./EffectPanel";
 import { NameInput } from "./NameInput";
 import styles from "./sound-editor.module.css";
 import { SelectionLabel } from "./SelectionLabel";
@@ -124,6 +126,12 @@ export type SoundEditorProps = {
   messages?: MessageOverrides;
   /** 색 테마. 생략하면 청록. 에디터 루트에 걸리므로 에디터 안쪽만 바뀐다 */
   theme?: AudrTheme;
+  /**
+   * 효과 버튼을 보이는 방식. 기본값은 `"expanded"`(전체를 펼치고 줄바꿈)다.
+   * `"minimized"`는 `Effects` 버튼 하나만 두고 팝오버로 연다.
+   * `"overflow"`는 한 줄만 보이고 나머지는 `⋯` 버튼의 팝오버로 연다.
+   */
+  effectsLayout?: EffectsLayout;
 };
 
 export function SoundEditor({
@@ -131,6 +139,7 @@ export function SoundEditor({
   messages: overrides,
   theme,
   errorNotice = true,
+  effectsLayout = "expanded",
   ...props
 }: SoundEditorProps) {
   const m = useMemo(() => getMessages(locale, overrides), [locale, overrides]);
@@ -411,8 +420,8 @@ export function SoundEditor({
               </button>
             )}
           </div>
-          {/* 효과 버튼 전체를 한 상자에 현재 순서대로 나열하고 줄바꿈한다. DOM 순서가 Tab 순서이자 화면 순서다 */}
-          <div role="group" aria-label={m.effects} className={styles.effectChips}>
+          {/* 효과 버튼은 `effectsLayout`에 따라 펼치거나 접는다. DOM 순서가 Tab 순서이자 화면 순서다 */}
+          <EffectPanel layout={effectsLayout} messages={m}>
             {EFFECT_BUTTONS.map(({ hue, effect, icon, label }) => {
               // Louder는 너무 큰 구간에서 막고 이유를 알린다
               const blocked = effect === "higher" && tooLoud;
@@ -429,7 +438,7 @@ export function SoundEditor({
                 />
               );
             })}
-          </div>
+          </EffectPanel>
         </div>
       </div>
       {/* 화면용 정보다. 재생 위치가 프레임마다 바뀌므로 aria-live를 달지 않는다(스크린 리더는 핸들의 aria-valuetext를 쓴다) */}
