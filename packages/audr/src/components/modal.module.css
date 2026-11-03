@@ -8,6 +8,8 @@
   /* 모달이 다른 UI 위에 오는 z-index */
   z-index: 510;
   background-color: var(--audr-ui-modal-overlay);
+  /* 화면이 모달보다 작을 때(좁은 폭, 낮은 높이) 오버레이를 스크롤해 모든 버튼에 닿게 한다 */
+  overflow: auto;
 }
 
 /* 모달 안은 border-box여야 폭이 600px이 된다. */

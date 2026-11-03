@@ -98,3 +98,31 @@ test.describe("마이크 끊김", () => {
     await expect(page.getByText("마이크 연결이 끊겼다")).toBeVisible();
   });
 });
+
+test.describe("좁은 화면", () => {
+  test.use({ viewport: { width: 375, height: 740 } });
+
+  test("375px 폭에서도 닫기와 Save가 화면 안에 있고 길이 문구가 버튼과 겹치지 않는다", async ({
+    page,
+  }) => {
+    const dialog = await openRecordDialog(page);
+    await dialog.getByRole("button", { name: "Record", exact: true }).click();
+    await page.waitForTimeout(1200);
+    await dialog.getByRole("button", { name: "Stop recording" }).click();
+
+    const box = async (loc: ReturnType<typeof dialog.locator>) => {
+      const b = await loc.boundingBox();
+      if (!b) throw new Error("요소가 그려지지 않았다");
+      return b;
+    };
+    const close = await box(dialog.getByRole("button", { name: "Close" }));
+    const save = await box(dialog.getByRole("button", { name: "Save" }));
+    const reRecord = await box(dialog.getByRole("button", { name: "Re-record" }));
+    const length = await box(dialog.getByText(/^Length /));
+
+    expect(close.x + close.width).toBeLessThanOrEqual(375);
+    expect(save.x + save.width).toBeLessThanOrEqual(375);
+    // 길이 문구는 버튼 줄 위에 있어 Re-record와 세로로 겹치지 않는다
+    expect(length.y + length.height).toBeLessThanOrEqual(reRecord.y);
+  });
+});

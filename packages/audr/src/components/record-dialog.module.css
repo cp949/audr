@@ -1,6 +1,8 @@
 /* RTL은 지원하지 않는다. */
 .dialogContent {
   width: 600px;
+  /* 오버레이 폭에서 좌우 1rem씩 남긴다. 600px보다 좁은 화면에서 모달이 잘리지 않게 한다 */
+  max-width: calc(100% - 2rem);
 }
 
 .body {
@@ -175,8 +177,8 @@ svg.recordButton {
   - DOM은 Re-record, Save 뒤 마지막 자식이다. absolute라 두 버튼의 위치·크기와 스타일은 그대로다.
   - 가로: .buttonRow와 그 조상(.body 등)은 position이 없어서 포함 블록은 position: fixed인 모달 오버레이다.
     모달은 그 안에서 margin: auto로 가운데에 있으므로 left: 50%가 버튼 줄의 가운데다.
-  - 뷰포트가 모달 폭(600px)보다 좁으면 모달은 왼쪽에 붙고 이 요소는 뷰포트 가운데로 가서 어긋난다.
-    이 요소의 위치를 버튼 줄 기준으로 잡으려면 기존 요소에 position을 줘야 해서 쓰지 않았다.
+  - 뷰포트가 모달 폭 + 좌우 여백(632px)보다 좁으면 모달이 줄어들어 두 버튼 사이 공간보다 이 요소가 넓어진다.
+    그때는 아래 미디어 쿼리가 이 요소를 버튼 줄 위의 한 줄로 옮긴다.
   - 세로: top을 정하지 않으면 static position을 쓴다. align-self: center가 버튼 줄 높이의 가운데로 맞춘다.
     flex 컨테이너의 absolute 자식이 정렬 속성으로 static position을 잡는 동작은 Chrome 52부터다.
   - 확인창이 뜨면 단계 화면이 visibility: hidden이 되고 이 요소도 상속해 함께 숨는다.
@@ -192,6 +194,26 @@ svg.recordButton {
   font-weight: 500;
   color: var(--audr-text-primary);
   pointer-events: none;
+}
+
+/*
+  좁은 화면: 줄어든 모달에서는 두 버튼 사이에 길이 문구가 들어가지 않아 버튼과 겹친다.
+  문구를 absolute에서 빼고, 버튼 줄을 감싼 뒤 맨 위 한 줄로 보낸다(DOM은 마지막 자식이라 order로 올린다).
+  632px는 .dialogContent의 600px + 좌우 여백 2rem이다.
+*/
+@media (max-width: 632px) {
+  .buttonRow {
+    flex-wrap: wrap;
+  }
+
+  .savedLength {
+    position: static;
+    order: -1;
+    flex-basis: 100%;
+    margin-bottom: 0.75rem;
+    transform: none;
+    text-align: center;
+  }
 }
 
 /* 자동 정지 안내. 한도에 닿아 멈춘 경우에만 그려지므로 기본 화면의 배치는 그대로다 */
