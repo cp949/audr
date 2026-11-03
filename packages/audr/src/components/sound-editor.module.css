@@ -204,10 +204,11 @@
   min-width: 0;
 }
 
-/* 재생 줄. 파형 아래 왼쪽에 둔다 */
+/* 재생 줄. 파형 아래 가로 가운데에 둔다 */
 .transport {
   display: flex;
   align-items: center;
+  justify-content: center;
   /* 선택 핸들의 아래쪽 손잡이가 재생 버튼을 덮지 않게 띄운다 */
   margin-top: 0.625rem;
 }
@@ -246,6 +247,11 @@
 
 .playButton:focus:not(:focus-visible) {
   outline: none;
+}
+
+/* 왼쪽 열의 소리 크기 묶음. 재생 줄 아래에 떨어뜨려 놓는다 */
+.workMain > .effectGroup {
+  margin-top: 0.75rem;
 }
 
 /* 효과 묶음. 묶음마다 이름과 색 점이 있고, 그 아래 효과 칩이 줄바꿈하며 이어진다 */

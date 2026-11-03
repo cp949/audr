@@ -55,6 +55,9 @@ const EFFECT_GROUPS = [
 
 type EffectGroupId = (typeof EFFECT_GROUPS)[number]["id"];
 
+/** 재생 버튼 아래(왼쪽 열)에 놓는 묶음 */
+const VOLUME_GROUP_ID: EffectGroupId = "volume";
+
 /**
  * 효과 버튼. 배열 순서가 묶음 안의 화면 순서이자 Tab 순서다.
  * 화면의 Louder는 `higher`, Softer는 `lower` 효과다.
@@ -201,6 +204,39 @@ export function SoundEditor({
   const scopeId = useId();
   const effectScopeText =
     trimStart === null || trimEnd === null ? m.effectScopeWhole : m.effectScopeSelection;
+
+  /** 효과 묶음 하나. 묶음마다 이름을 붙여 스크린 리더가 묶음을 알린다 */
+  const renderEffectGroup = ({ id, name }: (typeof EFFECT_GROUPS)[number]) => (
+    <div
+      key={id}
+      role="group"
+      aria-labelledby={`${scopeId}-${id}`}
+      className={styles.effectGroup}
+      data-group={id}
+    >
+      <div id={`${scopeId}-${id}`} className={styles.effectGroupName}>
+        {m[name]}
+      </div>
+      <div className={styles.effectChips}>
+        {EFFECT_BUTTONS.filter((b) => b.group === id).map(({ effect, icon, label }) => {
+          // Louder는 너무 큰 구간에서 막고 이유를 알린다
+          const blocked = effect === "higher" && tooLoud;
+          return (
+            <IconButton
+              key={effect}
+              className={styles.effectButton}
+              describedBy={scopeId}
+              disabled={blocked || busy || isEmpty}
+              disabledReason={blocked ? m.tooLoudHint : undefined}
+              img={icon}
+              title={m[label]}
+              onClick={() => onEffect(effect)}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -396,40 +432,12 @@ export function SoundEditor({
               </button>
             )}
           </div>
+          {/* 소리 크기 묶음은 재생 버튼 아래에 둔다 */}
+          {EFFECT_GROUPS.filter(({ id }) => id === VOLUME_GROUP_ID).map(renderEffectGroup)}
         </div>
-        {/* DOM 순서가 Tab 순서이자 화면 순서다. 묶음마다 이름을 붙여 스크린 리더가 묶음을 알린다 */}
+        {/* 소리 크기 묶음을 뺀 나머지 묶음. DOM 순서가 Tab 순서이자 화면 순서다 */}
         <div className={styles.effectPanel}>
-          {EFFECT_GROUPS.map(({ id, name }) => (
-            <div
-              key={id}
-              role="group"
-              aria-labelledby={`${scopeId}-${id}`}
-              className={styles.effectGroup}
-              data-group={id}
-            >
-              <div id={`${scopeId}-${id}`} className={styles.effectGroupName}>
-                {m[name]}
-              </div>
-              <div className={styles.effectChips}>
-                {EFFECT_BUTTONS.filter((b) => b.group === id).map(({ effect, icon, label }) => {
-                  // Louder는 너무 큰 구간에서 막고 이유를 알린다
-                  const blocked = effect === "higher" && tooLoud;
-                  return (
-                    <IconButton
-                      key={effect}
-                      className={styles.effectButton}
-                      describedBy={scopeId}
-                      disabled={blocked || busy || isEmpty}
-                      disabledReason={blocked ? m.tooLoudHint : undefined}
-                      img={icon}
-                      title={m[label]}
-                      onClick={() => onEffect(effect)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+          {EFFECT_GROUPS.filter(({ id }) => id !== VOLUME_GROUP_ID).map(renderEffectGroup)}
         </div>
       </div>
       {/* 화면용 정보다. 재생 위치가 프레임마다 바뀌므로 aria-live를 달지 않는다(스크린 리더는 핸들의 aria-valuetext를 쓴다) */}

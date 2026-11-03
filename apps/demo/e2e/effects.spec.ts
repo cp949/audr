@@ -291,27 +291,43 @@ test.describe("UI 경유 (데모 화면)", () => {
         );
       }
     }
-    // 묶음 이름은 같은 묶음의 첫 칩 위에 있고, 묶음이 위에서 아래로 이어진다
+    // 묶음 이름은 같은 묶음의 첫 칩 위에 있다. 오른쪽 패널의 묶음은 위에서 아래로 이어진다
     let previousBottom = -Infinity;
     for (const [name, titles] of GROUPS) {
       const label = await page.getByText(name, { exact: true }).boundingBox();
       const group = boxes.filter((b) => titles.includes(b.title));
       if (!label) throw new Error(`${name} 묶음 이름의 위치를 구하지 못했다`);
-      expect(label.y, name).toBeGreaterThanOrEqual(previousBottom - 0.5);
+      if (name !== "Volume") expect(label.y, name).toBeGreaterThanOrEqual(previousBottom - 0.5);
       expect(Math.min(...group.map((b) => b.y)), name).toBeGreaterThanOrEqual(
         label.y + label.height - 0.5,
       );
-      previousBottom = Math.max(...group.map((b) => b.y + b.height));
+      if (name !== "Volume") previousBottom = Math.max(...group.map((b) => b.y + b.height));
     }
   });
 
-  test("효과 패널은 파형 오른쪽에 있고 에디터 오른쪽 끝을 넘지 않는다", async ({ page }) => {
+  test("소리 크기 묶음 외의 효과 패널은 파형 오른쪽에 있고 에디터 오른쪽 끝을 넘지 않는다", async ({
+    page,
+  }) => {
     const editor = await page.locator('[class*="editorContainer"]').first().boundingBox();
     const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
     if (!editor || !wave) throw new Error("에디터나 파형의 위치를 구하지 못했다");
+    const volume = GROUPS[0]![1];
     for (const box of await chipBoxes(page)) {
+      if (volume.includes(box.title)) continue;
       expect(box.x, box.title).toBeGreaterThanOrEqual(wave.x + wave.width - 0.5);
       expect(box.x + box.width, box.title).toBeLessThanOrEqual(editor.x + editor.width + 0.5);
+    }
+  });
+
+  test("소리 크기 묶음은 재생 버튼 아래, 파형 폭 안에 있다", async ({ page }) => {
+    const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
+    const play = await editorButton(page, "Play").boundingBox();
+    if (!wave || !play) throw new Error("파형이나 재생 버튼의 위치를 구하지 못했다");
+    const volume = GROUPS[0]![1];
+    for (const box of (await chipBoxes(page)).filter((b) => volume.includes(b.title))) {
+      expect(box.y, box.title).toBeGreaterThanOrEqual(play.y + play.height - 0.5);
+      expect(box.x, box.title).toBeGreaterThanOrEqual(wave.x - 0.5);
+      expect(box.x + box.width, box.title).toBeLessThanOrEqual(wave.x + wave.width + 0.5);
     }
   });
 
@@ -330,11 +346,11 @@ test.describe("UI 경유 (데모 화면)", () => {
     }
   });
 
-  test("재생 버튼은 파형 아래 왼쪽 끝에 있다", async ({ page }) => {
+  test("재생 버튼은 파형 아래 가로 가운데에 있다", async ({ page }) => {
     const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
     const play = await editorButton(page, "Play").boundingBox();
     if (!wave || !play) throw new Error("파형이나 재생 버튼의 위치를 구하지 못했다");
-    expect(play.x).toBeCloseTo(wave.x, 0);
+    expect(Math.abs(play.x + play.width / 2 - (wave.x + wave.width / 2))).toBeLessThanOrEqual(1);
     expect(play.y).toBeGreaterThanOrEqual(wave.y + wave.height - 0.5);
   });
 
