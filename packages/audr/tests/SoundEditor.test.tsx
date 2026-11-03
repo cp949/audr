@@ -126,9 +126,9 @@ describe("SoundEditor 레이아웃", () => {
   });
 
   it("theme을 주면 에디터 루트에 data-audr-theme이 걸리고, 생략하면 걸리지 않는다", () => {
-    const { container, rerender } = setup({ theme: "teal" });
+    const { container, rerender } = setup({ theme: "purple" });
     const root = container.firstElementChild as HTMLElement;
-    expect(root.getAttribute("data-audr-theme")).toBe("teal");
+    expect(root.getAttribute("data-audr-theme")).toBe("purple");
     rerender(
       <SoundEditor
         samples={ramp(1000)}

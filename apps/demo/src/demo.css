@@ -23,7 +23,7 @@ body {
   align-items: center;
   height: 3rem;
   padding: 0 1rem;
-  background: var(--audr-looks-secondary);
+  background: var(--audr-accent);
   color: var(--audr-ui-white);
   font-size: 0.875rem;
 }
@@ -91,10 +91,10 @@ body {
 
 .sound-actions button {
   padding: 0.375rem 0.25rem;
-  border: 2px solid var(--audr-looks-secondary);
+  border: 2px solid var(--audr-accent);
   border-radius: 0.5rem;
   background: var(--audr-ui-white);
-  color: var(--audr-looks-secondary);
+  color: var(--audr-accent);
   font-size: 0.75rem;
   font-weight: bold;
   cursor: pointer;
@@ -133,8 +133,8 @@ body {
 }
 
 .sound-item[aria-current="true"] {
-  border-color: var(--audr-looks-secondary);
-  background: var(--audr-looks-light-transparent);
+  border-color: var(--audr-accent);
+  background: var(--audr-accent-faint);
 }
 
 .editor-pane {
@@ -154,6 +154,6 @@ body {
 
 /* 파일을 끌어 오면 놓을 수 있는 영역임을 보인다. outline이라 레이아웃은 움직이지 않는다. */
 .workspace[data-dropping] {
-  outline: 3px dashed var(--audr-looks-secondary);
+  outline: 3px dashed var(--audr-accent);
   outline-offset: -3px;
 }

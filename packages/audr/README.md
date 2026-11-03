@@ -62,7 +62,7 @@ import { SoundEditor } from "@cp949/audr";
 | `errorNotice` | `boolean`                           | 편집 실패를 에디터 안에 보이는 기본 알림. 기본값은 `true`. 호스트가 자체 알림을 쓰면 `false`로 끈다. `onError`는 켜고 꺼도 호출한다. 자세한 내용은 아래 "편집 실패 알림".                                                         |
 | `locale`      | `string`                            | BCP 47 언어 태그. 기본값은 `"en"`. 자세한 내용은 "다국어".                                                                                                                                                                        |
 | `messages`    | `MessageOverrides`                  | 문구를 덮어쓴다. 자세한 내용은 "다국어".                                                                                                                                                                                          |
-| `theme`       | `"blue" \| "teal"`                  | 색 테마. 생략하면 보라. 자세한 내용은 "테마".                                                                                                                                                                                     |
+| `theme`       | `"blue" \| "purple"`                | 색 테마. 생략하면 청록. 자세한 내용은 "테마".                                                                                                                                                                                     |
 
 호스트는 `onChange`로 받은 `samples`를 그대로 다시 내려 주면 된다.
 
@@ -134,7 +134,7 @@ import { RecordDialog } from "@cp949/audr";
 | `onError`  | `(error: RecordDialogError) => void`                 | 저장이나 마이크 사용에 실패하면 호출한다. 없으면 대화상자 문구와 `console.error`만 남는다.                                     |
 | `locale`   | `string`                                             | BCP 47 언어 태그. 기본값은 `"en"`. 자세한 내용은 "다국어".                                                                     |
 | `messages` | `MessageOverrides`                                   | 문구를 덮어쓴다. 자세한 내용은 "다국어".                                                                                       |
-| `theme`    | `"blue" \| "teal"`                                   | 색 테마. 생략하면 보라. 자세한 내용은 "테마".                                                                                  |
+| `theme`    | `"blue" \| "purple"`                                 | 색 테마. 생략하면 청록. 자세한 내용은 "테마".                                                                                  |
 
 - `onSave`가 Promise를 돌려주면 끝날 때까지 Save 버튼이 `Loading...`으로 비활성이다.
 - `onSave`가 reject하면 버튼은 `Save`로 돌아오고 대화상자는 열려 있다.
@@ -219,19 +219,19 @@ import { RecordDialog } from "@cp949/audr";
 
 ## 테마
 
-기본 색은 보라다. `SoundEditor`와 `RecordDialog`의 `theme` prop으로 `"blue"`(파랑)나 `"teal"`을 고른다. 생략하면 보라다.
+기본 색은 청록이다. `SoundEditor`와 `RecordDialog`의 `theme` prop으로 `"blue"`(파랑)나 `"purple"`(보라)을 고른다. 생략하면 청록이다.
 
 ```tsx
-<SoundEditor theme="teal" {...props} />
-<RecordDialog theme="teal" {...props} />
+<SoundEditor theme="purple" {...props} />
+<RecordDialog theme="purple" {...props} />
 ```
 
 - 두 컴포넌트에 같은 값을 넘겨야 화면 색이 맞는다. `theme`은 각 컴포넌트 안쪽에만 적용된다.
 - `RecordDialog`는 `body`에 포털로 그려져서 호스트의 래퍼 요소 속성이 닿지 않는다. 그래서 prop으로 받는다.
-- 호스트의 자기 UI(상단 바 등)도 맞추려면 래퍼에 `data-audr-theme="teal"` 속성을 직접 걸면 된다. CSS 변수 `--audr-looks-secondary` 등을 물려받는다. `<html>`에 걸면 페이지 전체와 두 컴포넌트에 적용된다.
+- 호스트의 자기 UI(상단 바 등)도 맞추려면 래퍼에 `data-audr-theme="purple"` 속성을 직접 걸면 된다. CSS 변수 `--audr-accent` 등을 물려받는다. `<html>`에 걸면 페이지 전체와 두 컴포넌트에 적용된다.
 - 아이콘 SVG는 `<img>`로 불러 CSS 변수가 닿지 않는다. 테마가 `filter: hue-rotate()`로 색조를 옮긴다. UI 색 토큰은 같은 변환을 적용한 값이어서 아이콘과 어긋나지 않는다.
 - 녹음 정지 아이콘, 녹음 시작 버튼, 녹음창 구간 핸들, 녹음 시간 라벨의 경고색 주황은 테마와 무관하게 유지한다. 경고색은 글자 대비를 위해 더 진한 `--audr-red-text`를 쓴다.
-- 새 테마는 `src/styles/tokens.css`에 `[data-audr-theme="이름"]` 블록을 더하고 `src/theme.ts`의 `AudrTheme`에 이름을 추가해 만든다. 보라 토큰에 같은 각도의 `hue-rotate`를 적용한 값과 `--audr-icon-filter-*`를 함께 정한다.
+- 새 테마는 `src/styles/tokens.css`에 `[data-audr-theme="이름"]` 블록을 더하고 `src/theme.ts`의 `AudrTheme`에 이름을 추가해 만든다. 아이콘 원본 색(분홍)에 같은 각도의 `hue-rotate`를 적용한 값과 `--audr-icon-filter-*`를 함께 정한다.
 
 ## 파일을 소리로 바꾸기
 

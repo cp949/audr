@@ -46,7 +46,7 @@
 }
 
 .playingText {
-  color: var(--audr-looks-secondary);
+  color: var(--audr-accent);
 }
 
 .recordingText {
@@ -81,7 +81,7 @@
 }
 
 .mainButtonRow button:focus-visible {
-  outline: 2px solid var(--audr-looks-secondary);
+  outline: 2px solid var(--audr-accent);
   outline-offset: 2px;
 }
 
@@ -99,12 +99,12 @@
   border: 1px solid var(--audr-ui-black-transparent);
   font-weight: 600;
   font-size: 0.85rem;
-  color: var(--audr-looks-secondary);
+  color: var(--audr-accent);
 }
 
 .buttonRow button.okButton {
-  background: var(--audr-looks-secondary);
-  border: var(--audr-looks-secondary);
+  background: var(--audr-accent);
+  border: var(--audr-accent);
   color: white;
 }
 
@@ -118,7 +118,7 @@
 
 /* 보라 계열 아이콘(재생·미리 듣기 정지·다시 녹음). 주황 녹음 정지 아이콘에는 달지 않는다 */
 img[data-audr-icon="looks"] {
-  filter: var(--audr-icon-filter-looks);
+  filter: var(--audr-icon-filter-accent);
 }
 
 /* Increase specificity to make sure this wins out over normalize.css */
@@ -261,13 +261,13 @@ svg.recordButton {
   border: 1px solid var(--audr-ui-black-transparent);
   font-weight: 600;
   font-size: 0.85rem;
-  color: var(--audr-looks-secondary);
+  color: var(--audr-accent);
 }
 
 /* 안전한 선택은 Save 버튼처럼 채워 먼저 눈에 들어오게 한다 */
 .discardButtons button.keepButton {
-  background: var(--audr-looks-secondary);
-  border-color: var(--audr-looks-secondary);
+  background: var(--audr-accent);
+  border-color: var(--audr-accent);
   color: var(--audr-ui-white);
 }
 
@@ -283,6 +283,6 @@ svg.recordButton {
 }
 
 .discardButtons button:focus-visible {
-  outline: 2px solid var(--audr-looks-secondary);
+  outline: 2px solid var(--audr-accent);
   outline-offset: 2px;
 }

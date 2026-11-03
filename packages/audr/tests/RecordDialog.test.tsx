@@ -144,7 +144,7 @@ describe("RecordDialog 녹음 단계", () => {
   it("녹음을 시작하면 버튼이 정지로 바뀌고, 입력 레벨이 파형으로 쌓인다", async () => {
     const { container } = setup();
     act(() => FakeAudioRecorder.last.onStarted?.());
-    expect(container.ownerDocument.querySelectorAll("svg path").length).toBe(0);
+    expect(container.ownerDocument.querySelectorAll("svg[data-waveform] rect").length).toBe(0);
     await act(async () => fireEvent.click(button(en.record)));
     expect(FakeAudioRecorder.last.startRecording).toHaveBeenCalledTimes(1);
     expect(button(en.stopRecording)).toBeTruthy();
@@ -152,7 +152,9 @@ describe("RecordDialog 녹음 단계", () => {
       FakeAudioRecorder.last.onUpdate?.(0.3);
       FakeAudioRecorder.last.onUpdate?.(0.6);
     });
-    expect(container.ownerDocument.querySelectorAll("svg path").length).toBe(1);
+    expect(
+      container.ownerDocument.querySelectorAll("svg[data-waveform] rect").length,
+    ).toBeGreaterThan(0);
   });
 
   it("녹음 전의 레벨 변화는 파형에 쌓이지 않는다", () => {
@@ -161,7 +163,7 @@ describe("RecordDialog 녹음 단계", () => {
       FakeAudioRecorder.last.onStarted?.();
       FakeAudioRecorder.last.onUpdate?.(0.3);
     });
-    expect(document.querySelectorAll("svg path").length).toBe(0);
+    expect(document.querySelectorAll("svg[data-waveform] rect").length).toBe(0);
   });
 
   it("녹음 길이 한도에 닿으면 정지 버튼 없이도 재생·trim 단계로 넘어간다", async () => {
@@ -186,7 +188,7 @@ describe("RecordDialog 재생·trim 단계", () => {
     expect(button(en.playbackPlay)).toBeTruthy();
     expect(button(en.reRecord)).toBeTruthy();
     expect(button(en.save)).toBeTruthy();
-    expect(document.querySelectorAll("svg path").length).toBe(1);
+    expect(document.querySelectorAll("svg[data-waveform] rect").length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: en.stopRecording })).toBeNull();
   });
 

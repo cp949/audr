@@ -11,11 +11,11 @@ import "./demo.css";
 import { MESSAGES_DE } from "./messagesDe";
 import { useSoundLibrary } from "./useSoundLibrary";
 
-/** 데모에서 고를 수 있는 테마. 빈 값은 기본 보라다. */
+/** 데모에서 고를 수 있는 테마. 빈 값은 기본 청록이다. */
 const THEMES: { value: "" | AudrTheme; label: string }[] = [
-  { value: "", label: "Purple" },
+  { value: "", label: "Teal" },
   { value: "blue", label: "Blue" },
-  { value: "teal", label: "Teal" },
+  { value: "purple", label: "Purple" },
 ];
 
 /**

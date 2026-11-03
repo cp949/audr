@@ -1,4 +1,4 @@
-// 테마 토큰 검사. 테마 블록에서 변수가 빠지면 그 자리만 보라가 섞이므로 변수 목록을 맞춰 둔다.
+// 테마 토큰 검사. 테마 블록에서 변수가 빠지면 그 자리만 기본 색이 섞이므로 변수 목록을 맞춰 둔다.
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -77,7 +77,7 @@ function contrast(a: Rgba, b: Rgba): number {
 describe("테마 토큰", () => {
   const base = variablesOf(":root");
 
-  for (const theme of ["blue", "teal"]) {
+  for (const theme of ["blue", "purple"]) {
     it(`${theme} 테마는 같은 변수 묶음을 정의하고 기본 :root에도 있다`, () => {
       const names = variablesOf(`[data-audr-theme="${theme}"]`);
       expect(names.length).toBeGreaterThan(0);
@@ -88,14 +88,14 @@ describe("테마 토큰", () => {
   }
 
   it("경고 글자 주황(--audr-red-text)은 테마와 무관하고 세 테마의 시간 라벨 배경 위에서 4.5:1 이상이다", () => {
-    for (const theme of ["blue", "teal"]) {
+    for (const theme of ["blue", "purple"]) {
       expect(variablesOf(`[data-audr-theme="${theme}"]`)).not.toContain("--audr-red-text");
     }
     const text = parseColor(valueOf(":root", "--audr-red-text"));
     const labelBackground = parseColor(valueOf(":root", "--audr-ui-white-dim"));
-    for (const selector of [":root", '[data-audr-theme="blue"]', '[data-audr-theme="teal"]']) {
-      // 라벨은 반투명 흰 배경이라 아래의 파형 영역 배경이나 파형(채움·외곽선)과 섞인다
-      for (const under of ["--audr-ui-primary", "--audr-sound-wave", "--audr-sound-tertiary"]) {
+    for (const selector of [":root", '[data-audr-theme="blue"]', '[data-audr-theme="purple"]']) {
+      // 라벨은 반투명 흰 배경이라 아래의 파형 영역 배경이나 파형 막대와 섞인다
+      for (const under of ["--audr-ui-primary", "--audr-wave-fill"]) {
         const background = over(labelBackground, parseColor(valueOf(selector, under)));
         expect(contrast(text, background), `${selector} ${under}`).toBeGreaterThanOrEqual(4.5);
       }
@@ -104,7 +104,7 @@ describe("테마 토큰", () => {
 
   it("경고 글자 주황(--audr-red-text)은 편집 실패 알림의 흰 배경(--audr-ui-white) 위에서 4.5:1 이상이다", () => {
     const text = parseColor(valueOf(":root", "--audr-red-text"));
-    for (const selector of [":root", '[data-audr-theme="blue"]', '[data-audr-theme="teal"]']) {
+    for (const selector of [":root", '[data-audr-theme="blue"]', '[data-audr-theme="purple"]']) {
       const background = parseColor(valueOf(selector, "--audr-ui-white"));
       expect(contrast(text, background), selector).toBeGreaterThanOrEqual(4.5);
     }

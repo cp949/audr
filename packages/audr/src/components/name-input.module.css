@@ -40,12 +40,12 @@
 }
 
 .inputForm:hover {
-  border-color: var(--audr-looks-secondary);
+  border-color: var(--audr-accent);
 }
 
 .inputForm:focus {
-  border-color: var(--audr-looks-secondary);
-  box-shadow: 0 0 0 0.25rem var(--audr-looks-transparent);
+  border-color: var(--audr-accent);
+  box-shadow: 0 0 0 0.25rem var(--audr-accent-transparent);
 }
 
 /* 움직임을 줄이도록 설정한 사용자에게는 장식용 전환 효과를 끈다 */

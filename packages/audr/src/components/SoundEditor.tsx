@@ -117,7 +117,7 @@ export type SoundEditorProps = {
   locale?: Locale;
   /** 문구를 덮어쓴다. 넘긴 키만 바뀌고 나머지는 `locale` 문구를 쓴다 */
   messages?: MessageOverrides;
-  /** 색 테마. 생략하면 보라. 에디터 루트에 걸리므로 에디터 안쪽만 바뀐다 */
+  /** 색 테마. 생략하면 청록. 에디터 루트에 걸리므로 에디터 안쪽만 바뀐다 */
   theme?: AudrTheme;
 };
 

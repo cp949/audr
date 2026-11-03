@@ -2,15 +2,7 @@
   width: 100%;
 }
 
-.waveformPath {
-  /*
-    This color is lighter than sound-primary, but
-    cannot use alpha because of overlapping elements.
-  */
-  fill: var(--audr-sound-wave);
-  stroke: var(--audr-sound-tertiary);
-}
-
-.baseline {
-  stroke: var(--audr-sound-tertiary);
+/* 막대 색. 편집기 무대는 이 변수를 밝은 색으로 덮어쓴다 */
+.bars {
+  fill: var(--audr-wave-fill);
 }

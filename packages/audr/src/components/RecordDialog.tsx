@@ -28,7 +28,7 @@ export type RecordDialogProps = RecordDialogOptions & {
   locale?: Locale;
   /** 문구를 덮어쓴다. 넘긴 키만 바뀌고 나머지는 `locale` 문구를 쓴다 */
   messages?: MessageOverrides;
-  /** 색 테마. 생략하면 보라. 모달은 body에 그려지므로 호스트의 래퍼 속성이 닿지 않아 여기서 받는다 */
+  /** 색 테마. 생략하면 청록. 모달은 body에 그려지므로 호스트의 래퍼 속성이 닿지 않아 여기서 받는다 */
   theme?: AudrTheme;
 };
 

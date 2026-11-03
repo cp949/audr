@@ -5,7 +5,7 @@
   cursor: pointer;
   font-size: 0.75rem;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  color: var(--audr-looks-secondary);
+  color: var(--audr-accent);
   border-radius: 0.5rem;
   background: none;
   border: none;
@@ -48,7 +48,7 @@
 }
 
 .container:active {
-  background-color: var(--audr-looks-light-transparent);
+  background-color: var(--audr-accent-faint);
 }
 
 /* .container:active와 우선순위가 같아서 뒤에 둬야 이긴다 */

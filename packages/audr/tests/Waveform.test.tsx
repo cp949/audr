@@ -4,42 +4,52 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Waveform } from "../src/components/Waveform";
 
-/** path의 `d`에서 Q 명령 개수를 센다 */
-function countQ(container: HTMLElement): number {
-  const d = container.querySelector("path")?.getAttribute("d") ?? "";
-  return (d.match(/Q/g) ?? []).length;
+/** 막대(rect) 목록 */
+function bars(container: HTMLElement): SVGRectElement[] {
+  return [...container.querySelectorAll("rect")];
 }
 
 describe("Waveform", () => {
-  it("data 길이 3000, width 600이면 path의 점 수가 600 이하다", () => {
+  it("폭 600이면 막대 피치 5px로 120개를 그린다", () => {
     const data = Array.from({ length: 3000 }, (_, i) => Math.abs(Math.sin(i / 10)));
     const { container } = render(<Waveform data={data} width={600} height={160} />);
-    // 위쪽 곡선과 아래쪽 곡선이 같은 점 수를 가지므로 Q 명령은 점 수의 2배다
-    const points = countQ(container) / 2;
-    expect(points).toBeLessThanOrEqual(600);
-    expect(points).toBe(600); // takeEveryN = ceil(3000 / 600) = 5
+    expect(bars(container)).toHaveLength(120);
   });
 
-  it("data가 600개 이하이면 모든 점을 그린다", () => {
+  it("data가 막대 수보다 적어도 폭 전체를 같은 개수의 막대로 채운다", () => {
     const { container } = render(<Waveform data={[0.1, 0.5, 0.2]} width={600} height={160} />);
-    expect(countQ(container) / 2).toBe(3);
+    const rects = bars(container);
+    expect(rects).toHaveLength(120);
+    // 첫 막대는 첫 값(0.1), 마지막 막대는 마지막 값(0.2)을 따른다
+    expect(Number(rects[0]?.getAttribute("height"))).toBeCloseTo(16);
+    expect(Number(rects[119]?.getAttribute("height"))).toBeCloseTo(32);
   });
 
-  it("data가 1개면 같은 값을 한 번 더 넣어 렌더하고 예외가 없다", () => {
-    const { container } = render(<Waveform data={[0.5]} width={600} height={160} />);
-    expect(countQ(container) / 2).toBe(2);
+  it("막대 높이는 구간의 최댓값에 비례하고 세로 가운데에 맞춘다", () => {
+    // 12000개 중 첫 100개만 1이면 첫 막대 구간(100개)의 최댓값이 1이다
+    const data = Array.from({ length: 12000 }, (_, i) => (i < 100 ? 1 : 0.5));
+    const { container } = render(<Waveform data={data} width={600} height={160} />);
+    const [first, second] = bars(container);
+    expect(Number(first?.getAttribute("height"))).toBeCloseTo(160);
+    expect(Number(first?.getAttribute("y"))).toBeCloseTo(0);
+    expect(Number(second?.getAttribute("height"))).toBeCloseTo(80);
+    expect(Number(second?.getAttribute("y"))).toBeCloseTo(40);
   });
 
-  it("data가 비어 있어도 예외가 없다", () => {
-    expect(() => render(<Waveform data={[]} width={600} height={160} />)).not.toThrow();
+  it("무음 구간도 최소 높이 2px의 점으로 보인다", () => {
+    const { container } = render(<Waveform data={[0, 0]} width={600} height={160} />);
+    expect(bars(container)).toHaveLength(120);
+    for (const rect of bars(container)) expect(Number(rect.getAttribute("height"))).toBe(2);
   });
 
-  it("viewBox와 좌우 반전 변환이 width, height를 따른다", () => {
+  it("data가 비어 있어도 예외가 없고 막대를 그리지 않는다", () => {
+    const { container } = render(<Waveform data={[]} width={600} height={160} />);
+    expect(bars(container)).toHaveLength(0);
+  });
+
+  it("viewBox가 width, height를 따른다", () => {
     const { container } = render(<Waveform data={[0.5, 0.5]} width={600} height={160} />);
     expect(container.querySelector("svg")?.getAttribute("viewBox")).toBe("0 0 600 160");
-    expect(container.querySelector("g")?.getAttribute("transform")).toBe(
-      "scale(1, -1) translate(0, -80)",
-    );
   });
 });
 
@@ -48,10 +58,10 @@ describe("tokens.css", () => {
   const css = readFileSync(resolve(process.cwd(), "src/styles/tokens.css"), "utf8");
 
   it.each([
-    ["--audr-looks-secondary", "#855CD6"],
+    ["--audr-accent", "#07898E"],
     ["--audr-red-primary", "#FF661A"],
     ["--audr-ui-primary", "hsla(215, 100%, 95%, 1)"],
-    ["--audr-sound-tertiary", "#BD42BD"],
+    ["--audr-stage-bg", "#12202B"],
   ])("%s 변수가 %s 값으로 있다", (name, value) => {
     // oxfmt가 hex를 소문자로 정규화하므로 대소문자는 구분하지 않는다
     expect(css.toLowerCase()).toContain(`${name}: ${value.toLowerCase()};`);
@@ -60,6 +70,12 @@ describe("tokens.css", () => {
   it("간격과 모서리 변수를 var()와 calc 식으로 정의한다", () => {
     expect(css).toContain("--audr-space: 0.5rem;");
     expect(css).toContain("--audr-form-radius: calc(var(--audr-space) / 2);");
+  });
+
+  it("Scratch 블록 카테고리 이름(motion, looks, pen, extensions 등)을 변수 이름에 쓰지 않는다", () => {
+    expect(css).not.toMatch(
+      /--audr-(motion|looks|sound|pen|extensions|control|data|error|membership)-/,
+    );
   });
 
   it("SCSS 변수($)가 남아 있지 않다", () => {
