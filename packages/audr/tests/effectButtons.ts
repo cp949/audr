@@ -6,7 +6,7 @@ type TextMessageKey = {
   [K in keyof Messages]: Messages[K] extends string ? K : never;
 }[keyof Messages];
 
-/** 화면에 보이는 효과 버튼 19개. 배열 순서가 묶음 순서(소리 크기, 속도·방향, 목소리, 공간, 흔들기)이자 DOM 순서다. */
+/** 화면에 보이는 효과 버튼 19개. 배열 순서가 화면 순서이자 DOM 순서다. */
 export const EFFECTS: ReadonlyArray<{ label: TextMessageKey; effect: EffectName }> = [
   { label: "louder", effect: "higher" },
   { label: "softer", effect: "lower" },
@@ -27,16 +27,4 @@ export const EFFECTS: ReadonlyArray<{ label: TextMessageKey; effect: EffectName 
   { label: "vibrato", effect: "vibrato" },
   { label: "stutter", effect: "stutter" },
   { label: "coaster", effect: "coaster" },
-];
-
-/** 효과 묶음. 이름 키와 소속 효과 이름(화면 순서) */
-export const EFFECT_GROUPS: ReadonlyArray<{
-  name: TextMessageKey;
-  labels: ReadonlyArray<TextMessageKey>;
-}> = [
-  { name: "effectGroupVolume", labels: ["louder", "softer", "fadeIn", "fadeOut", "mute"] },
-  { name: "effectGroupSpeed", labels: ["faster", "slower", "reverse", "scratch"] },
-  { name: "effectGroupVoice", labels: ["robot", "cyborg", "alien", "walkie"] },
-  { name: "effectGroupSpace", labels: ["echo", "reverseReverb", "broadcast"] },
-  { name: "effectGroupWobble", labels: ["vibrato", "stutter", "coaster"] },
 ];

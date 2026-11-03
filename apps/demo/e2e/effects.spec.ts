@@ -241,19 +241,34 @@ test.describe("UI 경유 (데모 화면)", () => {
     });
   }
 
-  test("음소거 버튼은 Volume 묶음에 보이고 누르면 전체가 무음이 된다", async ({ page }) => {
+  test("음소거 버튼은 효과 상자에 보이고 누르면 전체가 무음이 된다", async ({ page }) => {
     const mute = editorButton(page, "Mute");
     await expect(mute).toHaveCount(1);
     await mute.click();
     await expect(activeItem(page)).toHaveAttribute("data-peak", "0.0000");
   });
 
-  const GROUPS: [string, string[]][] = [
-    ["Volume", ["Louder", "Softer", "Fade in", "Fade out", "Mute"]],
-    ["Speed & direction", ["Faster", "Slower", "Reverse", "Scratch"]],
-    ["Voice", ["Robot", "Cyborg", "Alien", "Walkie-talkie"]],
-    ["Space", ["Echo", "Reverse reverb", "Broadcast"]],
-    ["Wobble", ["Vibrato", "Stutter", "Roller coaster"]],
+  /** 효과 칩 19개. 화면 순서이자 Tab 순서다 */
+  const CHIPS = [
+    "Louder",
+    "Softer",
+    "Fade in",
+    "Fade out",
+    "Mute",
+    "Faster",
+    "Slower",
+    "Reverse",
+    "Scratch",
+    "Robot",
+    "Cyborg",
+    "Alien",
+    "Walkie-talkie",
+    "Echo",
+    "Reverse reverb",
+    "Broadcast",
+    "Vibrato",
+    "Stutter",
+    "Roller coaster",
   ];
 
   /** 두 상자가 겹치는지 */
@@ -266,27 +281,31 @@ test.describe("UI 경유 (데모 화면)", () => {
     a.y < b.y + b.height - 0.5 &&
     b.y < a.y + a.height - 0.5;
 
-  /** 효과 칩 19개의 상자를 묶음 순서대로 모은다 */
+  /** 효과 칩 19개의 상자를 화면 순서대로 모은다 */
   async function chipBoxes(page: Page) {
     const boxes = [];
-    for (const [, titles] of GROUPS) {
-      for (const title of titles) {
-        const box = await editorButton(page, title).boundingBox();
-        if (!box) throw new Error(`${title} 버튼의 위치를 구하지 못했다`);
-        boxes.push({ title, ...box });
-      }
+    for (const title of CHIPS) {
+      const box = await editorButton(page, title).boundingBox();
+      if (!box) throw new Error(`${title} 버튼의 위치를 구하지 못했다`);
+      boxes.push({ title, ...box });
     }
     return boxes;
   }
 
-  test("효과 버튼 19개는 5개 묶음으로 나뉘어 재생 버튼 아래에 위에서 아래로 놓이며 서로 겹치지 않는다", async ({
+  test("효과 버튼 19개는 하나의 flex-wrap 상자에 현재 순서대로 나열되고 서로 겹치지 않는다", async ({
     page,
   }) => {
     const wave = await page.locator('[class*="waveformContainer"]').first().boundingBox();
     const play = await editorButton(page, "Play").boundingBox();
     if (!wave || !play) throw new Error("파형이나 재생 버튼의 위치를 구하지 못했다");
+    // 효과 상자는 하나이고 직계 자식이 칩 19개다
+    const group = page.getByRole("group", { name: "Effects" });
+    await expect(group).toHaveCount(1);
+    await expect(group).toHaveCSS("display", "flex");
+    await expect(group).toHaveCSS("flex-wrap", "wrap");
+    await expect(group.locator("> button")).toHaveCount(19);
+    expect(await group.locator("> button").allInnerTexts()).toEqual(CHIPS);
     const boxes = await chipBoxes(page);
-    expect(boxes).toHaveLength(19);
     for (let i = 0; i < boxes.length; i++) {
       for (let j = i + 1; j < boxes.length; j++) {
         expect(overlap(boxes[i]!, boxes[j]!), `${boxes[i]!.title}와 ${boxes[j]!.title}`).toBe(
@@ -300,19 +319,15 @@ test.describe("UI 경유 (데모 화면)", () => {
       expect(box.x, box.title).toBeGreaterThanOrEqual(wave.x - 0.5);
       expect(box.x + box.width, box.title).toBeLessThanOrEqual(wave.x + wave.width + 0.5);
     }
-    // 묶음 이름은 모두 화면에서 숨긴다(보조기기만 읽는다)
-    for (const [name] of GROUPS) {
-      const hidden = await page.getByText(name, { exact: true }).boundingBox();
-      expect(hidden?.width ?? 0, name).toBeLessThanOrEqual(1);
-      expect(hidden?.height ?? 0, name).toBeLessThanOrEqual(1);
+    // 읽는 순서(위 줄에서 아래 줄, 같은 줄은 왼쪽에서 오른쪽)가 나열 순서와 같다
+    for (let i = 1; i < boxes.length; i++) {
+      const a = boxes[i - 1]!;
+      const b = boxes[i]!;
+      const nextLine = b.y > a.y + a.height / 2;
+      expect(nextLine || b.x >= a.x + a.width - 0.5, `${a.title} 다음 ${b.title}`).toBe(true);
     }
-    // 묶음이 위에서 아래로 이어진다
-    let previousBottom = -Infinity;
-    for (const [name, titles] of GROUPS) {
-      const group = boxes.filter((b) => titles.includes(b.title));
-      expect(Math.min(...group.map((b) => b.y)), name).toBeGreaterThanOrEqual(previousBottom - 0.5);
-      previousBottom = Math.max(...group.map((b) => b.y + b.height));
-    }
+    // 폭이 모자라면 줄바꿈하므로 줄이 2개 이상이다(칩 한 줄에 19개는 들어가지 않는다)
+    expect(new Set(boxes.map((b) => Math.round(b.y))).size).toBeGreaterThan(1);
   });
 
   test("파형 영역은 부모 div의 너비를 가득 채우고 막대 그림도 같은 폭이다", async ({ page }) => {

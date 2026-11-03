@@ -45,46 +45,38 @@ import toolbarStyles from "./selection-toolbar.module.css";
 import { ShortcutHelp } from "./ShortcutHelp";
 import { Waveform } from "./Waveform";
 
-/** 효과 묶음. 배열 순서가 패널의 위→아래 순서다 */
-const EFFECT_GROUPS = [
-  { id: "volume", name: "effectGroupVolume" },
-  { id: "speed", name: "effectGroupSpeed" },
-  { id: "voice", name: "effectGroupVoice" },
-  { id: "space", name: "effectGroupSpace" },
-  { id: "wobble", name: "effectGroupWobble" },
-] as const satisfies ReadonlyArray<{ id: string; name: keyof Messages }>;
-
-type EffectGroupId = (typeof EFFECT_GROUPS)[number]["id"];
+/** 효과 아이콘의 색 계열. 같은 계열은 같은 색이다. 묶음 상자는 없고 색으로만 이어진다 */
+type EffectHue = "volume" | "speed" | "voice" | "space" | "wobble";
 
 /** 잴 수 없을 때 쓰는 파형 폭(px) */
 const DEFAULT_WAVE_WIDTH = 380;
 
 /**
- * 효과 버튼. 배열 순서가 묶음 안의 화면 순서이자 Tab 순서다.
+ * 효과 버튼. 배열 순서가 화면 순서이자 Tab 순서다. 한 상자에 이 순서로 나열하고 폭이 모자라면 줄바꿈한다.
  * 화면의 Louder는 `higher`, Softer는 `lower` 효과다.
  */
 const EFFECT_BUTTONS = [
-  { group: "volume", effect: "higher", icon: louderIcon, label: "louder" },
-  { group: "volume", effect: "lower", icon: softerIcon, label: "softer" },
-  { group: "volume", effect: "fade in", icon: fadeInIcon, label: "fadeIn" },
-  { group: "volume", effect: "fade out", icon: fadeOutIcon, label: "fadeOut" },
-  { group: "volume", effect: "mute", icon: muteIcon, label: "mute" },
-  { group: "speed", effect: "faster", icon: fasterIcon, label: "faster" },
-  { group: "speed", effect: "slower", icon: slowerIcon, label: "slower" },
-  { group: "speed", effect: "reverse", icon: reverseIcon, label: "reverse" },
-  { group: "speed", effect: "scratch", icon: scratchIcon, label: "scratch" },
-  { group: "voice", effect: "robot", icon: robotIcon, label: "robot" },
-  { group: "voice", effect: "cyborg", icon: cyborgIcon, label: "cyborg" },
-  { group: "voice", effect: "alien", icon: alienIcon, label: "alien" },
-  { group: "voice", effect: "walkie", icon: walkieIcon, label: "walkie" },
-  { group: "space", effect: "echo", icon: echoIcon, label: "echo" },
-  { group: "space", effect: "reverse reverb", icon: reverseReverbIcon, label: "reverseReverb" },
-  { group: "space", effect: "broadcast", icon: broadcastIcon, label: "broadcast" },
-  { group: "wobble", effect: "vibrato", icon: vibratoIcon, label: "vibrato" },
-  { group: "wobble", effect: "stutter", icon: stutterIcon, label: "stutter" },
-  { group: "wobble", effect: "coaster", icon: coasterIcon, label: "coaster" },
+  { hue: "volume", effect: "higher", icon: louderIcon, label: "louder" },
+  { hue: "volume", effect: "lower", icon: softerIcon, label: "softer" },
+  { hue: "volume", effect: "fade in", icon: fadeInIcon, label: "fadeIn" },
+  { hue: "volume", effect: "fade out", icon: fadeOutIcon, label: "fadeOut" },
+  { hue: "volume", effect: "mute", icon: muteIcon, label: "mute" },
+  { hue: "speed", effect: "faster", icon: fasterIcon, label: "faster" },
+  { hue: "speed", effect: "slower", icon: slowerIcon, label: "slower" },
+  { hue: "speed", effect: "reverse", icon: reverseIcon, label: "reverse" },
+  { hue: "speed", effect: "scratch", icon: scratchIcon, label: "scratch" },
+  { hue: "voice", effect: "robot", icon: robotIcon, label: "robot" },
+  { hue: "voice", effect: "cyborg", icon: cyborgIcon, label: "cyborg" },
+  { hue: "voice", effect: "alien", icon: alienIcon, label: "alien" },
+  { hue: "voice", effect: "walkie", icon: walkieIcon, label: "walkie" },
+  { hue: "space", effect: "echo", icon: echoIcon, label: "echo" },
+  { hue: "space", effect: "reverse reverb", icon: reverseReverbIcon, label: "reverseReverb" },
+  { hue: "space", effect: "broadcast", icon: broadcastIcon, label: "broadcast" },
+  { hue: "wobble", effect: "vibrato", icon: vibratoIcon, label: "vibrato" },
+  { hue: "wobble", effect: "stutter", icon: stutterIcon, label: "stutter" },
+  { hue: "wobble", effect: "coaster", icon: coasterIcon, label: "coaster" },
 ] as const satisfies ReadonlyArray<{
-  group: EffectGroupId;
+  hue: EffectHue;
   effect: EffectName;
   icon: string;
   label: keyof Messages;
@@ -208,39 +200,14 @@ export function SoundEditor({
   const effectScopeText =
     trimStart === null || trimEnd === null ? m.effectScopeWhole : m.effectScopeSelection;
 
-  /** 효과 묶음 하나. 묶음마다 이름을 붙여 스크린 리더가 묶음을 알린다 */
-  const renderEffectGroup = ({ id, name }: (typeof EFFECT_GROUPS)[number]) => (
-    <div
-      key={id}
-      role="group"
-      aria-labelledby={`${scopeId}-${id}`}
-      className={styles.effectGroup}
-      data-group={id}
-    >
-      {/* 묶음 이름은 화면에 보이지 않고 보조기기만 읽는다. 칩의 아이콘과 이름만으로 뜻이 분명하다 */}
-      <span id={`${scopeId}-${id}`} className={styles.visuallyHidden}>
-        {m[name]}
-      </span>
-      <div className={styles.effectChips}>
-        {EFFECT_BUTTONS.filter((b) => b.group === id).map(({ effect, icon, label }) => {
-          // Louder는 너무 큰 구간에서 막고 이유를 알린다
-          const blocked = effect === "higher" && tooLoud;
-          return (
-            <IconButton
-              key={effect}
-              className={styles.effectButton}
-              describedBy={scopeId}
-              disabled={blocked || busy || isEmpty}
-              disabledReason={blocked ? m.tooLoudHint : undefined}
-              img={icon}
-              title={m[label]}
-              onClick={() => onEffect(effect)}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
+  /** 효과 아이콘의 색 계열별 클래스 */
+  const hueClass: Record<EffectHue, string> = {
+    volume: styles.hueVolume ?? "",
+    speed: styles.hueSpeed ?? "",
+    voice: styles.hueVoice ?? "",
+    space: styles.hueSpace ?? "",
+    wobble: styles.hueWobble ?? "",
+  };
 
   return (
     <div
@@ -442,8 +409,25 @@ export function SoundEditor({
               </button>
             )}
           </div>
-          {/* 효과 묶음. 재생 버튼 아래에 위에서 아래로 놓는다. DOM 순서가 Tab 순서이자 화면 순서다 */}
-          {EFFECT_GROUPS.map(renderEffectGroup)}
+          {/* 효과 버튼 전체를 한 상자에 현재 순서대로 나열하고 줄바꿈한다. DOM 순서가 Tab 순서이자 화면 순서다 */}
+          <div role="group" aria-label={m.effects} className={styles.effectChips}>
+            {EFFECT_BUTTONS.map(({ hue, effect, icon, label }) => {
+              // Louder는 너무 큰 구간에서 막고 이유를 알린다
+              const blocked = effect === "higher" && tooLoud;
+              return (
+                <IconButton
+                  key={effect}
+                  className={`${styles.effectButton} ${hueClass[hue]}`}
+                  describedBy={scopeId}
+                  disabled={blocked || busy || isEmpty}
+                  disabledReason={blocked ? m.tooLoudHint : undefined}
+                  img={icon}
+                  title={m[label]}
+                  onClick={() => onEffect(effect)}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
       {/* 화면용 정보다. 재생 위치가 프레임마다 바뀌므로 aria-live를 달지 않는다(스크린 리더는 핸들의 aria-valuetext를 쓴다) */}

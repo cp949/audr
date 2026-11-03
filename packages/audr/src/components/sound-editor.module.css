@@ -181,7 +181,7 @@
   min-width: 1.25rem;
 }
 
-/* 작업 영역. 파형, 재생 줄, 효과 묶음이 한 열로 위에서 아래로 이어진다.
+/* 작업 영역. 파형, 재생 줄, 효과 칩 상자가 한 열로 위에서 아래로 이어진다.
    flex gap은 Chrome 84부터라 쓰지 않는다. 음수 margin과 자식 margin으로 간격을 만든다 */
 .workArea {
   display: flex;
@@ -244,21 +244,12 @@
   outline: none;
 }
 
-/* 재생 줄 바로 아래 첫 묶음은 재생 줄과 떨어뜨려 놓는다 */
-.workMain > .effectGroup {
-  margin-top: 0.75rem;
-}
-
-/* 효과 묶음. 칩이 줄바꿈하며 이어지고, 묶음 사이를 띄운다. 묶음 이름은 보조기기만 읽는다 */
-.effectGroup + .effectGroup {
-  margin-top: 0.75rem;
-}
-
-/* 칩 사이 간격 2px은 칩 margin이 만들고, 바깥 여백은 음수 margin으로 상쇄한다 */
+/* 효과 칩 전체를 담는 상자. 칩 사이 간격 2px은 칩 margin이 만들고, 바깥 여백은 음수 margin으로 상쇄한다 */
 .effectChips {
   display: flex;
   flex-wrap: wrap;
-  margin: -2px;
+  /* 재생 줄과 떨어뜨린다 */
+  margin: calc(0.75rem - 2px) -2px -2px;
 }
 
 /*
@@ -292,24 +283,24 @@
 }
 
 /*
-  묶음 색. 아이콘 원본이 분홍(#cf63cf)이라 hue-rotate로 색조를 옮긴다.
+  색 계열별 색. 아이콘 원본이 분홍(#cf63cf)이라 hue-rotate로 색조를 옮긴다.
   각도는 원본 색에 같은 행렬을 적용했을 때 색조가 목표(청록 181, 파랑 207, 주황 28, 연두 85, 분홍 345)에 가장 가까운 값이다.
-  묶음 색은 테마와 무관하다.
+  이 색은 테마와 무관하다.
 */
 
-[data-group="volume"] .effectButton img {
+.hueVolume img {
   filter: hue-rotate(-119deg);
 }
-[data-group="speed"] .effectButton img {
+.hueSpeed img {
   filter: hue-rotate(-86deg);
 }
-[data-group="voice"] .effectButton img {
+.hueVoice img {
   filter: hue-rotate(95deg);
 }
-[data-group="space"] .effectButton img {
+.hueSpace img {
   filter: hue-rotate(152deg);
 }
-[data-group="wobble"] .effectButton img {
+.hueWobble img {
   filter: hue-rotate(44deg);
 }
 

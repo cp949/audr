@@ -3,7 +3,7 @@ import { applyEffect } from "@cp949/audr-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SoundEditor } from "../src/components/SoundEditor";
 import { getMessages } from "../src/i18n";
-import { EFFECT_GROUPS, EFFECTS } from "./effectButtons";
+import { EFFECTS } from "./effectButtons";
 import { fakeAudioBuffer, FakeAudioBufferPlayer, ramp } from "./helpers/fakePlayer";
 
 vi.mock("@cp949/audr-core", async (importOriginal) => {
@@ -79,38 +79,33 @@ describe("SoundEditor 레이아웃", () => {
     ]);
   });
 
-  it("음소거 버튼이 소리 크기 묶음의 마지막에 보이고 영어·한국어 이름을 쓴다", () => {
+  it("음소거 버튼이 효과 버튼의 마지막에 보이고 영어·한국어 이름을 쓴다", () => {
     const { unmount } = setup();
-    const group = screen.getByRole("group", { name: en.effectGroupVolume });
+    const group = screen.getByRole("group", { name: en.effects });
     const names = within(group)
       .getAllByRole("button")
       .map((b) => b.getAttribute("aria-label") ?? b.textContent);
-    expect(names.at(-1)).toBe(en.mute);
+    expect(names).toContain(en.mute);
     unmount();
     setup({ locale: "ko" });
     expect(screen.getByRole("button", { name: getMessages("ko").mute })).toBeTruthy();
   });
 
-  it("효과 버튼은 5개 묶음으로 나뉘고 묶음마다 이름이 붙으며 DOM 순서가 묶음 순서다", () => {
+  it("효과 버튼 19개는 이름이 붙은 하나의 상자에 묶음 없이 현재 순서대로 나열된다", () => {
     setup();
-    const all: HTMLElement[] = [];
-    for (const { name, labels } of EFFECT_GROUPS) {
-      const group = screen.getByRole("group", { name: en[name] });
-      const buttons = labels.map((label) => screen.getByRole("button", { name: en[label] }));
-      expect(buttons.every((b) => group.contains(b))).toBe(true);
-      expect(Array.from(group.querySelectorAll("button"))).toEqual(buttons);
-      all.push(...buttons);
-    }
-    expect(all).toHaveLength(19);
-    expect(all.map((b) => b.getAttribute("aria-label") ?? b.textContent)).toEqual(effectLabels);
+    const group = screen.getByRole("group", { name: en.effects });
+    // 상자의 직계 자식이 곧 버튼 19개다(안쪽에 묶음 상자가 없다)
+    const children = Array.from(group.children);
+    expect(children).toHaveLength(19);
+    expect(children.every((c) => c.tagName === "BUTTON")).toBe(true);
+    expect(children.map((b) => b.getAttribute("aria-label") ?? b.textContent)).toEqual(
+      effectLabels,
+    );
   });
 
-  it("묶음 이름은 한국어 로케일에서 한국어 문구다", () => {
+  it("효과 상자 이름은 한국어 로케일에서 한국어 문구다", () => {
     setup({ locale: "ko" });
-    const ko = getMessages("ko");
-    for (const { name } of EFFECT_GROUPS) {
-      expect(screen.getByRole("group", { name: ko[name] })).toBeTruthy();
-    }
+    expect(screen.getByRole("group", { name: getMessages("ko").effects })).toBeTruthy();
   });
 
   it("재생 버튼은 아이콘 옆에 글자가 보이고, 재생 중에는 멈추기 글자로 바뀐다", async () => {
@@ -137,30 +132,16 @@ describe("SoundEditor 레이아웃", () => {
     expect(screen.getByLabelText(en.sound)).toHaveProperty("value", "Meow");
   });
 
-  it("작업 영역은 한 열이며 파형, 재생 줄, 효과 묶음 5개가 위에서 아래로 이어진다", () => {
+  it("작업 영역은 한 열이며 파형, 재생 줄, 효과 상자가 위에서 아래로 이어진다", () => {
     const { container } = setup();
     const work = container.querySelector('[class*="workArea"]') as HTMLElement;
     expect(work.children).toHaveLength(1);
     const column = work.children[0] as HTMLElement;
     expect(column.querySelector("svg[data-waveform]")).not.toBeNull();
     const transport = screen.getByRole("button", { name: en.play }).parentElement;
-    const groups = EFFECT_GROUPS.map(({ name }) => screen.getByRole("group", { name: en[name] }));
-    // 재생 줄 바로 뒤에 5개 묶음이 묶음 순서대로 이어진다
-    let previous = transport;
-    for (const group of groups) {
-      expect(group.previousElementSibling).toBe(previous);
-      expect(column.contains(group)).toBe(true);
-      previous = group;
-    }
-  });
-
-  it("효과 묶음 이름은 모두 화면에서 숨기고 보조기기만 읽는다", () => {
-    setup();
-    for (const { name } of EFFECT_GROUPS) {
-      expect(screen.getByText(en[name]).className, name).toMatch(/visuallyHidden/);
-      // 묶음 이름으로 계속 읽힌다
-      expect(screen.getByRole("group", { name: en[name] }), name).toBeTruthy();
-    }
+    const effects = screen.getByRole("group", { name: en.effects });
+    expect(effects.previousElementSibling).toBe(transport);
+    expect(column.contains(effects)).toBe(true);
   });
 
   it("locale ko이면 한국어 문자열을 쓴다", () => {
