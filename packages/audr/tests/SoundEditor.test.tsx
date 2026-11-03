@@ -271,6 +271,14 @@ describe("SoundEditor 시간 표시줄", () => {
     expect(screen.getByText(en.effectScopeSelection).className).toContain("visuallyHidden");
   });
 
+  it("파형 상자 안에 보조기기에서 숨긴 가운데 기준선이 있다", () => {
+    const { container } = setupOneSecond();
+    const guide = container.querySelector('[class*="centerGuide"]');
+    expect(guide).not.toBeNull();
+    expect(guide?.getAttribute("aria-hidden")).toBe("true");
+    expect(container.querySelector('[class*="waveformContainer"]')?.contains(guide)).toBe(true);
+  });
+
   it("소수점 기호는 locale을 따른다", async () => {
     const { container } = setupOneSecond({ locale: "de" });
     expect(screen.getByText("1,00 s")).toBeTruthy();

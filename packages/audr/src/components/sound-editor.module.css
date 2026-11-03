@@ -86,6 +86,17 @@
   margin-bottom: 20px;
 }
 
+/* 파형 상자의 세로 가운데를 가로지르는 연한 선. 상자 안쪽 폭 전체를 쓰고 입력은 받지 않는다 */
+.centerGuide {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--audr-ui-black-transparent);
+  pointer-events: none;
+}
+
 .button {
   height: 2rem;
   padding: 0.35rem;
